@@ -170,6 +170,7 @@ input:checked+.slider-sw:before{transform:translateX(20px);}
     <button class="tab-btn" onclick="switchTab('maintenance')"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>Maintenance</button>
     <button class="tab-btn" onclick="switchTab('settings')"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>Settings</button>
     <button class="tab-btn" onclick="switchTab('loginlog')"><svg class="ic" aria-hidden="true"><use href="#i-log"/></svg>Riwayat Login</button>
+    <button class="tab-btn" onclick="switchTab('event')"><svg class="ic" aria-hidden="true"><use href="#i-megaphone"/></svg>Event</button>
     <button class="tab-btn" onclick="switchTab('chat')"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg>Chat</button>
     <button class="tab-btn" onclick="switchTab('feedback')"><svg class="ic" aria-hidden="true"><use href="#i-bug"/></svg>Feedback <span id="feedback-badge" class="badge-fail" style="display:none;margin-left:4px;">0</span></button>
   </div>
@@ -403,6 +404,69 @@ input:checked+.slider-sw:before{transform:translateX(20px);}
     </div>
 
     <!-- CHAT -->
+    <!-- EVENT SPESIAL -->
+    <div class="tab-panel" id="tab-event">
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-megaphone"/></svg></span> Event Spesial</div>
+        <div id="ev-status" style="font-size:12px;margin-bottom:10px;color:#888;">Memuat...</div>
+        <label class="admin-label">Judul event</label>
+        <input class="admin-input" id="ev-title" maxlength="60" placeholder="Malam Tahun Baru 2027">
+        <label class="admin-label">Pesan / deskripsi (tampil di panel event)</label>
+        <textarea class="admin-textarea" id="ev-msg" maxlength="400" placeholder="Ikuti event spesial kami..."></textarea>
+        <label class="admin-label">Tema</label>
+        <select class="admin-select" id="ev-theme" onchange="evThemeChanged()">
+          <option value="newyear">Tahun Baru (emas + pink, kembang api)</option>
+          <option value="merdeka">Kemerdekaan (merah putih, confetti)</option>
+          <option value="halloween">Halloween (oranye + ungu, bara)</option>
+          <option value="natal">Natal (hijau + merah, salju)</option>
+          <option value="custom">Kustom</option>
+        </select>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+          <div><label class="admin-label">Warna 1</label><input type="color" id="ev-c1" value="#ffd54a" style="width:60px;height:34px;border:0;background:none;"></div>
+          <div><label class="admin-label">Warna 2</label><input type="color" id="ev-c2" value="#ff2d95" style="width:60px;height:34px;border:0;background:none;"></div>
+          <div style="flex:1;min-width:140px;"><label class="admin-label">Efek visual</label>
+            <select class="admin-select" id="ev-fx"><option value="fireworks">Kembang api</option><option value="confetti">Confetti</option><option value="snow">Salju</option><option value="embers">Bara</option><option value="none">Tanpa efek</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:170px;"><label class="admin-label">Mulai (kosong = langsung)</label><input class="admin-input" type="datetime-local" id="ev-start"></div>
+          <div style="flex:1;min-width:170px;"><label class="admin-label">Selesai (kosong = manual)</label><input class="admin-input" type="datetime-local" id="ev-end"></div>
+        </div>
+        <div class="toggle-row" style="margin-top:10px;">
+          <div><div class="toggle-label">Kontes project</div><div class="toggle-sub">Pengguna bisa mengirim project, ada galeri dan voting</div></div>
+          <label class="switch"><input type="checkbox" id="ev-contest"><span class="slider-sw"></span></label>
+        </div>
+        <label class="admin-label">Aturan / tema kontes</label>
+        <textarea class="admin-textarea" id="ev-rule" maxlength="300" placeholder="Buat show 1 menit bertema neon..."></textarea>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Chat event</div><div class="toggle-sub">Ruang chat khusus event</div></div>
+          <label class="switch"><input type="checkbox" id="ev-chat"><span class="slider-sw"></span></label>
+        </div>
+        <button class="btn-green" onclick="evLaunch()"><svg class="ic" aria-hidden="true"><use href="#i-megaphone"/></svg>Luncurkan Event Baru</button>
+        <button class="btn-gray" onclick="evSave()"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>Simpan Perubahan (event berjalan)</button>
+        <button class="btn-gray" onclick="evStop()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>Matikan Event</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></span> Pengumuman Event</div>
+        <textarea class="admin-textarea" id="ev-ann" maxlength="200" placeholder="Pesan singkat yang muncul di layar semua peserta..."></textarea>
+        <button class="btn-green" onclick="evAnnounce()"><svg class="ic" aria-hidden="true"><use href="#i-megaphone"/></svg>Kirim ke Semua Pengguna</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span> Peserta Kontes</div>
+        <button class="btn-gray" onclick="evLoadEntries()"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat Ulang</button>
+        <button class="btn-gray" onclick="evClearWinner()"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Hapus Pemenang</button>
+        <div id="ev-entries" style="margin-top:10px;font-size:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></span> Chat Event</div>
+        <div style="display:flex;gap:6px;">
+          <input class="admin-input" id="ev-chat-msg" maxlength="300" placeholder="Pesan sebagai admin..." style="flex:1;margin:0;">
+          <button class="btn-green" style="width:auto;margin:0;" onclick="evChatSend()">Kirim</button>
+        </div>
+        <button class="btn-gray" onclick="evLoadChat()" style="margin-top:8px;"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat Ulang</button>
+        <div id="ev-chat-list" style="margin-top:10px;font-size:12px;"></div>
+      </div>
+    </div>
+
     <div class="tab-panel" id="tab-chat">
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></span> Live Chat <span id="chat-live-state" class="badge-info" style="margin-left:6px;">Memuat</span></div>
@@ -505,6 +569,7 @@ function switchTab(name) {
   if(name==='loginlog') loadLoginLog();
   if(name==='maintenance') loadMaintenance();
   if(name==='newupdate') loadNewUpdate();
+  if(name==='event') loadEventAdmin();
   if(name==='aiassist') loadAiAssist();
   if(name==='settings') loadSettings();
   if(name==='feedback') loadFeedback();
@@ -544,6 +609,164 @@ async function runWrite(fn, okMsg) {
     toast(e && e.message === 'timeout' ? 'Server tidak merespons. Periksa koneksi lalu coba lagi.' : 'Gagal: ' + ((e && e.message) || e), true);
     return false;
   }
+}
+
+
+// ═══════════════════════════════════════════
+// EVENT SPESIAL (app_config/main -> event, data peserta di event_data/{id}/...)
+// ═══════════════════════════════════════════
+const EV_THEMES = {
+  newyear:   { c1:'#ffd54a', c2:'#ff2d95', fx:'fireworks' },
+  merdeka:   { c1:'#ff2a2a', c2:'#ffffff', fx:'confetti' },
+  halloween: { c1:'#ff7a00', c2:'#8a2be2', fx:'embers' },
+  natal:     { c1:'#3ddc84', c2:'#ff3b3b', fx:'snow' }
+};
+let _evCur = null;
+function evThemeChanged() {
+  const t = EV_THEMES[document.getElementById('ev-theme').value];
+  if (!t) return;
+  document.getElementById('ev-c1').value = t.c1; document.getElementById('ev-c2').value = t.c2; document.getElementById('ev-fx').value = t.fx;
+}
+function evToLocal(ms) {
+  if (!ms) return '';
+  const d = new Date(ms), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function evFromLocal(v) { if (!v) return 0; const t = new Date(v).getTime(); return isFinite(t) ? t : 0; }
+function evForm() {
+  const g = id => document.getElementById(id);
+  return {
+    title: g('ev-title').value.trim().slice(0, 60),
+    msg: g('ev-msg').value.trim().slice(0, 400),
+    theme: g('ev-theme').value, c1: g('ev-c1').value, c2: g('ev-c2').value, fx: g('ev-fx').value,
+    startAt: evFromLocal(g('ev-start').value), endAt: evFromLocal(g('ev-end').value),
+    contest: { on: g('ev-contest').checked, rule: g('ev-rule').value.trim().slice(0, 300) },
+    chat: { on: g('ev-chat').checked }
+  };
+}
+function evValidate(f) {
+  if (!f.title) return 'Judul event wajib diisi';
+  if (f.startAt && f.endAt && f.endAt <= f.startAt) return 'Waktu selesai harus setelah waktu mulai';
+  return '';
+}
+function evFill(d) {
+  const g = id => document.getElementById(id);
+  d = d || {};
+  g('ev-title').value = d.title || ''; g('ev-msg').value = d.msg || '';
+  g('ev-theme').value = d.theme || 'newyear';
+  const base = EV_THEMES[g('ev-theme').value] || EV_THEMES.newyear;
+  g('ev-c1').value = d.c1 || base.c1; g('ev-c2').value = d.c2 || base.c2; g('ev-fx').value = d.fx || base.fx;
+  g('ev-start').value = evToLocal(d.startAt); g('ev-end').value = evToLocal(d.endAt);
+  g('ev-contest').checked = !!(d.contest && d.contest.on); g('ev-rule').value = (d.contest && d.contest.rule) || '';
+  g('ev-chat').checked = !!(d.chat && d.chat.on);
+}
+function evStatusText(d) {
+  if (!d || !d.id) return 'Belum ada event.';
+  const now = Date.now();
+  let st = 'Nonaktif';
+  if (d.active) st = (d.startAt && now < d.startAt) ? 'Terjadwal (belum mulai)' : (d.endAt && now >= d.endAt) ? 'Sudah berakhir' : 'AKTIF sekarang';
+  return 'Event terakhir: "' + (d.title || '-') + '" — ' + st + (d.winner ? ' — Pemenang: ' + d.winner.title + ' (' + d.winner.name + ')' : '');
+}
+async function loadEventAdmin() {
+  try {
+    const cfg = await getConfig();
+    _evCur = cfg.event || null;
+    evFill(_evCur);
+    document.getElementById('ev-status').textContent = evStatusText(_evCur);
+    if (_evCur && _evCur.id) { evLoadEntries(); evLoadChat(); }
+  } catch (e) { document.getElementById('ev-status').textContent = 'Gagal memuat: ' + (e.message || e); }
+}
+async function evWriteReplace(data) {
+  await ensureConfigDoc();
+  await CFG_REF().update({ event: data });   // ganti seluruh isi event (membuang pemenang/pengumuman lama)
+}
+async function evLaunch() {
+  const f = evForm(), err = evValidate(f);
+  if (err) { toast(err, true); return; }
+  const data = Object.assign({}, f, { active: true, id: Date.now() });
+  const ok = await runWrite(() => evWriteReplace(data), 'Event diluncurkan!');
+  if (ok) { _evCur = data; document.getElementById('ev-status').textContent = evStatusText(data); evLoadEntries(); evLoadChat(); }
+}
+async function evSave() {
+  if (!_evCur || !_evCur.id) { toast('Belum ada event berjalan. Gunakan "Luncurkan Event Baru".', true); return; }
+  const f = evForm(), err = evValidate(f);
+  if (err) { toast(err, true); return; }
+  const ok = await runWrite(() => saveSection('event', f), 'Perubahan event disimpan');
+  if (ok) { _evCur = Object.assign({}, _evCur, f); document.getElementById('ev-status').textContent = evStatusText(_evCur); }
+}
+async function evStop() {
+  if (!_evCur || !_evCur.id) { toast('Belum ada event.', true); return; }
+  const ok = await runWrite(() => saveSection('event', { active: false }), 'Event dimatikan');
+  if (ok) { _evCur.active = false; document.getElementById('ev-status').textContent = evStatusText(_evCur); }
+}
+async function evAnnounce() {
+  if (!_evCur || !_evCur.id) { toast('Luncurkan event dulu.', true); return; }
+  const t = document.getElementById('ev-ann').value.trim().slice(0, 200);
+  if (!t) { toast('Isi pengumuman kosong', true); return; }
+  const ok = await runWrite(() => saveSection('event', { announce: { id: Date.now(), text: t } }), 'Pengumuman dikirim');
+  if (ok) document.getElementById('ev-ann').value = '';
+}
+function evSub(name) { return db.collection('event_data').doc(String(_evCur.id)).collection(name); }
+async function evLoadEntries() {
+  const box = document.getElementById('ev-entries');
+  if (!_evCur || !_evCur.id) { box.textContent = 'Belum ada event.'; return; }
+  box.textContent = 'Memuat...';
+  try {
+    const snap = await evSub('entries').orderBy('votes', 'desc').limit(100).get();
+    box.innerHTML = '';
+    if (snap.empty) { box.textContent = 'Belum ada peserta.'; return; }
+    snap.forEach(doc => {
+      const e = doc.data(), row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #2a2a2a;';
+      const info = document.createElement('div'); info.style.flex = '1';
+      info.textContent = e.title + ' — ' + e.name + ' — ' + (e.votes || 0) + ' suara — ' + Math.round((e.bytes || 0) / 1024) + ' KB';
+      const w = document.createElement('button'); w.className = 'btn-gray'; w.style.cssText = 'width:auto;margin:0;padding:4px 10px;'; w.textContent = 'Pemenang';
+      w.onclick = () => evSetWinner(doc.id, e);
+      const d = document.createElement('button'); d.className = 'btn-gray'; d.style.cssText = 'width:auto;margin:0;padding:4px 10px;'; d.textContent = 'Hapus';
+      d.onclick = () => evDelEntry(doc.id);
+      row.append(info, w, d); box.appendChild(row);
+    });
+  } catch (e) { box.textContent = 'Gagal memuat: ' + (e.message || e); }
+}
+async function evSetWinner(id, e) {
+  const ok = await runWrite(() => saveSection('event', { winner: { entryId: id, title: e.title, name: e.name, votes: e.votes || 0 } }), 'Pemenang ditetapkan');
+  if (ok) { _evCur.winner = { entryId: id, title: e.title, name: e.name, votes: e.votes || 0 }; document.getElementById('ev-status').textContent = evStatusText(_evCur); }
+}
+async function evClearWinner() {
+  if (!_evCur || !_evCur.id) return;
+  const ok = await runWrite(async () => { await ensureConfigDoc(); await CFG_REF().update({ 'event.winner': firebase.firestore.FieldValue.delete() }); }, 'Pemenang dihapus');
+  if (ok) { delete _evCur.winner; document.getElementById('ev-status').textContent = evStatusText(_evCur); }
+}
+async function evDelEntry(id) {
+  if (!confirm('Hapus peserta ini beserta project-nya?')) return;
+  const ok = await runWrite(async () => { const b = db.batch(); b.delete(evSub('entries').doc(id)); b.delete(evSub('projects').doc(id)); await b.commit(); }, 'Peserta dihapus');
+  if (ok) evLoadEntries();
+}
+async function evLoadChat() {
+  const box = document.getElementById('ev-chat-list');
+  if (!_evCur || !_evCur.id) { box.textContent = 'Belum ada event.'; return; }
+  box.textContent = 'Memuat...';
+  try {
+    const snap = await evSub('chat').orderBy('ts', 'desc').limit(40).get();
+    box.innerHTML = '';
+    if (snap.empty) { box.textContent = 'Belum ada pesan.'; return; }
+    snap.forEach(doc => {
+      const m = doc.data(), row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #2a2a2a;';
+      const t = document.createElement('div'); t.style.cssText = 'flex:1;word-break:break-word;';
+      t.textContent = (m.admin ? '[ADMIN] ' : '') + (m.name || '?') + ': ' + (m.text || '');
+      const d = document.createElement('button'); d.className = 'btn-gray'; d.style.cssText = 'width:auto;margin:0;padding:3px 9px;'; d.textContent = 'Hapus';
+      d.onclick = async () => { const ok = await runWrite(() => evSub('chat').doc(doc.id).delete(), 'Pesan dihapus'); if (ok) evLoadChat(); };
+      row.append(t, d); box.appendChild(row);
+    });
+  } catch (e) { box.textContent = 'Gagal memuat: ' + (e.message || e); }
+}
+async function evChatSend() {
+  if (!_evCur || !_evCur.id) { toast('Luncurkan event dulu.', true); return; }
+  const inp = document.getElementById('ev-chat-msg'), t = inp.value.trim().slice(0, 300);
+  if (!t) return;
+  const ok = await runWrite(() => evSub('chat').add({ uid: 'admin', name: 'ADMIN', text: t, ts: firebase.firestore.FieldValue.serverTimestamp(), admin: true }), 'Pesan terkirim');
+  if (ok) { inp.value = ''; evLoadChat(); }
 }
 
 // ═══════════════════════════════════════════
