@@ -437,6 +437,15 @@ input:checked+.slider-sw:before{transform:translateX(20px);}
         </div>
         <label class="admin-label">Aturan / tema kontes</label>
         <textarea class="admin-textarea" id="ev-rule" maxlength="300" placeholder="Buat show 1 menit bertema neon..."></textarea>
+        <label class="admin-label">Hadiah Juara 1</label>
+        <input class="admin-input" id="ev-prize1" maxlength="120" placeholder="Contoh: Saldo DANA Rp100.000">
+        <label class="admin-label">Hadiah Juara 2 (opsional)</label>
+        <input class="admin-input" id="ev-prize2" maxlength="120">
+        <label class="admin-label">Hadiah Juara 3 (opsional)</label>
+        <input class="admin-input" id="ev-prize3" maxlength="120">
+        <label class="admin-label">Data yang harus diisi pemenang (satu baris satu isian, maks 5)</label>
+        <textarea class="admin-textarea" id="ev-claimfields" placeholder="Nomor DANA&#10;Nama pemilik DANA"></textarea>
+        <div class="toggle-sub" style="margin-bottom:8px;">Kosong = pemenang hanya diminta mengisi "Kontak (WhatsApp/email)".</div>
         <div class="toggle-row">
           <div><div class="toggle-label">Chat event</div><div class="toggle-sub">Ruang chat khusus event</div></div>
           <label class="switch"><input type="checkbox" id="ev-chat"><span class="slider-sw"></span></label>
@@ -453,8 +462,13 @@ input:checked+.slider-sw:before{transform:translateX(20px);}
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span> Peserta Kontes</div>
         <button class="btn-gray" onclick="evLoadEntries()"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat Ulang</button>
-        <button class="btn-gray" onclick="evClearWinner()"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Hapus Pemenang</button>
+        <div class="toggle-sub" style="margin-top:8px;">Tekan J1, J2, atau J3 pada peserta untuk menetapkan juara. Pemenang langsung mendapat pemberitahuan di aplikasinya.</div>
         <div id="ev-entries" style="margin-top:10px;font-size:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span> Pemenang &amp; Klaim Hadiah</div>
+        <button class="btn-gray" onclick="evLoadClaims()"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat Ulang</button>
+        <div id="ev-claims" style="margin-top:10px;font-size:12px;"></div>
       </div>
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></span> Chat Event</div>
@@ -641,7 +655,9 @@ function evForm() {
     theme: g('ev-theme').value, c1: g('ev-c1').value, c2: g('ev-c2').value, fx: g('ev-fx').value,
     startAt: evFromLocal(g('ev-start').value), endAt: evFromLocal(g('ev-end').value),
     contest: { on: g('ev-contest').checked, rule: g('ev-rule').value.trim().slice(0, 300) },
-    chat: { on: g('ev-chat').checked }
+    chat: { on: g('ev-chat').checked },
+    prizes: { 1: g('ev-prize1').value.trim().slice(0, 120), 2: g('ev-prize2').value.trim().slice(0, 120), 3: g('ev-prize3').value.trim().slice(0, 120) },
+    claimFields: g('ev-claimfields').value.split('\n').map(x => x.trim().replace(/[.\/\[\]*~`]/g, ' ').slice(0, 40)).filter(Boolean).slice(0, 5)
   };
 }
 function evValidate(f) {
@@ -659,13 +675,16 @@ function evFill(d) {
   g('ev-start').value = evToLocal(d.startAt); g('ev-end').value = evToLocal(d.endAt);
   g('ev-contest').checked = !!(d.contest && d.contest.on); g('ev-rule').value = (d.contest && d.contest.rule) || '';
   g('ev-chat').checked = !!(d.chat && d.chat.on);
+  const pz = d.prizes || {};
+  g('ev-prize1').value = pz[1] || ''; g('ev-prize2').value = pz[2] || ''; g('ev-prize3').value = pz[3] || '';
+  g('ev-claimfields').value = Array.isArray(d.claimFields) ? d.claimFields.join('\n') : '';
 }
 function evStatusText(d) {
   if (!d || !d.id) return 'Belum ada event.';
   const now = Date.now();
   let st = 'Nonaktif';
   if (d.active) st = (d.startAt && now < d.startAt) ? 'Terjadwal (belum mulai)' : (d.endAt && now >= d.endAt) ? 'Sudah berakhir' : 'AKTIF sekarang';
-  return 'Event terakhir: "' + (d.title || '-') + '" — ' + st + (d.winner ? ' — Pemenang: ' + d.winner.title + ' (' + d.winner.name + ')' : '');
+  return 'Event terakhir: "' + (d.title || '-') + '" — ' + st + (d.winners && Object.keys(d.winners).length ? ' — Juara ditetapkan: ' + Object.keys(d.winners).sort().join(', ') : '');
 }
 async function loadEventAdmin() {
   try {
@@ -673,7 +692,7 @@ async function loadEventAdmin() {
     _evCur = cfg.event || null;
     evFill(_evCur);
     document.getElementById('ev-status').textContent = evStatusText(_evCur);
-    if (_evCur && _evCur.id) { evLoadEntries(); evLoadChat(); }
+    if (_evCur && _evCur.id) { evLoadEntries(); evLoadClaims(); evLoadChat(); }
   } catch (e) { document.getElementById('ev-status').textContent = 'Gagal memuat: ' + (e.message || e); }
 }
 async function evWriteReplace(data) {
@@ -685,7 +704,7 @@ async function evLaunch() {
   if (err) { toast(err, true); return; }
   const data = Object.assign({}, f, { active: true, id: Date.now() });
   const ok = await runWrite(() => evWriteReplace(data), 'Event diluncurkan!');
-  if (ok) { _evCur = data; document.getElementById('ev-status').textContent = evStatusText(data); evLoadEntries(); evLoadChat(); }
+  if (ok) { _evCur = data; document.getElementById('ev-status').textContent = evStatusText(data); evLoadEntries(); evLoadClaims(); evLoadChat(); }
 }
 async function evSave() {
   if (!_evCur || !_evCur.id) { toast('Belum ada event berjalan. Gunakan "Luncurkan Event Baru".', true); return; }
@@ -720,26 +739,62 @@ async function evLoadEntries() {
       row.style.cssText = 'display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #2a2a2a;';
       const info = document.createElement('div'); info.style.flex = '1';
       info.textContent = e.title + ' — ' + e.name + ' — ' + (e.votes || 0) + ' suara — ' + Math.round((e.bytes || 0) / 1024) + ' KB';
-      const w = document.createElement('button'); w.className = 'btn-gray'; w.style.cssText = 'width:auto;margin:0;padding:4px 10px;'; w.textContent = 'Pemenang';
-      w.onclick = () => evSetWinner(doc.id, e);
+      const cur = Object.keys(_evCur.winners || {}).filter(r => _evCur.winners[r] && _evCur.winners[r].entryId === doc.id);
+      if (cur.length) info.textContent += ' — JUARA ' + cur.join(', ');
+      row.appendChild(info);
+      [1, 2, 3].forEach(r => {
+        const w = document.createElement('button'); w.className = 'btn-gray'; w.style.cssText = 'width:auto;margin:0;padding:4px 8px;'; w.textContent = 'J' + r;
+        w.onclick = () => evSetWinner(doc.id, e, r);
+        row.appendChild(w);
+      });
       const d = document.createElement('button'); d.className = 'btn-gray'; d.style.cssText = 'width:auto;margin:0;padding:4px 10px;'; d.textContent = 'Hapus';
       d.onclick = () => evDelEntry(doc.id);
-      row.append(info, w, d); box.appendChild(row);
+      row.appendChild(d); box.appendChild(row);
     });
   } catch (e) { box.textContent = 'Gagal memuat: ' + (e.message || e); }
 }
-async function evSetWinner(id, e) {
-  const ok = await runWrite(() => saveSection('event', { winner: { entryId: id, title: e.title, name: e.name, votes: e.votes || 0 } }), 'Pemenang ditetapkan');
-  if (ok) { _evCur.winner = { entryId: id, title: e.title, name: e.name, votes: e.votes || 0 }; document.getElementById('ev-status').textContent = evStatusText(_evCur); }
+async function evSetWinner(id, e, rank) {
+  const w = { entryId: id, title: e.title, name: e.name, votes: e.votes || 0 };
+  const ok = await runWrite(() => saveSection('event', { winners: { [rank]: w } }), 'Juara ' + rank + ' ditetapkan');
+  if (ok) { _evCur.winners = Object.assign({}, _evCur.winners || {}, { [rank]: w }); document.getElementById('ev-status').textContent = evStatusText(_evCur); evLoadEntries(); evLoadClaims(); }
 }
-async function evClearWinner() {
+async function evClearWinner(rank) {
   if (!_evCur || !_evCur.id) return;
-  const ok = await runWrite(async () => { await ensureConfigDoc(); await CFG_REF().update({ 'event.winner': firebase.firestore.FieldValue.delete() }); }, 'Pemenang dihapus');
-  if (ok) { delete _evCur.winner; document.getElementById('ev-status').textContent = evStatusText(_evCur); }
+  if (!confirm('Hapus juara ' + rank + '?')) return;
+  const ok = await runWrite(async () => { await ensureConfigDoc(); await CFG_REF().update({ ['event.winners.' + rank]: firebase.firestore.FieldValue.delete() }); }, 'Juara ' + rank + ' dihapus');
+  if (ok) { if (_evCur.winners) delete _evCur.winners[rank]; document.getElementById('ev-status').textContent = evStatusText(_evCur); evLoadEntries(); evLoadClaims(); }
+}
+async function evLoadClaims() {
+  const box = document.getElementById('ev-claims');
+  if (!_evCur || !_evCur.id) { box.textContent = 'Belum ada event.'; return; }
+  const ws = _evCur.winners || {}, ranks = Object.keys(ws).filter(r => ws[r]).sort();
+  if (!ranks.length) { box.textContent = 'Belum ada juara yang ditetapkan.'; return; }
+  box.textContent = 'Memuat...';
+  try {
+    box.innerHTML = '';
+    for (const r of ranks) {
+      const w = ws[r], prize = (_evCur.prizes && _evCur.prizes[r]) || '-';
+      const snap = await evSub('claims').doc(w.entryId).get();
+      const card = document.createElement('div');
+      card.style.cssText = 'padding:8px;border:1px solid #2a2a2a;border-radius:8px;margin-bottom:8px;';
+      const h = document.createElement('div'); h.style.fontWeight = 'bold';
+      h.textContent = 'Juara ' + r + ': ' + w.title + ' (' + w.name + ') — Hadiah: ' + prize;
+      card.appendChild(h);
+      const body = document.createElement('div'); body.style.cssText = 'margin-top:4px;white-space:pre-wrap;word-break:break-word;';
+      if (snap.exists) {
+        const c = snap.data(), a = c.answers || {};
+        body.textContent = 'SUDAH KLAIM' + (c.ts && c.ts.toDate ? ' (' + c.ts.toDate().toLocaleString('id-ID') + ')' : '') + '\n' + Object.keys(a).map(k => k + ': ' + a[k]).join('\n');
+      } else body.textContent = 'Belum klaim.';
+      card.appendChild(body);
+      const x = document.createElement('button'); x.className = 'btn-gray'; x.style.cssText = 'width:auto;margin:6px 0 0;padding:4px 10px;'; x.textContent = 'Hapus Juara ' + r;
+      x.onclick = () => evClearWinner(r);
+      card.appendChild(x); box.appendChild(card);
+    }
+  } catch (e) { box.textContent = 'Gagal memuat: ' + (e.message || e); }
 }
 async function evDelEntry(id) {
   if (!confirm('Hapus peserta ini beserta project-nya?')) return;
-  const ok = await runWrite(async () => { const b = db.batch(); b.delete(evSub('entries').doc(id)); b.delete(evSub('projects').doc(id)); await b.commit(); }, 'Peserta dihapus');
+  const ok = await runWrite(async () => { const b = db.batch(); b.delete(evSub('entries').doc(id)); b.delete(evSub('projects').doc(id)); b.delete(evSub('secrets').doc(id)); await b.commit(); }, 'Peserta dihapus');
   if (ok) evLoadEntries();
 }
 async function evLoadChat() {

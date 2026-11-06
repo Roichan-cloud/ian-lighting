@@ -3275,6 +3275,7 @@
     // Fungsi Pengalih Tab Navigasi (Main / Editor)
     function switchTab(tabName) {
         if (tabName !== 'chat' && typeof chatClose === 'function') chatClose();
+        if (tabName !== 'event' && typeof evTabClose === 'function') evTabClose();
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         if (tabName === 'main') {
@@ -3292,6 +3293,11 @@
             document.querySelector('.tab-btn[onclick="switchTab(\'chat\')"]').classList.add('active');
             document.getElementById('tab-chat').classList.add('active');
             if (typeof chatOpen === 'function') chatOpen();
+        } else if (tabName === 'event') {
+            const _eb = document.getElementById('tab-btn-event'), _ep = document.getElementById('tab-event');
+            if (_eb) _eb.classList.add('active');
+            if (_ep) _ep.classList.add('active');
+            if (typeof evTabOpen === 'function') evTabOpen();
         } else if (tabName === 'settings') {
             document.querySelector('.tab-btn[onclick="switchTab(\'settings\')"]').classList.add('active');
             document.getElementById('tab-settings').classList.add('active');
@@ -13168,6 +13174,7 @@
         const _mbFactor = _lf(0.35 * Math.pow(0.02 / 0.35, _cachedMbSmooth / 100));
         _mbFlashLevel += (_mbTargetLevel - _mbFlashLevel) * _mbFactor;
         try { fogUpdate(); } catch (e) {}
+        try { if (typeof evFxUpdate === 'function') evFxUpdate(); } catch (e) {}
         if (Math.abs(_mbFlashLevel - _mbTargetLevel) < 0.001) _mbFlashLevel = _mbTargetLevel;
 
         minibrutes.forEach((mb, mi) => {
@@ -20626,6 +20633,7 @@
 })();
 </script>
 <script>
+
 // ═══════════════════════════════════════════════════════════════
 // EVENT SPESIAL — diaktifkan admin (app_config/main -> event)
 // Banner + hitung mundur, tema warna + efek visual, kontes project (galeri + voting), pengumuman, chat event.
@@ -20671,7 +20679,9 @@
             contest: { on: !!(d.contest && d.contest.on), rule: str(d.contest && d.contest.rule, 300) },
             chat: { on: !!(d.chat && d.chat.on) },
             announce: d.announce && d.announce.id ? { id: String(d.announce.id), text: str(d.announce.text, 200) } : null,
-            winner: d.winner && d.winner.title ? { title: str(d.winner.title, 40), name: str(d.winner.name, 20), votes: +d.winner.votes || 0 } : null
+            prizes: [1, 2, 3].map(r => str(d.prizes && d.prizes[r], 120)),
+            claimFields: Array.isArray(d.claimFields) ? d.claimFields.slice(0, 5).map(x => str(x, 40)).filter(Boolean) : [],
+            winners: [1, 2, 3].map(r => { const w = d.winners && d.winners[r]; return w && w.entryId ? { rank: r, entryId: str(w.entryId, 40), title: str(w.title, 40), name: str(w.name, 20), votes: +w.votes || 0 } : null; }).filter(Boolean)
         } : null;
         const prevId = ev && ev.id;
         ev = next;
@@ -20683,6 +20693,7 @@
         }
         lastAnnId = annId; firstCall = false;
         refresh();
+        try { checkWin(); } catch (e) { console.log('ev win', e); }
     };
 
     // ── tampilan ──
@@ -20693,33 +20704,41 @@
         fxSet(vis && st === 'live' && prefs().fx ? { kind: ev.fx || (BASE[ev.theme] || [])[2] || 'confetti', c1: ev.c1 || (BASE[ev.theme] || BASE.newyear)[0], c2: ev.c2 || (BASE[ev.theme] || BASE.newyear)[1] } : null);
         if (vis && !timer) timer = setInterval(tick, 1000);
         if (!vis && timer) { clearInterval(timer); timer = 0; }
+        syncTab(vis && ev.contest.on);
         if (!vis) closePanel(); else if ($('ev-panel')) renderPanel();
     }
     function tick() {
         if (!ev) return;
         const before = state();
-        const c = $('ev-b-cd'); if (c) c.textContent = countdownText();
+        const c = $('ev-b-cd'); if (c) { const t = cdShort(); c.textContent = t; c.style.display = t ? 'block' : 'none'; }
         const pc = $('ev-p-cd'); if (pc) pc.textContent = countdownText();
+        const tc = $('ev-t-cd'); if (tc) tc.textContent = countdownText();
         if (before !== lastState) { lastState = before; refresh(); }
     }
     let lastState = 'off';
     function colors() { const b = (ev && BASE[ev.theme]) || BASE.newyear; return [ev && ev.c1 || b[0], ev && ev.c2 || b[1]]; }
 
+    const ICON = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.4 5.2 5.6.7-4.1 3.9 1.1 5.6L12 15.7 7 18.4l1.1-5.6L4 8.9l5.6-.7z"/></svg>';
+    function cdShort() { const st = state(); if (st === 'pending') return ev.startAt ? fmt(ev.startAt - Date.now()) : ''; return (st === 'live' && ev.endAt) ? fmt(ev.endAt - Date.now()) : ''; }
     function renderBanner(vis) {
         let b = $('ev-banner');
         if (!vis) { if (b) b.remove(); return; }
+        const vp = $('viewport'); if (!vp) return;
         const [c1, c2] = colors();
         if (!b) {
-            b = document.createElement('div'); b.id = 'ev-banner';
-            b.style.cssText = 'position:fixed;top:6px;left:6px;z-index:2600;max-width:min(62vw,300px);padding:5px 10px;border-radius:14px;cursor:pointer;font-family:inherit;color:#000;box-shadow:0 2px 10px rgba(0,0,0,.5);touch-action:manipulation;';
+            b = document.createElement('button'); b.id = 'ev-banner'; b.type = 'button';
+            b.style.cssText = 'position:absolute;right:10px;bottom:34px;z-index:60;display:flex;flex-direction:column;align-items:center;gap:1px;background:transparent;border:0;padding:2px 3px;cursor:pointer;touch-action:manipulation;font-family:inherit;';
+            ['mousedown', 'touchstart', 'dblclick', 'contextmenu'].forEach(t => b.addEventListener(t, e => e.stopPropagation(), { passive: true }));
             b.onclick = () => openPanel();
-            const t = document.createElement('div'); t.id = 'ev-b-t'; t.style.cssText = 'font-size:10px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-            const c = document.createElement('div'); c.id = 'ev-b-cd'; c.style.cssText = 'font-size:9px;opacity:.85;';
-            b.append(t, c); document.body.appendChild(b);
+            const ic = document.createElement('span'); ic.id = 'ev-b-ic'; ic.style.cssText = 'display:block;line-height:0;'; ic.innerHTML = ICON;
+            const c = document.createElement('span'); c.id = 'ev-b-cd'; c.style.cssText = 'font-size:8px;font-weight:bold;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000;white-space:nowrap;';
+            b.append(ic, c); vp.appendChild(b);
         }
-        b.style.background = 'linear-gradient(135deg,' + c1 + ',' + c2 + ')';
-        $('ev-b-t').textContent = (state() === 'pending' ? 'SEGERA: ' : 'EVENT: ') + ev.title;
-        $('ev-b-cd').textContent = countdownText();
+        b.setAttribute('aria-label', 'Event: ' + ev.title);
+        b.title = ev.title;
+        $('ev-b-ic').style.color = c1;
+        $('ev-b-ic').style.filter = 'drop-shadow(0 0 3px ' + c2 + ') drop-shadow(0 1px 2px #000)';
+        const t = cdShort(); const cd = $('ev-b-cd'); cd.textContent = t; cd.style.display = t ? 'block' : 'none';
     }
 
     // tema warna selama event (tidak mengubah pengaturan tema pengguna)
@@ -20741,68 +20760,95 @@
             '.settings-section{border-color:' + t.accent + ' !important;}.settings-section-title{color:' + t.primary + ' !important;}';
     }
 
-    // ── efek visual (canvas 2D ringan) ──
-    let cv = null, cx = null, raf = 0, fxCfg = null, parts = [], lastT = 0, nextBurst = 0;
-    function fxSet(cfg) {
-        const same = JSON.stringify(cfg) === JSON.stringify(fxCfg);
-        fxCfg = cfg;
-        if (!cfg || cfg.kind === 'none' || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { fxStop(); return; }
-        if (same && raf) return;
-        if (!cv) {
-            cv = document.createElement('canvas'); cv.id = 'ev-fx';
-            cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:2500;pointer-events:none;';
-            document.body.appendChild(cv); cx = cv.getContext('2d');
-            window.addEventListener('resize', fxResize);
-            document.addEventListener('visibilitychange', () => { if (!document.hidden && fxCfg && !raf) { lastT = 0; raf = requestAnimationFrame(fxLoop); } });
-        }
-        fxResize(); parts = []; nextBurst = 0;
-        if (cfg.kind !== 'fireworks') for (let i = 0; i < 70; i++) parts.push(spawn(true));
-        if (!raf) { lastT = 0; raf = requestAnimationFrame(fxLoop); }
+    // ── efek visual 3D: partikel THREE.Points di dalam scene, jadi hanya terlihat di 3D viewport ──
+    let fxPts = null, fxGeo = null, fxMat = null, fxTex = null, fxCfg = null, fxP = [], fxLast = 0, fxNext = 0, fxT = 0;
+    const BX = 130, Y0 = -8, Y1 = 130, Z0 = -110, Z1 = 45;
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    function dotTex() {
+        const c = document.createElement('canvas'); c.width = c.height = 64;
+        const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+        return new THREE.CanvasTexture(c);
     }
-    function fxStop() { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.remove(); cv = null; cx = null; window.removeEventListener('resize', fxResize); } parts = []; }
-    function fxResize() { if (!cv) return; cv.width = Math.max(1, innerWidth); cv.height = Math.max(1, innerHeight); }
-    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-    function spawn(init) {
-        const W = innerWidth, H = innerHeight, k = fxCfg.kind, cols = [fxCfg.c1, fxCfg.c2, '#ffffff'];
-        if (k === 'confetti') return { t: 'c', x: Math.random() * W, y: init ? Math.random() * H : -10, vx: (Math.random() - .5) * 30, vy: 40 + Math.random() * 70, r: Math.random() * 6, vr: (Math.random() - .5) * 8, w: 5 + Math.random() * 5, h: 3 + Math.random() * 4, col: pick(cols) };
-        if (k === 'snow') return { t: 's', x: Math.random() * W, y: init ? Math.random() * H : -6, vx: (Math.random() - .5) * 18, vy: 25 + Math.random() * 40, rad: 1.5 + Math.random() * 2.5, col: '#ffffff', ph: Math.random() * 6 };
-        if (k === 'embers') return { t: 'e', x: Math.random() * W, y: init ? Math.random() * H : H + 6, vx: (Math.random() - .5) * 20, vy: -(25 + Math.random() * 45), rad: 1 + Math.random() * 2.2, col: pick([fxCfg.c1, fxCfg.c2]), ph: Math.random() * 6, life: Math.random() };
-        return null;
+    function fxSet(cfg) {
+        const same = JSON.stringify(cfg) === JSON.stringify(fxCfg) && fxPts;
+        fxCfg = cfg;
+        if (!cfg || cfg.kind === 'none' || typeof THREE === 'undefined' || typeof scene === 'undefined' || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { fxStop(); return; }
+        if (same) return;
+        fxStop(); fxCfg = cfg;
+        const k = cfg.kind, N = k === 'fireworks' ? 900 : 360;
+        fxGeo = new THREE.BufferGeometry();
+        fxGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+        fxGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+        fxTex = dotTex();
+        fxMat = new THREE.PointsMaterial({ size: k === 'snow' ? 1.7 : (k === 'confetti' ? 2.3 : 2.0), map: fxTex, vertexColors: true, transparent: true, depthWrite: false, sizeAttenuation: true, blending: (k === 'confetti' || k === 'snow') ? THREE.NormalBlending : THREE.AdditiveBlending });
+        fxPts = new THREE.Points(fxGeo, fxMat); fxPts.frustumCulled = false; fxPts.renderOrder = 50;
+        scene.add(fxPts);
+        fxP = []; fxNext = 0; fxLast = 0; fxT = 0;
+        const cols = [new THREE.Color(cfg.c1), new THREE.Color(cfg.c2), new THREE.Color('#ffffff')];
+        for (let i = 0; i < N; i++) {
+            const p = { on: false, x: 0, y: -9999, z: 0, vx: 0, vy: 0, vz: 0, life: 0, ph: Math.random() * 6.28, col: cols[i % 3] };
+            if (k !== 'fireworks') respawn(p, true);
+            fxP.push(p);
+        }
+        fxPts.userData.cols = cols;
+    }
+    function respawn(p, init) {
+        const k = fxCfg.kind;
+        p.on = true; p.x = rnd(-BX, BX); p.z = rnd(Z0, Z1); p.life = 1;
+        if (k === 'confetti') { p.y = init ? rnd(Y0, Y1) : Y1 + rnd(0, 10); p.vy = -rnd(9, 20); p.vx = rnd(-3, 3); p.vz = rnd(-3, 3); }
+        else if (k === 'snow') { p.y = init ? rnd(Y0, Y1) : Y1 + rnd(0, 10); p.vy = -rnd(5, 12); p.vx = rnd(-2, 2); p.vz = rnd(-2, 2); }
+        else { p.y = init ? rnd(Y0, Y1) : Y0 + rnd(0, 6); p.vy = rnd(7, 18); p.vx = rnd(-2, 2); p.vz = rnd(-2, 2); }   // embers naik
     }
     function burst() {
-        const W = innerWidth, H = innerHeight, x = W * (0.15 + Math.random() * 0.7), y = H * (0.12 + Math.random() * 0.3), col = pick([fxCfg.c1, fxCfg.c2, '#ffffff']);
-        for (let i = 0; i < 34; i++) { const a = i / 34 * Math.PI * 2 + Math.random() * 0.2, sp = 70 + Math.random() * 110; parts.push({ t: 'f', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, col }); }
-    }
-    function fxLoop(ts) {
-        raf = 0;
-        if (!cx || !fxCfg || document.hidden) return;
-        const dt = Math.min(0.05, lastT ? (ts - lastT) / 1000 : 0.016); lastT = ts;
-        const W = cv.width, H = cv.height;
-        cx.clearRect(0, 0, W, H);
-        if (fxCfg.kind === 'fireworks') { nextBurst -= dt; if (nextBurst <= 0) { burst(); nextBurst = 0.9 + Math.random() * 1.2; } }
-        for (let i = parts.length - 1; i >= 0; i--) {
-            const p = parts[i];
-            if (p.t === 'f') {
-                p.vy += 90 * dt; p.vx *= 0.99; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 0.7;
-                if (p.life <= 0) { parts.splice(i, 1); continue; }
-                cx.globalAlpha = Math.max(0, p.life); cx.fillStyle = p.col; cx.fillRect(p.x, p.y, 3, 3);
-            } else if (p.t === 'c') {
-                p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
-                if (p.y > H + 12) { parts[i] = spawn(false); continue; }
-                cx.save(); cx.globalAlpha = 0.9; cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.col; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
-            } else if (p.t === 's') {
-                p.ph += dt; p.x += (p.vx + Math.sin(p.ph) * 12) * dt; p.y += p.vy * dt;
-                if (p.y > H + 8) { parts[i] = spawn(false); continue; }
-                cx.globalAlpha = 0.85; cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.rad, 0, 6.3); cx.fill();
-            } else if (p.t === 'e') {
-                p.ph += dt; p.x += (p.vx + Math.sin(p.ph * 2) * 10) * dt; p.y += p.vy * dt; p.life -= dt * 0.15;
-                if (p.y < -8 || p.life < -0.5) { parts[i] = spawn(false); continue; }
-                cx.globalAlpha = Math.max(0.1, Math.min(0.9, 0.5 + p.life * 0.5)); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.rad, 0, 6.3); cx.fill();
-            }
+        const cols = fxPts.userData.cols, col = cols[Math.floor(Math.random() * 3)];
+        const cx = rnd(-90, 90), cy = rnd(55, 115), cz = rnd(-95, -10);
+        let n = 0;
+        for (let i = 0; i < fxP.length && n < 110; i++) {
+            const p = fxP[i]; if (p.on) continue;
+            const u = rnd(-1, 1), a = rnd(0, 6.2832), r = Math.sqrt(1 - u * u), sp = rnd(16, 34);   // arah acak di bola 3D
+            p.on = true; p.x = cx; p.y = cy; p.z = cz; p.vx = r * Math.cos(a) * sp; p.vy = u * sp; p.vz = r * Math.sin(a) * sp; p.life = 1; p.col = col; n++;
         }
-        cx.globalAlpha = 1;
-        raf = requestAnimationFrame(fxLoop);
     }
+    function fxStop() {
+        if (fxPts) { try { scene.remove(fxPts); } catch (e) {} }
+        if (fxGeo) fxGeo.dispose(); if (fxMat) fxMat.dispose(); if (fxTex) fxTex.dispose();
+        fxPts = fxGeo = fxMat = fxTex = null; fxP = [];
+    }
+    // dipanggil dari loop render utama
+    window.evFxUpdate = function () {
+        if (!fxPts || !fxCfg || document.hidden) return;
+        const t = performance.now(); const dt = Math.min(0.05, fxLast ? (t - fxLast) / 1000 : 0.016); fxLast = t; fxT += dt;
+        const k = fxCfg.kind, pos = fxGeo.attributes.position.array, col = fxGeo.attributes.color.array;
+        if (k === 'fireworks') { fxNext -= dt; if (fxNext <= 0) { burst(); fxNext = rnd(0.9, 2.0); } }
+        for (let i = 0; i < fxP.length; i++) {
+            const p = fxP[i], o = i * 3;
+            if (!p.on) { pos[o + 1] = -9999; continue; }
+            let br = 1;
+            if (k === 'fireworks') {
+                p.vy -= 22 * dt; p.vx *= 0.985; p.vz *= 0.985; p.life -= dt * 0.65;
+                if (p.life <= 0) { p.on = false; pos[o + 1] = -9999; continue; }
+                br = p.life;
+            } else if (k === 'confetti') {
+                p.ph += dt * 4; p.x += (p.vx + Math.sin(p.ph) * 4) * dt; p.z += (p.vz + Math.cos(p.ph * 0.8) * 3) * dt;
+                br = 0.65 + 0.35 * Math.sin(p.ph * 2.3);   // kilap berkedip seperti kertas berputar
+                if (p.y < Y0) { respawn(p, false); }
+            } else if (k === 'snow') {
+                p.ph += dt * 1.5; p.x += (p.vx + Math.sin(p.ph) * 3) * dt; p.z += (p.vz + Math.cos(p.ph) * 2) * dt;
+                if (p.y < Y0) { respawn(p, false); }
+            } else {
+                p.ph += dt * 2; p.x += (p.vx + Math.sin(p.ph) * 4) * dt; p.z += (p.vz + Math.cos(p.ph) * 3) * dt;
+                br = Math.max(0.15, Math.min(1, (Y1 - p.y) / (Y1 - Y0) + 0.2));
+                if (p.y > Y1) { respawn(p, false); }
+            }
+            p.x += 0; p.y += p.vy * dt;
+            if (k === 'fireworks') { p.x += p.vx * dt; p.z += p.vz * dt; }
+            pos[o] = p.x; pos[o + 1] = p.y; pos[o + 2] = p.z;
+            col[o] = p.col.r * br; col[o + 1] = p.col.g * br; col[o + 2] = p.col.b * br;
+        }
+        fxGeo.attributes.position.needsUpdate = true; fxGeo.attributes.color.needsUpdate = true;
+    };
 
     // ── panel ──
     function el(tag, props, kids) {
@@ -20811,8 +20857,45 @@
         (kids || []).forEach(c => { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
         return e;
     }
-    function closePanel() { const p = $('ev-panel'); if (p) p.remove(); stopListeners(); }
+    // ── tab KONTES di deretan tab utama (Main, Editor, Audio, Chat, Settings) ──
+    function syncTab(show) {
+        let btn = $('tab-btn-event'), pn = $('tab-event');
+        if (!show) {
+            if (btn) btn.remove();
+            if (pn) { const was = pn.classList.contains('active'); pn.remove(); stopContest(); if (was && typeof switchTab === 'function') switchTab('main'); }
+            return;
+        }
+        if (!btn) {
+            btn = document.createElement('button'); btn.className = 'tab-btn'; btn.id = 'tab-btn-event'; btn.setAttribute('onclick', "switchTab('event')"); btn.textContent = 'KONTES';
+            const bar = document.querySelector('.tab-bar'), anchor = bar && bar.querySelector('.tab-btn[onclick="switchTab(\'settings\')"]');
+            if (!bar) return;
+            bar.insertBefore(btn, anchor || null);
+        }
+        if (!pn) {
+            pn = document.createElement('div'); pn.id = 'tab-event'; pn.className = 'tab-content';
+            pn.style.cssText = 'flex-direction:column;padding:10px;background:#111;overflow:auto;color:#ddd;font-size:12px;';
+            const after = $('tab-chat'); if (after) after.after(pn); else { const m = $('mixer'); if (m) m.appendChild(pn); }
+        }
+        if (pn.classList.contains('active')) renderContestTab();
+    }
+    function renderContestTab() {
+        const pn = $('tab-event'); if (!pn || !ev) return;
+        const keep = pn.scrollTop, [c1, c2] = colors();
+        pn.innerHTML = '';
+        pn.appendChild(el('div', { style: 'padding:8px 10px;border-radius:8px;margin-bottom:10px;background:linear-gradient(135deg,' + c1 + ',' + c2 + ');color:#000;' }, [
+            el('div', { textContent: 'KONTES: ' + ev.title, style: 'font-weight:bold;font-size:12px;' }),
+            el('div', { id: 'ev-t-cd', textContent: countdownText(), style: 'font-size:10px;opacity:.85;' })
+        ]));
+        bodyContest(pn);
+        pn.scrollTop = keep;
+    }
+    window.evTabOpen = function () { if (ev && ev.contest.on) renderContestTab(); };
+    window.evTabClose = function () { stopContest(); };
+
+    function closePanel() { const p = $('ev-panel'); if (p) p.remove(); stopChat(); }
     function openPanel(t) { tab = t || tab; if (!ev) return; renderPanel(); }
+    function stopChat() { if (unsubC) { try { unsubC(); } catch (e) {} unsubC = null; } }
+    function stopContest() { if (unsubE) { try { unsubE(); } catch (e) {} unsubE = null; } }
     function stopListeners() { if (unsubE) { try { unsubE(); } catch (e) {} unsubE = null; } if (unsubC) { try { unsubC(); } catch (e) {} unsubC = null; } }
     function btn(label, fn, primary, style) {
         return el('button', { textContent: label, style: 'background:' + (primary ? 'var(--tp)' : '#222') + ';color:' + (primary ? '#000' : 'var(--tp)') + ';border:1px solid var(--tp);border-radius:6px;padding:8px 12px;font-size:11px;font-weight:bold;cursor:pointer;touch-action:manipulation;' + (style || ''), on: { click: fn } });
@@ -20834,15 +20917,14 @@
             el('button', { textContent: 'TUTUP', style: 'background:rgba(0,0,0,.35);color:#fff;border:0;border-radius:6px;padding:6px 10px;font-size:10px;font-weight:bold;cursor:pointer;', on: { click: closePanel } })
         ]);
         const tabs = el('div', { style: 'display:flex;gap:4px;padding:6px;border-bottom:1px solid #222;' });
-        [['info', 'INFO', true], ['contest', 'KONTES', ev.contest.on], ['chat', 'CHAT', ev.chat.on]].forEach(([k, l, show]) => {
+        [['info', 'INFO', true], ['chat', 'CHAT', ev.chat.on]].forEach(([k, l, show]) => {
             if (!show) return;
             tabs.appendChild(el('button', { textContent: l, style: 'flex:1;padding:7px 0;border-radius:6px;font-size:10px;font-weight:bold;cursor:pointer;border:1px solid ' + (tab === k ? c1 : '#333') + ';background:' + (tab === k ? '#1a1a1a' : '#111') + ';color:' + (tab === k ? c1 : '#999') + ';', on: { click: () => { tab = k; renderPanel(); } } }));
         });
-        if ((tab === 'contest' && !ev.contest.on) || (tab === 'chat' && !ev.chat.on)) tab = 'info';
+        if (tab === 'contest' || (tab === 'chat' && !ev.chat.on)) tab = 'info';
         const body = el('div', { id: 'ev-body', style: 'padding:12px;overflow:auto;flex:1;min-height:120px;' });
         card.append(head, tabs, body); p.appendChild(card);
-        if (tab === 'info') bodyInfo(body); else if (tab === 'contest') bodyContest(body); else bodyChat(body);
-        if (tab !== 'contest' && unsubE) { try { unsubE(); } catch (e) {} unsubE = null; }
+        if (tab === 'info') bodyInfo(body); else bodyChat(body);
         if (tab !== 'chat' && unsubC) { try { unsubC(); } catch (e) {} unsubC = null; }
         body.scrollTop = keepScroll;
     }
@@ -20852,13 +20934,20 @@
     function bodyInfo(b) {
         const pf = prefs();
         if (ev.msg) b.appendChild(el('div', { textContent: ev.msg, style: 'white-space:pre-wrap;line-height:1.5;margin-bottom:10px;' }));
-        if (ev.winner) b.appendChild(el('div', { textContent: 'Pemenang kontes: ' + ev.winner.title + ' oleh ' + ev.winner.name + ' (' + ev.winner.votes + ' suara)', style: 'padding:8px;border:1px solid var(--tp);border-radius:8px;color:var(--tp);margin-bottom:10px;' }));
+        if (ev.winners.length) {
+            const box = el('div', { style: 'padding:8px;border:1px solid var(--tp);border-radius:8px;margin-bottom:10px;line-height:1.6;' }, [el('div', { textContent: 'JUARA KONTES', style: 'font-weight:bold;color:var(--tp);' })]);
+            ev.winners.forEach(w => box.appendChild(el('div', { textContent: 'Juara ' + w.rank + ': ' + w.title + ' oleh ' + w.name + ' (' + w.votes + ' suara)' + (ev.prizes[w.rank - 1] ? ' — Hadiah: ' + ev.prizes[w.rank - 1] : '') })));
+            b.appendChild(box);
+        }
+        const mw = myWins()[0];
+        if (mw && !ls(claimKey())) b.appendChild(btn('KLAIM HADIAH JUARA ' + mw.rank, () => claimForm(mw), true, 'width:100%;margin-bottom:10px;'));
+        else if (mw) b.appendChild(el('div', { textContent: 'Klaim hadiah Anda sudah terkirim. Admin akan menghubungi Anda.', style: 'color:var(--tp);margin-bottom:10px;' }));
         if (ev.announce) b.appendChild(el('div', { textContent: 'Pengumuman: ' + ev.announce.text, style: 'padding:8px;background:#1a1a1a;border-radius:8px;margin-bottom:10px;' }));
         const sched = []; if (ev.startAt) sched.push('Mulai: ' + new Date(ev.startAt).toLocaleString('id-ID')); if (ev.endAt) sched.push('Selesai: ' + new Date(ev.endAt).toLocaleString('id-ID'));
         if (sched.length) b.appendChild(el('div', { textContent: sched.join('   '), style: 'font-size:10px;color:#888;margin-bottom:10px;' }));
         b.appendChild(row('Tema warna event', toggleBtn(pf.theme, () => setPref('theme', !pf.theme))));
         b.appendChild(row('Efek visual (matikan jika berat)', toggleBtn(pf.fx, () => setPref('fx', !pf.fx))));
-        if (ev.contest.on) b.appendChild(el('div', { textContent: 'Kontes project sedang dibuka. Buka tab KONTES.', style: 'margin-top:10px;color:#aaa;' }));
+        if (ev.contest.on) b.appendChild(el('div', { textContent: 'Kontes project sedang berlangsung. Buka tab KONTES di deretan tab utama (Main, Editor, Audio, Chat).', style: 'margin-top:10px;color:#aaa;' }));
     }
 
     // ── kontes ──
@@ -20888,6 +20977,8 @@
 
     function bodyContest(b) {
         if (ev.contest.rule) b.appendChild(el('div', { textContent: ev.contest.rule, style: 'white-space:pre-wrap;line-height:1.5;padding:8px;background:#1a1a1a;border-radius:8px;margin-bottom:10px;' }));
+        const pz = ev.prizes.map((t, i) => t ? 'Juara ' + (i + 1) + ': ' + t : '').filter(Boolean);
+        if (pz.length) b.appendChild(el('div', { textContent: 'HADIAH\n' + pz.join('\n'), style: 'white-space:pre-wrap;line-height:1.5;padding:8px;border:1px solid var(--tp);border-radius:8px;margin-bottom:10px;' }));
         const mine = ls(myEntryKey());
         const inputCss = 'width:100%;box-sizing:border-box;background:#1b1b1b;color:#eee;border:1px solid #444;border-radius:6px;padding:8px;font-size:12px;margin:3px 0;';
         if (!mine && state() === 'live' && _db) {
@@ -20901,7 +20992,7 @@
                 if (name.length < 2) { msg.textContent = 'Nama minimal 2 huruf'; return; }
                 if (title.length < 2) { msg.textContent = 'Judul minimal 2 huruf'; return; }
                 busy = true; go.textContent = 'MENGIRIM...'; msg.textContent = '';
-                try { await submitEntry(name, title, desc); lsSet(NAME_KEY, name); renderPanel(); }
+                try { await submitEntry(name, title, desc); lsSet(NAME_KEY, name); renderContestTab(); }
                 catch (e) { msg.textContent = (e && e.message) || 'Gagal mengirim'; go.textContent = 'KIRIM PROJECT SAYA SAAT INI'; }
                 busy = false;
             }, true, 'width:100%;margin-top:6px;');
@@ -20927,7 +21018,7 @@
             const card = el('div', { style: 'border:1px solid #2a2a2a;border-radius:8px;padding:8px;margin-bottom:6px;background:#121212;' }, [
                 el('div', { style: 'display:flex;gap:8px;align-items:center;' }, [
                     el('div', { textContent: '#' + (i + 1), style: 'color:var(--tp);font-weight:bold;min-width:26px;' }),
-                    el('div', { style: 'flex:1;min-width:0;' }, [el('div', { textContent: str(e.title, 40), style: 'font-weight:bold;word-break:break-word;' }), el('div', { textContent: 'oleh ' + str(e.name, 20) + (isMe ? ' (Anda)' : ''), style: 'font-size:10px;color:#888;' })]),
+                    el('div', { style: 'flex:1;min-width:0;' }, [el('div', { textContent: str(e.title, 40), style: 'font-weight:bold;word-break:break-word;' }), el('div', { textContent: 'oleh ' + str(e.name, 20) + (isMe ? ' (Anda)' : '') + (ev.winners.some(w => w.entryId === e.id) ? '  —  JUARA ' + ev.winners.filter(w => w.entryId === e.id).map(w => w.rank).join(', ') : ''), style: 'font-size:10px;color:' + (ev.winners.some(w => w.entryId === e.id) ? 'var(--tp)' : '#888') + ';' })]),
                     el('div', { textContent: (e.votes || 0) + ' suara', style: 'font-size:10px;color:#ccc;white-space:nowrap;' })
                 ]),
                 e.desc ? el('div', { textContent: str(e.desc, 160), style: 'font-size:11px;color:#aaa;margin:6px 0 0;word-break:break-word;' }) : null,
@@ -20945,9 +21036,13 @@
         const packed = await pack(JSON.stringify(data));
         if (packed.length > 900000) throw new Error('Project terlalu besar (' + Math.round(packed.length / 1024) + ' KB, maks 900 KB). Kurangi isi panggung.');
         const ts = firebase.firestore.FieldValue.serverTimestamp(), eRef = sub('entries').doc(), pRef = sub('projects').doc(eRef.id), batch = _db.batch();
+        const kb = new Uint8Array(12); crypto.getRandomValues(kb);
+        const secret = Array.from(kb, x => x.toString(16).padStart(2, '0')).join('');
         batch.set(pRef, { proj: packed, ts });
+        batch.set(sub('secrets').doc(eRef.id), { key: secret });
         batch.set(eRef, { uid: _deviceId, name, title, desc, ts, votes: 0, bytes: packed.length });
         await batch.commit();
+        lsSet('_ev_key_' + ev.id, secret);
         lsSet(myEntryKey(), eRef.id);
     }
     async function voteFor(e) {
@@ -20962,7 +21057,7 @@
             const data = JSON.parse(await unpack(snap.data().proj));
             if (!data || !data.chaseData) throw new Error('format');
             askConfirm('Buka karya "' + str(e.title, 40) + '"? Panggung Anda saat ini akan diganti (simpan dulu kalau perlu).', () => {
-                closePanel();
+                if (typeof switchTab === 'function') switchTab('main');
                 if (typeof _applyLoadWithCompat === 'function') _applyLoadWithCompat(data); else applyLoadedProject(data);
             });
         } catch (er) { console.log('open entry', er); if (typeof showStatus === 'function') showStatus('Gagal membuka karya', true); }
@@ -20974,6 +21069,64 @@
             el('div', { style: 'display:flex;gap:8px;' }, [btn('BUKA', () => { d.remove(); ok(); }, true, 'flex:1;'), btn('BATAL', () => d.remove(), false, 'flex:1;')])
         ]);
         d.appendChild(box); document.body.appendChild(d);
+    }
+
+    // ── pemenang: notifikasi + klaim hadiah ──
+    const claimKey = () => '_ev_claimed_' + ev.id;
+    function myWins() { if (!ev) return []; const mine = ls(myEntryKey()); return mine ? ev.winners.filter(w => w.entryId === mine) : []; }
+    const shownWin = {};
+    function checkWin() {
+        if (!ev || !_db) return;
+        const w = myWins()[0]; if (!w || ls(claimKey())) return;
+        const k = ev.id + ':' + w.rank; if (shownWin[k]) return; shownWin[k] = 1;
+        winPopup(w);
+    }
+    function modal(kids, z) {
+        const d = el('div', { style: 'position:fixed;inset:0;z-index:' + (z || 9200) + ';background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:14px;' });
+        const box = el('div', { style: 'width:min(100%,340px);max-height:90vh;overflow:auto;background:#101010;border:2px solid var(--tp);border-radius:12px;padding:16px;color:#ddd;font-size:12px;display:flex;flex-direction:column;gap:10px;' }, kids);
+        d.appendChild(box); document.body.appendChild(d);
+        return { close: () => d.remove() };
+    }
+    const TROPHY = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>';
+    function winPopup(w) {
+        const ic = el('div', { style: 'text-align:center;color:var(--tp);line-height:0;' }); ic.innerHTML = TROPHY;
+        const prize = ev.prizes[w.rank - 1];
+        const m = modal([
+            ic,
+            el('div', { textContent: 'SELAMAT!', style: 'text-align:center;font-weight:bold;font-size:16px;color:var(--tp);' }),
+            el('div', { textContent: 'Karya Anda "' + w.title + '" menjadi Juara ' + w.rank + ' pada ' + ev.title + '.', style: 'text-align:center;line-height:1.5;' }),
+            prize ? el('div', { textContent: 'Hadiah: ' + prize, style: 'text-align:center;font-weight:bold;padding:8px;border:1px solid var(--tp);border-radius:8px;' }) : null,
+            el('div', { textContent: 'Untuk menerima hadiah, isi data klaim terlebih dahulu.', style: 'text-align:center;color:#aaa;' }),
+            el('div', { style: 'display:flex;gap:8px;' }, [btn('KLAIM SEKARANG', () => { m.close(); claimForm(w); }, true, 'flex:1;'), btn('NANTI', () => m.close(), false, 'flex:1;')])
+        ]);
+    }
+    function claimForm(w) {
+        const fields = ev.claimFields.length ? ev.claimFields : ['Kontak (WhatsApp/email)'];
+        const css = 'width:100%;box-sizing:border-box;background:#1b1b1b;color:#eee;border:1px solid #444;border-radius:6px;padding:8px;font-size:12px;margin:3px 0;';
+        const inputs = fields.map(f => el('input', { type: 'text', maxLength: 200, placeholder: f, style: css }));
+        const msg = el('div', { style: 'font-size:10px;color:#f88;min-height:14px;' });
+        const kids = [el('div', { textContent: 'KLAIM HADIAH JUARA ' + w.rank, style: 'font-weight:bold;font-size:13px;color:var(--tp);' })];
+        fields.forEach((f, i) => { kids.push(el('div', { textContent: f, style: 'color:#aaa;margin-top:2px;' })); kids.push(inputs[i]); });
+        let busyC = false, m = null;
+        const send = btn('KIRIM KLAIM', async () => {
+            if (busyC) return;
+            const key = ls('_ev_key_' + ev.id);
+            if (!key) { msg.textContent = 'Kunci karya tidak ditemukan di perangkat ini. Klaim hanya bisa dari perangkat yang mengirim karya.'; return; }
+            const answers = {};
+            for (let i = 0; i < fields.length; i++) { const v = inputs[i].value.trim(); if (!v) { msg.textContent = 'Semua isian wajib diisi'; return; } answers[fields[i]] = v.slice(0, 200); }
+            busyC = true; send.textContent = 'MENGIRIM...'; msg.textContent = '';
+            try {
+                await sub('claims').doc(w.entryId).set({ key, rank: w.rank, answers, ts: firebase.firestore.FieldValue.serverTimestamp() });
+                lsSet(claimKey(), String(w.rank));
+                m.close(); if (typeof showStatus === 'function') showStatus('Klaim terkirim. Admin akan menghubungi Anda.');
+                if ($('ev-panel')) renderPanel();
+            } catch (e) {
+                msg.textContent = (e && e.code === 'permission-denied') ? 'Klaim ditolak. Mungkin sudah pernah diklaim, atau juara diubah admin.' : 'Gagal mengirim, coba lagi.';
+                send.textContent = 'KIRIM KLAIM'; busyC = false;
+            }
+        }, true, 'flex:1;');
+        kids.push(msg, el('div', { style: 'display:flex;gap:8px;' }, [send, btn('BATAL', () => m.close(), false, 'flex:1;')]));
+        m = modal(kids);
     }
 
     // ── chat event ──
@@ -21024,6 +21177,7 @@
 
     window.evOpenPanel = openPanel;
 })();
+
 
 </script>
 </body>
