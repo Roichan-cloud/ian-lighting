@@ -727,7 +727,7 @@
 <div id="dz-tooltip">Seret filenya ke sini</div>
 
 <div id="viewport">
-    <div id="display">IAN LIGHTING BETA TESTER — Inspired From IJUL</div>
+    <div id="display">IAN LIGHTING v8.9 — Inspired From IJUL</div>
     <div id="status-msg"></div>
     <div id="fps-counter" style="display:block;">FPS: --</div>
     <div id="vprec-countdown-overlay" style="display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center; background:rgba(0,0,0,0.35);">
@@ -19705,7 +19705,7 @@
 </script>
 <script>
 // ═══════════════════════════════════════════════════════════════
-// FOGGER 900W — model 3D (dari fog900w.html), asap partikel, panel Editor, tombol FOG di HW CTRL
+// FOGGER 900W — model 3D (dari fog900wv2.html), asap partikel, panel Editor, tombol FOG di HW CTRL
 // ═══════════════════════════════════════════════════════════════
 (function () {
     'use strict';
@@ -19747,7 +19747,7 @@
         [[-10, -7.3], [-10, 7.3], [12.5, -7.3], [12.5, 7.3]].forEach(p => add(Cy(.8, .5), trim, p[0], .25, p[1]));
 
         // decal samping
-        const sideTex = flip => { const W = 1024, s = W / 29; return tex('side' + (flip ? 1 : 0), W, Math.round(8.3 * s), c => {
+        const sideTex = flip => { const W = 2048, s = W / 29; return tex('side' + (flip ? 1 : 0), W, Math.round(8.3 * s), c => {
             const X = x => ((flip ? -x : x) + 14.5) * s, Y = d => d * s;
             c.fillStyle = INK; c.font = 'italic 700 ' + (1.9 * s) + 'px Arial, sans-serif'; c.textBaseline = 'middle';
             c.textAlign = flip ? 'right' : 'left'; c.fillText('FOG-900', X(-12.4), Y(2.5));
@@ -19761,7 +19761,7 @@
         [1, -1].forEach(sg => { const p = dec(sideTex(sg < 0), 29, 8.3); p.position.set(0, B0 + 4.15, sg * (SZ + .01)); if (sg < 0) p.rotation.y = Math.PI; g.add(p); });
 
         // decal atas (ventilasi)
-        { const s = 36; const p = dec(tex('top', Math.round(29 * s), Math.round(19.4 * s), c => {
+        { const s = 50; const p = dec(tex('top', Math.round(29 * s), Math.round(19.4 * s), c => {
             c.strokeStyle = '#000'; c.lineCap = 'round'; c.lineWidth = .38 * s;
             const X = x => (x + 14.5) * s, Z = z => (z + 9.7) * s;
             for (let i = 0; i < 6; i++) { const x = -2.6 - i * .62;
@@ -19806,25 +19806,25 @@
         // nozzle depan
         { const y = B0 + 2.6;
             const n = add(Cy(2.4, 2.4, 48), dark, -12.4, y, 0); n.rotation.z = Math.PI / 2;
-            const dt = tex('nozzle', 128, 128, c => { c.fillStyle = '#161616'; c.beginPath(); c.arc(64, 64, 63, 0, 7); c.fill(); c.fillStyle = '#000';
-                for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; c.beginPath(); c.arc(64 + Math.cos(a) * 39, 64 + Math.sin(a) * 39, 3.5, 0, 7); c.fill(); } });
+            const dt = tex('nozzle', 256, 256, c => { c.fillStyle = '#161616'; c.beginPath(); c.arc(128, 128, 126, 0, 7); c.fill(); c.fillStyle = '#000';
+                for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; c.beginPath(); c.arc(128 + Math.cos(a) * 78, 128 + Math.sin(a) * 78, 7, 0, 7); c.fill(); } });
             const d = dec(dt, 4.8, 4.8); d.position.set(-13.61, y, 0); d.rotation.y = -Math.PI / 2; g.add(d);
             const br = add(Cy(.5, .5, 20), brass, -13.8, y, 0); br.rotation.z = Math.PI / 2;
             const hl = add(Cy(.1, .1, 10), dark, -14.06, y, 0); hl.rotation.z = Math.PI / 2;
+            // stiker lingkaran hitam (di referensi berisi logo, di sini polos karena tidak ada file logo)
             const sg = new THREE.Group(); sg.position.set(-12.98, B0 + 2.75, 6.2); sg.rotation.z = .281; g.add(sg);
-            const st = dec(tex('warn', 128, 128, c => { c.lineJoin = 'round'; c.fillStyle = '#e0b000'; c.strokeStyle = '#161616'; c.lineWidth = 7;
-                c.beginPath(); c.moveTo(64, 9); c.lineTo(120, 115); c.lineTo(8, 115); c.closePath(); c.fill(); c.stroke();
-                c.strokeStyle = '#161616'; c.lineWidth = 4.5; c.lineCap = 'round';
-                [50, 70, 90].forEach(yy => { c.beginPath(); c.moveTo(44, yy); c.bezierCurveTo(54, yy - 9, 64, yy + 9, 84, yy); c.stroke(); }); }), 4.4, 4.4);
-            st.rotation.y = -Math.PI / 2; sg.add(st); }
+            const lt = tex('disc', 256, 256, c => { c.fillStyle = '#000'; c.beginPath(); c.arc(128, 128, 127, 0, 7); c.fill(); });
+            const st = dec(lt, 5, 5); st.rotation.y = -Math.PI / 2; sg.add(st);
+            [1, -1].forEach(k => { const q = dec(lt, 2.6, 2.6); q.position.set(-9, TOP - 5.6, k * (SZ + .02)); if (k < 0) q.rotation.y = Math.PI; g.add(q); });
+            { const q = dec(lt, 4, 4); q.rotation.set(-Math.PI / 2, 0, -Math.PI / 2); q.position.set(-10.3, TS + .02, 0); g.add(q); } }
 
         // panel belakang
-        { const s = 512 / 17.5, Xp = u => 256 + u * s, Yp = v => 105 - v * s;
-            const t = tex('back', 512, 210, c => { c.fillStyle = INK; c.textAlign = 'center'; c.textBaseline = 'middle';
-                c.font = 'italic 700 31px Arial, sans-serif'; c.fillText('FOG MACHINE', Xp(.2), Yp(2.7));
-                c.font = 'italic 700 15px Arial, sans-serif';
+        { const s = 1024 / 17.5, Xp = u => 512 + u * s, Yp = v => 210 - v * s;
+            const t = tex('back', 1024, 421, c => { c.fillStyle = INK; c.textAlign = 'center'; c.textBaseline = 'middle';
+                c.font = 'italic 700 62px Arial, sans-serif'; c.fillText('FOG MACHINE', Xp(.2), Yp(2.7));
+                c.font = 'italic 700 30px Arial, sans-serif';
                 c.fillText('LINE INPUT', Xp(5.3), Yp(2.85)); c.fillText('LINE INPUT', Xp(5.3), Yp(-.4)); c.fillText('POWER INPUT', Xp(-5.3), Yp(-.4));
-                c.font = 'italic 700 20px Arial, sans-serif'; c.fillText('MADE IN CHINA', Xp(0), Yp(-3.1)); });
+                c.font = 'italic 700 40px Arial, sans-serif'; c.fillText('MADE BY IAN', Xp(0), Yp(-3.1)); });
             const p = dec(t, 17.5, 7.2); p.position.set(BX + .01, B0 + 4.2, 0); p.rotation.y = Math.PI / 2; g.add(p);
             const port = (u, v) => { const y = B0 + 4.2 + v, z = -u;
                 add(Bx(.35, 2.2, 3), trim, BX + .17, y, z); add(Bx(.1, 1.5, 2.3), dark, BX + .37, y, z);
@@ -19832,7 +19832,7 @@
             port(5.3, 1.3); port(5.3, -1.9); port(-5.3, -1.9);
             const sy = B0 + 4.2 + 1.6;
             add(Bx(.35, 2.4, 2), M(0x8a1111, .2, .3), BX + .17, sy, 5.5);
-            const sw = dec(tex('sw', 64, 75, c => { c.fillStyle = '#8a1111'; c.fillRect(0, 0, 64, 75); c.strokeStyle = '#eee'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(32, 9); c.lineTo(32, 26); c.stroke(); c.beginPath(); c.arc(32, 51, 11, 0, 7); c.stroke(); }), 2, 2.4);
+            const sw = dec(tex('sw', 128, 150, c => { c.fillStyle = '#8a1111'; c.fillRect(0, 0, 128, 150); c.strokeStyle = '#eee'; c.lineWidth = 7; c.beginPath(); c.moveTo(64, 18); c.lineTo(64, 52); c.stroke(); c.beginPath(); c.arc(64, 102, 22, 0, 7); c.stroke(); }), 2, 2.4);
             sw.position.set(BX + .36, sy, 5.5); sw.rotation.y = Math.PI / 2; g.add(sw); }
         return g;
     }
@@ -20727,7 +20727,7 @@
         const [c1, c2] = colors();
         if (!b) {
             b = document.createElement('button'); b.id = 'ev-banner'; b.type = 'button';
-            b.style.cssText = 'position:absolute;right:10px;bottom:34px;z-index:60;display:flex;flex-direction:column;align-items:center;gap:1px;background:transparent;border:0;padding:2px 3px;cursor:pointer;touch-action:manipulation;font-family:inherit;';
+            b.style.cssText = 'position:absolute;left:4px;bottom:2px;z-index:60;display:flex;flex-direction:column;align-items:center;gap:1px;background:transparent;border:0;padding:2px 3px;cursor:pointer;touch-action:manipulation;font-family:inherit;';
             ['mousedown', 'touchstart', 'dblclick', 'contextmenu'].forEach(t => b.addEventListener(t, e => e.stopPropagation(), { passive: true }));
             b.onclick = () => openPanel();
             const ic = document.createElement('span'); ic.id = 'ev-b-ic'; ic.style.cssText = 'display:block;line-height:0;'; ic.innerHTML = ICON;
