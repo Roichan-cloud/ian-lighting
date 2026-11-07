@@ -1858,6 +1858,7 @@
                         <input type="file" accept="video/mp4,video/*" id="vt-flash-upload" style="display:none;" onchange="vtUploadFlashVideo(this)">
                     </label>
                     <button class="audio-btn" style="background:#111;border-color:#88f;color:#88f;" onclick="vtClearFlashVideo()">HAPUS</button>
+                    <button class="audio-btn" style="background:#111;border-color:#88f;color:#88f;" onclick="openVtCropModal(true)">CROP / ZOOM FLASH</button>
                     <span id="vt-flash-filename" style="font-size:9px;color:#666;">Kosong: layar putih penuh</span>
                 </div>
 
@@ -1877,17 +1878,17 @@
 
                 <!-- GERAK VIDEOTRON -->
                 <div style="margin-top:8px; border:1px solid #44a; border-radius:6px; padding:6px 8px; background:#0b0b1a;">
-                    <div style="font-size:9px; font-weight:bold; color:#aaf; letter-spacing:0.5px; margin-bottom:4px;">GERAK VIDEOTRON</div>
+                    <div style="font-size:9px; font-weight:bold; color:#aaf; letter-spacing:0.5px; margin-bottom:4px;">GERAK ISI VIDEO</div>
                     <div class="sliders-h-row">
-                        <div class="setting-col"><label style="color:#aaf;">JARAK KIRI/KANAN</label><input type="range" class="slider-h" id="vt-mvX" min="0" max="100" value="0" oninput="uVt('mvX',this.value); document.getElementById('vt-mvX-disp').innerText=this.value;"><span id="vt-mvX-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span></div>
-                        <div class="setting-col"><label style="color:#aaf;">JARAK ATAS/BAWAH</label><input type="range" class="slider-h" id="vt-mvY" min="0" max="60" value="0" oninput="uVt('mvY',this.value); document.getElementById('vt-mvY-disp').innerText=this.value;"><span id="vt-mvY-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span></div>
+                        <div class="setting-col"><label style="color:#aaf;">GESER KIRI/KANAN (%)</label><input type="range" class="slider-h" id="vt-mvX" min="0" max="30" value="0" oninput="uVt('mvX',this.value); document.getElementById('vt-mvX-disp').innerText=this.value;"><span id="vt-mvX-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span></div>
+                        <div class="setting-col"><label style="color:#aaf;">GESER ATAS/BAWAH (%)</label><input type="range" class="slider-h" id="vt-mvY" min="0" max="30" value="0" oninput="uVt('mvY',this.value); document.getElementById('vt-mvY-disp').innerText=this.value;"><span id="vt-mvY-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span></div>
                         <div class="setting-col"><label style="color:#aaf;">KECEPATAN</label><input type="range" class="slider-h" id="vt-mvSpeed" min="1" max="100" value="20" oninput="uVt('mvSpeed',this.value); document.getElementById('vt-mvSpeed-disp').innerText=this.value;"><span id="vt-mvSpeed-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">20</span></div>
                         <div class="setting-col"><label style="color:#aaf;">FASE ANTAR VT</label><input type="range" class="slider-h" id="vt-mvPhase" min="0" max="360" value="0" oninput="uVt('mvPhase',this.value); document.getElementById('vt-mvPhase-disp').innerText=this.value;"><span id="vt-mvPhase-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span></div>
                     </div>
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; align-items:center;">
                         <button class="audio-btn" id="vt-wave-btn" onclick="vtToggleWave()" style="border-color:#88f; color:#aaf;">GELOMBANG: HALUS</button>
                     </div>
-                    <div style="font-size:8px; color:#888; margin-top:6px; line-height:1.5;">Jarak 0 berarti gerak mati. Isi kiri/kanan saja atau atas/bawah saja untuk gerak lurus. Isi keduanya untuk gerak melingkar (HALUS) atau berbentuk belah ketupat (LINEAR). FASE ANTAR VT membuat tiap unit bergerak bergantian. Berlaku ke VT yang dipilih.</div>
+                    <div style="font-size:8px; color:#888; margin-top:6px; line-height:1.5;">Layar Videotron tetap diam, yang bergeser adalah gambar video di dalamnya. Jarak 0 berarti gerak mati. Video otomatis diperbesar sedikit sebesar jarak geser supaya tepi layar tidak kosong. Isi kiri/kanan saja atau atas/bawah saja untuk gerak lurus, isi keduanya untuk gerak melingkar (HALUS) atau belah ketupat (LINEAR). FASE ANTAR VT membuat tiap unit bergeser bergantian. Hanya berlaku saat ada video. Berlaku ke VT yang dipilih.</div>
                 </div>
 
                 <!-- COLOR & FRAME -->
@@ -2522,6 +2523,13 @@
                 <div style="font-size:12px;color:#8696a0;margin-top:4px;" data-i18n="chat_setup_desc">Nama ini tampil di chat. 2-16 karakter, bisa diubah kapan saja.</div>
                 <input id="chat-name-input" type="text" maxlength="16" autocomplete="off" onkeydown="if(event.key==='Enter')chatSaveName()">
                 <button onclick="chatSaveName()" data-i18n="chat_setup_btn">MULAI CHAT</button>
+                <button type="button" id="chat-vf-open" onclick="chatVfToggle()" style="background:transparent;color:#22c55e;border:1px solid #1f6f3d;margin-top:8px;padding:6px;font-size:11px;">Terverifikasi?</button>
+                <div id="chat-vf-box" style="display:none;margin-top:6px;">
+                    <input id="chat-vf-user" type="text" maxlength="16" placeholder="Username" autocomplete="off" autocapitalize="none" spellcheck="false" style="margin:6px 0;">
+                    <input id="chat-vf-pass" type="password" maxlength="64" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter')chatVfLogin()" style="margin:6px 0;">
+                    <div id="chat-vf-msg" style="font-size:11px;color:#f87171;min-height:14px;margin-bottom:6px;"></div>
+                    <button type="button" onclick="chatVfLogin()" style="background:#22c55e;">MASUK TERVERIFIKASI</button>
+                </div>
             </div>
             <button id="chat-down" onclick="chatScrollBottom()" aria-label="Ke pesan terbaru"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
             <div id="chat-typing"></div>
@@ -2546,6 +2554,19 @@
 
     <!-- ===== TAB SETTINGS ===== -->
     <div id="tab-settings" class="tab-content" style="flex-direction:column; gap:0; padding:10px; background:#111;">
+
+        <!-- KEHALUSAN MASTER STROBE -->
+        <div class="settings-section">
+            <div class="settings-section-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M3 12h3l3-8 4 16 3-8h5"/></svg>
+                <span>KEHALUSAN MASTER STROBE</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="range" class="slider-h" id="strobe-smooth" min="0" max="100" value="25" style="flex:1;" oninput="strobeSmoothSet(this.value)">
+                <span id="strobe-smooth-disp" style="font-size:9px; color:#ccc; min-width:34px; text-align:right;">25%</span>
+            </div>
+            <div style="font-size:8px; color:#666; margin-top:4px; line-height:1.5;">0% = kedip instan dan keras (nyala/mati langsung). Makin tinggi makin lembut, lampu menyala dan padam secara bertahap. Bawaan 25%. Berlaku untuk Moving Head, Parled, Lampu Kipas, dan Videotron. Wallwasher dan Strobo Kotak tetap instan.</div>
+        </div>
 
         <!-- TAMPILAN LAYAR: fullscreen + tulisan versi -->
         <div class="settings-section">
@@ -8169,7 +8190,7 @@
         });
         const off = document.getElementById('wall-pat-off');
         if (off) { off.style.background = st.id === 'off' ? 'var(--tp)' : ''; off.style.color = st.id === 'off' ? '#000' : ''; }
-        wallColorBoostRender();
+        wallColorBoostRender(); strobeSmoothRender();
         const tg = document.getElementById('wall-pat-strobe-toggle');
         if (tg) {
             const on = !!st.followStrobe;
@@ -8180,6 +8201,16 @@
         const sp = st.speed || 1;
         if (sl) sl.value = Math.round(sp * 100);
         if (d) d.innerText = sp.toFixed(1) + 'x';
+    }
+    function strobeSmoothGet() { const v = settingsState.strobeSmooth; return (typeof v === 'number' && v >= 0 && v <= 100) ? v : 25; }
+    function strobeSmoothSet(v) {
+        settingsState.strobeSmooth = Math.max(0, Math.min(100, parseFloat(v) || 0));
+        const d = document.getElementById('strobe-smooth-disp'); if (d) d.innerText = Math.round(settingsState.strobeSmooth) + '%';
+    }
+    function strobeSmoothRender() {
+        const v = strobeSmoothGet();
+        const sl = document.getElementById('strobe-smooth'), d = document.getElementById('strobe-smooth-disp');
+        if (sl) sl.value = v; if (d) d.innerText = Math.round(v) + '%';
     }
     function wallColorBoostGet() { const b = settingsState.wallColorBoost; return (typeof b === 'number' && b >= 1 && b <= 4) ? b : 2.0; }
     function wallColorBoostSet(v) {
@@ -8743,18 +8774,21 @@
         ctx.closePath();
     }
 
-    function applyVideoFrame(canvas, ctx, video, cornerR, cropX, cropY, cropZoom) {
+    // mvx/mvy = geseran isi video dalam % lebar/tinggi video, mvAmp = jarak gerak maksimum (%).
+    // Video otomatis diperbesar sedikit sebesar jarak gerak supaya tepi layar tidak pernah kosong.
+    function applyVideoFrame(canvas, ctx, video, cornerR, cropX, cropY, cropZoom, mvx, mvy, mvAmp) {
         ctx.clearRect(0,0,512,288);
         const cw = 512, ch = 288;
-        const zoom = (cropZoom || 100) / 100;
+        let zoom = (cropZoom || 100) / 100;
+        if (mvAmp > 0) zoom = zoom / (1 - 2 * Math.min(mvAmp, 30) / 100);
         // Hitung source rect di video berdasarkan crop & zoom
         const vw = video.videoWidth || cw, vh = video.videoHeight || ch;
         const srcW = vw / zoom, srcH = vh / zoom;
         // Offset dalam koordinat video (cropX/Y -100..100 => geser setengah lebar/tinggi source)
         const offX = ((cropX || 0) / 100) * (vw - srcW) * 0.5;
         const offY = -((cropY || 0) / 100) * (vh - srcH) * 0.5;
-        const sx = Math.max(0, Math.min(vw - srcW, vw/2 - srcW/2 - offX));
-        const sy = Math.max(0, Math.min(vh - srcH, vh/2 - srcH/2 - offY));
+        const sx = Math.max(0, Math.min(vw - srcW, vw/2 - srcW/2 - offX + (mvx || 0) / 100 * vw));
+        const sy = Math.max(0, Math.min(vh - srcH, vh/2 - srcH/2 - offY + (mvy || 0) / 100 * vh));
         if(cornerR > 0) {
             ctx.save();
             roundRect(ctx, 0, 0, cw, ch, cornerR * (cw/80));
@@ -9501,8 +9535,8 @@
                 v.state.cornerRadius=val;
                 v.screen.userData.updateShape(val);
             }
-            if(param==='mvX')     { v.state.mvX = val; }
-            if(param==='mvY')     { v.state.mvY = val; }
+            if(param==='mvX')     { v.state.mvX = Math.max(0, Math.min(30, val)); }
+            if(param==='mvY')     { v.state.mvY = Math.max(0, Math.min(30, val)); }
             if(param==='mvSpeed') { v.state.mvSpeed = val; }
             if(param==='mvPhase') { v.state.mvPhase = val; }
             if(param==='cropX')    { v.state.cropX = val; }
@@ -9551,7 +9585,7 @@
     }
 
     // ===== CROP MODAL =====
-    let _cropVtIdx = -1;
+    let _cropVtIdx = -1;   // -2 = video Flash MB
     let _cropState = { x:0, y:0, zoom:100 };
     let _cropDragType = null;
     let _cropDragStart = null;
@@ -9609,7 +9643,7 @@
         if (!wrap) return;
         const ww = wrap.offsetWidth, wh = ww * (360/640);
         const { left, top, width, height } = _cropBoxState;
-        const v = videotrons[_cropVtIdx];
+        const v = _cropVtIdx >= 0 ? videotrons[_cropVtIdx] : videotrons[0];
         const shape = (v && v.state.shape) || 'RECT';
         const pathStr = _shapeSvgPath(shape, left, top, width, height);
 
@@ -9684,12 +9718,18 @@
         setD('crop-m-r', `M ${R} ${cy-mv} L ${R} ${cy+mv}`);
     }
 
-    function openVtCropModal() {
-        const idxs = getSelectedVts();
-        if (!idxs.length) return;
-        _cropVtIdx = idxs[0];
-        const v = videotrons[_cropVtIdx]; if (!v) return;
-        _cropState = { x: v.state.cropX||0, y: v.state.cropY||0, zoom: v.state.cropZoom||100 };
+    function openVtCropModal(flash) {
+        if (flash === true) {
+            if (!_vtFlashVideo) { showStatus('Upload video Flash MB dulu', true); return; }
+            _cropVtIdx = -2;
+            _cropState = { x: _vtFlashCrop.x, y: _vtFlashCrop.y, zoom: _vtFlashCrop.zoom };
+        } else {
+            const idxs = getSelectedVts();
+            if (!idxs.length) return;
+            _cropVtIdx = idxs[0];
+            const v = videotrons[_cropVtIdx]; if (!v) return;
+            _cropState = { x: v.state.cropX||0, y: v.state.cropY||0, zoom: v.state.cropZoom||100 };
+        }
         const modal = document.getElementById('vt-crop-modal');
         modal.style.display = 'flex';
         const canvas = document.getElementById('vt-crop-canvas');
@@ -9744,9 +9784,10 @@
         function draw() {
             const modal = document.getElementById('vt-crop-modal');
             if (!modal || modal.style.display === 'none') return;
-            const v = videotrons[_cropVtIdx];
+            const v = _cropVtIdx === -2 ? { video: _vtFlashVideo } : videotrons[_cropVtIdx];
             ctx.clearRect(0,0,640,360);
             ctx.fillStyle='#000'; ctx.fillRect(0,0,640,360);
+            if (_cropVtIdx === -2 && _vtFlashVideo && _vtFlashVideo.paused) _vtFlashVideo.play().catch(() => {});
             if (v && v.video && v.video.readyState >= 2) {
                 const vw=v.video.videoWidth||640, vh=v.video.videoHeight||360;
                 const zoom=(_cropState.zoom||100)/100;
@@ -9893,7 +9934,10 @@
     function closeVtCropModal(apply) {
         if (_cropAnimId) { cancelAnimationFrame(_cropAnimId); _cropAnimId = null; }
         document.getElementById('vt-crop-modal').style.display = 'none';
-        if (apply && _cropVtIdx >= 0) {
+        if (_cropVtIdx === -2) {
+            if (apply) _vtFlashCrop = { x: _cropState.x, y: _cropState.y, zoom: _cropState.zoom };
+            if (_vtFlashVideo && !(vtFollowFlashMB && isMinibruteActive)) { _vtFlashVideo.pause(); try { _vtFlashVideo.currentTime = 0; } catch (e) {} }
+        } else if (apply && _cropVtIdx >= 0) {
             getSelectedVts().forEach(idx => {
                 const v = videotrons[idx]; if(!v) return;
                 v.state.cropX = _cropState.x;
@@ -10017,6 +10061,7 @@
     // Video khusus yang diputar di layar Videotron selama Flash MB dipencet (hanya VT dengan IKUT FLASH MB ON).
     // Tanpa video, layar tetap putih penuh seperti sebelumnya.
     let _vtFlashVideo = null;
+    let _vtFlashCrop = { x: 0, y: 0, zoom: 100 };
     function vtUploadFlashVideo(input) {
         const file = input.files[0]; if (!file) return;
         if (_vtFlashVideo) vtClearFlashVideo(true);
@@ -10024,7 +10069,7 @@
         vid.loop = true; vid.muted = true; vid.playsInline = true;
         vid.src = URL.createObjectURL(file);
         vid.load();
-        _vtFlashVideo = vid;
+        _vtFlashVideo = vid; _vtFlashCrop = { x: 0, y: 0, zoom: 100 };
         document.getElementById('vt-flash-filename').textContent = file.name;
         showStatus('Video Flash MB siap. Aktifkan IKUT FLASH MB pada Videotron');
         input.value = '';
@@ -10984,7 +11029,8 @@
             wallPatFlowLR:null, wallPatFlowRL:null, wallPatOut:null, wallPatIn:null, wallPatBounce:null, wallPatAlt:null, wallPatFill:null, wallPatRandom:null
         },
         wallPattern: { id:'off', speed:1, followStrobe:false },
-        wallColorBoost: 2.0
+        wallColorBoost: 2.0,
+        strobeSmooth: 25   // 0..100, 0 = instan; 25 setara perilaku lama (faktor 0.35 per frame)
     };
     // Snapshot bawaan (pristine) — dipakai oleh fitur "Reset ke Default"
     const DEFAULT_SETTINGS_STATE = JSON.parse(JSON.stringify(settingsState));
@@ -11173,6 +11219,7 @@
         if (typeof showStatus === 'function') showStatus(on ? 'Gerakan tetap cepat saat lag: ON' : 'Gerakan tetap cepat saat lag: OFF (gerakan melambat saat lag)');
     }
     function _applyFrameCompUI() {
+        if (typeof strobeSmoothRender === 'function') strobeSmoothRender();
         const on = settingsState.frameComp !== false;
         const a = document.getElementById('fc-btn-on'), b = document.getElementById('fc-btn-off');
         if (a) a.classList.toggle('active', on);
@@ -12955,7 +13002,9 @@
         _animLastTs = now;
         // Faktor smoothing eksponensial per frame -> disesuaikan dengan lama frame (hasil sama di FPS berapa pun)
         const _lf = (f) => f >= 1 ? 1 : (f <= 0 ? 0 : 1 - Math.pow(1 - f, _fs));
-        const _lf35 = _lf(0.35);
+        // Kehalusan master strobe: 0% -> faktor 1 (instan), 25% -> 0.35 (perilaku lama), 100% -> sangat lambat
+        const _ss = Math.min(0.995, strobeSmoothGet() / 100);
+        const _lfS = _ss <= 0 ? 1 : _lf(Math.max(0.004, Math.pow(1 - _ss, 3.65)));
 
         const globalSpeed    = _cachedSpeed;
         const smoothVal      = _cachedSmooth;
@@ -13274,7 +13323,7 @@
                 d *= masterDimLevel;
                 ['flyout', 'flyoutB', 'flyoutL', 'flyoutR'].forEach(k => { if (fxState[k]) d *= _flyoutCalc(i, now, k).env; });   // Flyout: cahaya muncul/hilang bergantian antar tim
             }
-            s.curDim += (d - s.curDim) * _lf35;
+            s.curDim += (d - s.curDim) * _lfS;
             s.curDim *= (1 - _mbFlashLevel); // overlay Flash MB — smooth sesuai slider MB SMOOTH
 
             // FX Generator pergerakan (persis v7_0)
@@ -13629,7 +13678,7 @@
                 else if (fxState.sLoop) d = (i === (Math.floor(now/(1000/_cachedSpdSLoop)) % Math.max(1, pTotal))) ? s.dim : 0; // terus maju, tidak balik
                 d *= masterDimLevel;
             }
-            s.curDim += (d - s.curDim) * _lf35;
+            s.curDim += (d - s.curDim) * _lfS;
             if (parledFollowFlash) s.curDim *= (1 - _mbFlashLevel); // overlay Flash MB — smooth sesuai slider MB SMOOTH
 
             // Warna parled — TIDAK terpengaruh Color Chase (chase hanya untuk beam). Pakai rainbow PARLED sendiri > colorStep/activeColor.
@@ -13768,15 +13817,13 @@
         videotrons.forEach((v, i) => {
             if (!areVtsVisible) return;
             const s = v.state;
-            // GERAK: offset sinus/segitiga di atas posisi dasar (posX/posY tidak diubah)
-            if (s.mvX || s.mvY) {
+            // GERAK ISI VIDEO: layar tetap diam, hanya gambar di dalamnya yang bergeser (sinus/segitiga)
+            let mvx = 0, mvy = 0;
+            const mvAmp = Math.max(s.mvX || 0, s.mvY || 0);
+            if (mvAmp > 0) {
                 const t = now * 0.001 * ((s.mvSpeed || 20) / 50) + (s.mvPhase || 0) / 360 * i;
                 const wv = u => s.mvWave === 'tri' ? 4 * Math.abs(((u - 0.25) % 1 + 1) % 1 - 0.5) - 1 : Math.sin(u * Math.PI * 2);
-                v.group.position.x = s.posX + (s.mvX || 0) * wv(t);
-                v.group.position.y = s.posY + (s.mvY || 0) * wv(t + 0.25);
-                v._mvOn = true;
-            } else if (v._mvOn) {
-                v.group.position.x = s.posX; v.group.position.y = s.posY; v._mvOn = false;
+                mvx = (s.mvX || 0) * wv(t); mvy = (s.mvY || 0) * wv(t + 0.25);
             }
 
             // IKUT FLASH MB — kalau toggle ON dan Flash MB lagi dipencet, layar dipaksa full putih (map dimatiin sementara).
@@ -13787,7 +13834,7 @@
                 // Video custom saat Flash MB
                 if (_vtFlashVideo.paused) _vtFlashVideo.play().catch(() => {});
                 if (v.screenMat.map !== v.screenTex) { v.screenMat.map = v.screenTex; v.screenMat.needsUpdate = true; }
-                applyVideoFrame(v.screenCanvas, v.ctx2d, _vtFlashVideo, s.cornerRadius || 0, 0, 0, 100);
+                applyVideoFrame(v.screenCanvas, v.ctx2d, _vtFlashVideo, s.cornerRadius || 0, _vtFlashCrop.x, _vtFlashCrop.y, _vtFlashCrop.zoom);
                 v.screenTex.needsUpdate = true;
                 v.screenMat.color.setRGB(1, 1, 1);
                 v._vtWhitedByFlash = true;
@@ -13816,8 +13863,8 @@
             const isPlaying = hasFrame && !v.video.paused;
             const stateKey = isPlaying ? 'playing' : (hasFrame ? 'paused' : (_vtHasSrc(v.video) ? 'blank' : 'ph'));
 
-            if (isPlaying || v._vtRenderState !== stateKey || v._vtLastCr !== cr || v._vtLastCropX !== cropX || v._vtLastCropY !== cropY || v._vtLastCropZoom !== cropZoom) {
-                if (hasFrame) applyVideoFrame(v.screenCanvas, v.ctx2d, v.video, cr, cropX, cropY, cropZoom);
+            if (isPlaying || (mvAmp > 0 && hasFrame) || v._vtRenderState !== stateKey || v._vtLastCr !== cr || v._vtLastCropX !== cropX || v._vtLastCropY !== cropY || v._vtLastCropZoom !== cropZoom) {
+                if (hasFrame) applyVideoFrame(v.screenCanvas, v.ctx2d, v.video, cr, cropX, cropY, cropZoom, mvx, mvy, mvAmp);
                 else if (!_vtHasSrc(v.video)) drawVtPlaceholder(v.ctx2d, cr, i + 1, s);
                 else drawBlankScreen(v.ctx2d, cr);
                 v.screenTex.needsUpdate = true;
@@ -13838,7 +13885,7 @@
                 else if (fxState.sChase13) vtTarget = ((i % 3) === sChase13Step) ? 1 : 0;
                 else if (fxState.sLoop) vtTarget = (i === (Math.floor(now/(1000/_cachedSpdSLoop)) % Math.max(1, vtTotal))) ? 1 : 0;
                 if (v._vtStrobeMul === undefined) v._vtStrobeMul = 1;
-                v._vtStrobeMul += (vtTarget - v._vtStrobeMul) * _lf35;
+                v._vtStrobeMul += (vtTarget - v._vtStrobeMul) * _lfS;
             } else {
                 v._vtStrobeMul = 1;
             }
@@ -14007,7 +14054,7 @@
                     else if (fxState.sLoop) d = (i === (Math.floor(now/(1000/_cachedSpdSLoop)) % Math.max(1, fanTotal))) ? s.dim : 0; // terus maju, tidak balik
                 }
                 if (!isBlackout) d *= masterDimLevel;
-                s.curDim += (d - s.curDim) * _lf35;
+                s.curDim += (d - s.curDim) * _lfS;
 
                 let col = s.color;
                 if (fanLampRainbowOn) {
@@ -17510,7 +17557,7 @@
                             edgeSize: vd.edgeSize || 0, edgeSpeed: vd.edgeSpeed, edgeBright: vd.edgeBright,
                             edgeGlow: vd.edgeGlow, edgeDir: vd.edgeDir, edgeSmooth: vd.edgeSmooth,
                             edgeColors: Array.isArray(vd.edgeColors) ? vd.edgeColors.slice() : undefined,
-                            sound: !!vd.sound, mvX: +vd.mvX || 0, mvY: +vd.mvY || 0, mvSpeed: +vd.mvSpeed || 20, mvPhase: +vd.mvPhase || 0, mvWave: vd.mvWave === 'tri' ? 'tri' : 'sine'
+                            sound: !!vd.sound, mvX: Math.min(30, +vd.mvX || 0), mvY: Math.min(30, +vd.mvY || 0), mvSpeed: +vd.mvSpeed || 20, mvPhase: +vd.mvPhase || 0, mvWave: vd.mvWave === 'tri' ? 'tri' : 'sine'
                         };
                         createVideotronFixture(s, i);
                     });
@@ -18279,6 +18326,7 @@
                 if(first || changed('maintenance'))  handleMaintenance(cfg.maintenance || {});
                 if(first || changed('forceUpdate'))  handleForceUpdate(cfg.forceUpdate || {}, first);
                 if(first || changed('announcement')) handleAnnouncement(cfg.announcement || {});
+                        if(first || changed('adminAudio'))   { try { if (window.handleAdminAudio) window.handleAdminAudio(cfg.adminAudio || {}); } catch(e) { console.log('adminAudio', e); } }
                 if(first || changed('motd'))         handleMotd(cfg.motd || {});
                 if(first || changed('newUpdate'))    handleNewUpdate(cfg.newUpdate || {});
                 if(first || changed('aiAssistant'))  handleAiConfig(cfg.aiAssistant || {});
@@ -19354,6 +19402,14 @@
         online:   { id:'online', en:'online' },
         fast:     { id:'Terlalu cepat, tunggu sebentar.', en:'Too fast, wait a moment.' },
         fail:     { id:'Pesan gagal terkirim.', en:'Message failed to send.' },
+        vfBadForm: { id:'Isi username dan password.', en:'Enter username and password.' },
+        vfNone:   { id:'Akun tidak ditemukan.', en:'Account not found.' },
+        vfWrong:  { id:'Password salah.', en:'Wrong password.' },
+        vfFail:   { id:'Gagal masuk. Periksa koneksi lalu coba lagi.', en:'Login failed. Check your connection and try again.' },
+        vfNoCrypto: { id:'Browser ini tidak mendukung verifikasi (butuh HTTPS).', en:'This browser does not support verification (HTTPS required).' },
+        vfOk:     { id:'Terverifikasi! Nama terkunci ke akunmu.', en:'Verified! Your name is locked to your account.' },
+        vfReserved: { id:'Nama ini milik akun terverifikasi. Pakai tombol Terverifikasi? untuk masuk.', en:'This name belongs to a verified account. Use Verified? to log in.' },
+        vfRevoked: { id:'Verifikasi akunmu tidak berlaku lagi. Pilih nama lain.', en:'Your verification is no longer valid. Pick another name.' },
         nameBad:  { id:'Nama harus 2-16 karakter.', en:'Name must be 2-16 characters.' },
         err:      { id:'Chat tidak bisa dimuat. Periksa koneksi.', en:'Chat could not load. Check your connection.' },
         muted:    { id:'Kamu dibungkam admin sampai ', en:'You are muted by the admin until ' },
@@ -19370,6 +19426,7 @@
     const SVG = {
         reply: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
         ban:   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>',
+        vcheck: '<svg width="13" height="13" viewBox="0 0 24 24" aria-label="Terverifikasi" role="img"><circle cx="12" cy="12" r="11" fill="#22c55e"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         check: '<svg width="14" height="14" viewBox="0 0 24 24" aria-label="Admin terverifikasi"><circle cx="12" cy="12" r="11" fill="#1d9bf0"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     };
 
@@ -19380,6 +19437,9 @@
     function me() { return typeof _deviceId !== 'undefined' ? _deviceId : 'anon'; }
     function isOffline() { return document.body.classList.contains('is-offline') || navigator.onLine === false; }
     function isBlocked() { return Array.isArray(window.ianChatBlocked) && window.ianChatBlocked.indexOf(me()) !== -1; }
+    const VS = '_poth_chat_v';
+    function getV() { try { const o = JSON.parse(localStorage.getItem(VS) || 'null'); return (o && o.u && o.n && o.n === getName()) ? o : null; } catch (e) { return null; } }
+    function clearV() { try { localStorage.removeItem(VS); } catch (e) {} }
     function getName() { try { return (localStorage.getItem(NS) || '').trim(); } catch (e) { return ''; } }
     function colorFor(s) { let h = 0; s = s || ''; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return 'hsl(' + h + ',62%,62%)'; }
     function two(n) { return n < 10 ? '0' + n : '' + n; }
@@ -19450,6 +19510,7 @@
                     if (!adm) n.style.color = colorFor(m.uid || m.name);
                     const nt = document.createElement('span'); nt.textContent = m.name || '?'; n.appendChild(nt);
                     if (adm) { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = SVG.check; n.appendChild(c); }
+                    else if (m.v === true) { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = SVG.vcheck; n.appendChild(c); }
                     b.appendChild(n);
                 }
                 if (adm && m.hl) { const tg = document.createElement('div'); tg.className = 'chat-hl-tag'; tg.textContent = T('hl'); b.appendChild(tg); }
@@ -19676,18 +19737,49 @@
         lastSend = now;
         const payload = { uid: me(), name: myName, text: text, ts: firebase.firestore.FieldValue.serverTimestamp(), replyTo: replyTo ? { id: replyTo.id, name: replyTo.name, text: replyTo.text } : null };
         i.value = ''; i.style.height = 'auto'; $('chat-count-n').textContent = '0'; $('chat-count').style.display = 'none'; cancelReply(); lastTypingWrite = 0; writePresence(false);
+        if (getV()) payload.v = true;
         try { await d.collection('chat_messages').add(payload); setTimeout(scrollBottom, 60); }
-        catch (e) { console.log('chat send err', e); i.value = text; toast(T('fail'), true); }
+        catch (e) {
+            console.log('chat send err', e); i.value = text;
+            if (payload.v && e && e.code === 'permission-denied') { clearV(); toast(T('vfRevoked'), true); changeName(); }   // akun dicabut / password diganti
+            else toast(T('fail'), true);
+        }
     }
 
     function saveName() {
         const v = ($('chat-name-input').value || '').replace(/\s+/g, ' ').trim();
         if (v.length < 2 || v.length > 16) { toast(T('nameBad'), true); return; }
-        try { localStorage.setItem(NS, v); } catch (e) {}
-        stopListeners(); open();
+        const d = db(), key = v.toLowerCase();
+        const fin = () => { clearV(); try { localStorage.setItem(NS, v); } catch (e) {} stopListeners(); open(); };
+        if (d && /^[a-z0-9][a-z0-9_]{2,15}$/.test(key)) {   // nama milik akun terverifikasi dicadangkan
+            d.collection('verified_users').doc(key).get().then(s => { if (s.exists) toast(T('vfReserved'), true); else fin(); }).catch(fin);
+        } else fin();
+    }
+    function vfToggle() { const b = $('chat-vf-box'); b.style.display = b.style.display === 'none' ? 'block' : 'none'; $('chat-vf-msg').textContent = ''; if (b.style.display === 'block') setTimeout(() => $('chat-vf-user').focus(), 50); }
+    async function vfLogin() {
+        const msg = $('chat-vf-msg'), u = ($('chat-vf-user').value || '').trim().toLowerCase(), pw = $('chat-vf-pass').value || '';
+        msg.style.color = '#f87171'; msg.textContent = '';
+        if (!u || !pw) { msg.textContent = T('vfBadForm'); return; }
+        if (!window.crypto || !crypto.subtle) { msg.textContent = T('vfNoCrypto'); return; }
+        if (!/^[a-z0-9][a-z0-9_]{2,15}$/.test(u)) { msg.textContent = T('vfNone'); return; }
+        const d = db(); if (!d || isOffline()) { msg.textContent = T('offline'); return; }
+        msg.style.color = '#8696a0'; msg.textContent = '...';
+        try {
+            const snap = await d.collection('verified_users').doc(u).get();
+            if (!snap.exists) { msg.style.color = '#f87171'; msg.textContent = T('vfNone'); return; }
+            const acc = snap.data(), enc = new TextEncoder(), hex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+            const k = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+            const proof = hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(String(acc.salt)), iterations: 100000 }, k, 256));
+            const chk = hex(await crypto.subtle.digest('SHA-256', enc.encode(proof)));
+            if (chk !== acc.chk) { msg.style.color = '#f87171'; msg.textContent = T('vfWrong'); return; }
+            await d.collection('verified_sessions').doc(me()).set({ u: u, proof: proof, ts: firebase.firestore.FieldValue.serverTimestamp() });
+            try { localStorage.setItem(NS, acc.n); localStorage.setItem(VS, JSON.stringify({ u: u, n: acc.n })); } catch (e) {}
+            $('chat-vf-pass').value = ''; toast(T('vfOk'));
+            stopListeners(); open();
+        } catch (e) { console.log('vf login', e); msg.style.color = '#f87171'; msg.textContent = T('vfFail'); }
     }
     function changeName() {
-        stopListeners(); myName = '';
+        stopListeners(); myName = ''; clearV();   // ganti nama = centang hilang, harus login lagi
         const d = db(); if (d) d.collection('chat_presence').doc(me()).delete().catch(() => {});
         $('chat-name-input').value = getName(); show('setup');
         setTimeout(() => $('chat-name-input').focus(), 50);
@@ -19722,7 +19814,7 @@
     window.chatOpen = function () { initGestures(); open(); };
     window.chatClose = close;
     window.chatSend = send; window.chatOnInput = onInput; window.chatCancelReply = cancelReply;
-    window.chatSaveName = saveName; window.chatChangeName = changeName;
+    window.chatVfToggle = vfToggle; window.chatVfLogin = vfLogin; window.chatSaveName = saveName; window.chatChangeName = changeName;
     window.chatCloseSheet = function () { if (Date.now() - sheetOpenedAt < 380) return; closeSheet(); }; window.chatScrollBottom = scrollBottom;
 })();
 </script>
@@ -20656,6 +20748,159 @@
 })();
 </script>
 <script>
+// ════════════════════════════════════════════════════
+// AUDIO ADMIN (kartu pemutar di pengumuman) + BACKSOUND EVENT
+// Sumber: link (URL) atau file kecil yang disimpan admin di Firestore app_audio/{ann|event_bs} sebagai data URL.
+// ════════════════════════════════════════════════════
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const SVG = (d, s) => '<svg width="' + (s || 18) + '" height="' + (s || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+    const SPK = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>';
+    const IC = {
+        play: '<polygon points="6 4 20 12 6 20 6 4" fill="currentColor"/>',
+        pause: '<rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/>',
+        restart: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+        vol: SPK + '<path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+        mute: SPK + '<line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>',
+        close: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+    };
+    const fileCache = {};
+    function loadFile(docId) {   // data URL dari Firestore (di-cache per versi ts)
+        if (typeof _db === 'undefined' || !_db) return Promise.resolve('');
+        return _db.collection('app_audio').doc(docId).get().then(s => {
+            const d = s.exists ? s.data() : null;
+            return (d && typeof d.data === 'string' && d.data.indexOf('data:audio') === 0) ? d.data : '';
+        }).catch(() => '');
+    }
+    const fmtT = t => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+
+    // ── ducking: backsound event mengecil saat audio admin diputar ──
+    let aPlaying = false;
+    function duck(on) { aPlaying = !!on; bsApply(); }
+
+    // ── KARTU AUDIO ADMIN ──
+    let aAud = null;
+    function aClose() {
+        if (aAud) { try { aAud.pause(); } catch (e) {} aAud.removeAttribute('src'); try { aAud.load(); } catch (e) {} aAud = null; }
+        const c = $('_aud_card'); if (c) c.remove();
+        duck(false);
+    }
+    function ensureStyle() {
+        if ($('_aud_style')) return;
+        const st = document.createElement('style'); st.id = '_aud_style';
+        st.textContent = '@keyframes _audEq{0%,100%{height:3px}50%{height:16px}}' +
+            '#_aud_card{position:fixed;top:64px;left:50%;transform:translateX(-50%);width:min(92vw,360px);box-sizing:border-box;z-index:999997;background:#0b0f0b;border:1px solid var(--tp,#0f0);border-radius:12px;padding:10px 12px;color:#ddd;font-family:inherit;box-shadow:0 6px 24px rgba(0,0,0,.6),0 0 14px rgba(0,255,0,.18);}' +
+            '#_aud_card button{background:transparent;border:1px solid #333;color:var(--tp,#0f0);border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation;}' +
+            '#_aud_card .eq{display:flex;align-items:flex-end;gap:2px;height:16px;}#_aud_card .eq i{display:block;width:3px;height:3px;background:var(--tp,#0f0);border-radius:1px;}' +
+            '#_aud_card.on .eq i{animation:_audEq .8s ease-in-out infinite;}#_aud_card .eq i:nth-child(2){animation-delay:.15s!important}#_aud_card .eq i:nth-child(3){animation-delay:.3s!important}#_aud_card .eq i:nth-child(4){animation-delay:.45s!important}#_aud_card .eq i:nth-child(5){animation-delay:.6s!important}' +
+            '#_aud_card input[type=range]{accent-color:var(--tp,#0f0);margin:0;}' +
+            '#ev-bs-btn{position:absolute;left:6px;bottom:48px;z-index:60;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;}';
+        document.head.appendChild(st);
+    }
+    function aBuild(d, src) {
+        ensureStyle();
+        aClose();
+        const card = document.createElement('div'); card.id = '_aud_card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', 'Audio dari admin');
+        const b = 'width:30px;height:30px;';
+        card.innerHTML =
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<span style="color:var(--tp,#0f0);line-height:0;">' + SVG(IC.vol, 16) + '</span>' +
+              '<div style="flex:1;min-width:0;"><div style="font-size:9px;letter-spacing:.6px;color:#888;">AUDIO DARI ADMIN</div>' +
+              '<div style="font-size:13px;font-weight:bold;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(d.name || 'Admin') + '</div></div>' +
+              '<div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' +
+              '<button type="button" id="_aud_x" aria-label="Tutup" style="' + b + '">' + SVG(IC.close, 16) + '</button>' +
+            '</div>' +
+            (d.title ? '<div style="font-size:11px;color:#bbb;margin:6px 0 2px;line-height:1.35;">' + esc(d.title) + '</div>' : '') +
+            '<div id="_aud_hint" style="font-size:9px;color:#fc0;margin:2px 0;display:none;">Tekan tombol play untuk mendengarkan.</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">' +
+              '<button type="button" id="_aud_pp" aria-label="Putar" style="width:38px;height:38px;border-radius:50%;border-color:var(--tp,#0f0);">' + SVG(IC.play, 18) + '</button>' +
+              '<button type="button" id="_aud_rs" aria-label="Ulangi dari awal" style="' + b + '">' + SVG(IC.restart, 15) + '</button>' +
+              '<div style="flex:1;min-width:0;"><input type="range" id="_aud_seek" min="0" max="1000" value="0" style="width:100%;" aria-label="Posisi audio"><div style="display:flex;justify-content:space-between;font-size:9px;color:#888;"><span id="_aud_cur">0:00</span><span id="_aud_dur">0:00</span></div></div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">' +
+              '<button type="button" id="_aud_mt" aria-label="Bisukan" style="' + b + '">' + SVG(IC.vol, 15) + '</button>' +
+              '<input type="range" id="_aud_vol" min="0" max="100" value="80" style="flex:1;" aria-label="Volume">' +
+              '<span id="_aud_vd" style="font-size:9px;color:#888;min-width:28px;text-align:right;">80%</span>' +
+            '</div>';
+        document.body.appendChild(card);
+        const a = new Audio(); a.preload = 'auto'; a.loop = !!d.loop; a.src = src; aAud = a;
+        let vol = 0.8; try { const sv = parseFloat(localStorage.getItem('_aud_vol')); if (sv >= 0 && sv <= 1) vol = sv; } catch (e) {}
+        a.volume = vol; $('_aud_vol').value = Math.round(vol * 100); $('_aud_vd').textContent = Math.round(vol * 100) + '%';
+        const pp = $('_aud_pp'), seek = $('_aud_seek'); let seeking = false;
+        const setPP = playing => { pp.innerHTML = SVG(playing ? IC.pause : IC.play, 18); pp.setAttribute('aria-label', playing ? 'Jeda' : 'Putar'); card.classList.toggle('on', playing); duck(playing); if (playing) $('_aud_hint').style.display = 'none'; };
+        a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false)); a.addEventListener('ended', () => setPP(false));
+        a.addEventListener('loadedmetadata', () => { $('_aud_dur').textContent = fmtT(a.duration); });
+        a.addEventListener('timeupdate', () => { $('_aud_cur').textContent = fmtT(a.currentTime); if (!seeking && a.duration) seek.value = Math.round(a.currentTime / a.duration * 1000); });
+        a.addEventListener('error', () => { $('_aud_hint').textContent = 'Audio tidak bisa dimuat.'; $('_aud_hint').style.display = 'block'; });
+        pp.onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
+        $('_aud_rs').onclick = () => { a.currentTime = 0; a.play().catch(() => {}); };
+        seek.addEventListener('input', () => { seeking = true; if (a.duration) $('_aud_cur').textContent = fmtT(seek.value / 1000 * a.duration); });
+        seek.addEventListener('change', () => { if (a.duration) a.currentTime = seek.value / 1000 * a.duration; seeking = false; });
+        const mt = $('_aud_mt');
+        mt.onclick = () => { a.muted = !a.muted; mt.innerHTML = SVG(a.muted ? IC.mute : IC.vol, 15); };
+        $('_aud_vol').addEventListener('input', e => { const v = e.target.value / 100; a.volume = v; a.muted = false; mt.innerHTML = SVG(IC.vol, 15); $('_aud_vd').textContent = e.target.value + '%'; try { localStorage.setItem('_aud_vol', String(v)); } catch (er) {} });
+        $('_aud_x').onclick = aClose;
+        const p = a.play(); if (p && p.catch) p.catch(() => { $('_aud_hint').style.display = 'block'; });   // diblokir browser: tombol play tetap tersedia
+    }
+    window.handleAdminAudio = async function (d) {
+        if (!d || !d.active) { aClose(); try { sessionStorage.removeItem('_aud_ts'); } catch (e) {} return; }
+        try { if (sessionStorage.getItem('_aud_ts') === String(d.ts)) return; } catch (e) {}
+        let src = '';
+        if (d.src === 'file') src = await loadFile('ann');
+        else if (/^https?:\/\//i.test(d.url || '')) src = d.url;
+        if (!src) { if (typeof showStatus === 'function') showStatus('Audio admin tidak bisa dimuat', true); return; }
+        try { sessionStorage.setItem('_aud_ts', String(d.ts)); } catch (e) {}
+        aBuild(d, src);
+    };
+
+    // ── BACKSOUND EVENT (hanya saat event LIVE) ──
+    let bsAud = null, bsKey = '', bsVol = 0.5, bsWant = false, bsGest = false, bsTok = 0;
+    const bsMuted = () => { try { return localStorage.getItem('_ev_bs_mute') === '1'; } catch (e) { return false; } };
+    function bsApply() {
+        if (bsAud) { bsAud.volume = Math.max(0, Math.min(1, bsVol * (aPlaying ? 0.25 : 1))); bsAud.muted = bsMuted(); }
+        const b = $('ev-bs-btn'); if (b) { b.innerHTML = SVG(bsMuted() ? IC.mute : IC.vol, 14); b.setAttribute('aria-label', bsMuted() ? 'Nyalakan backsound' : 'Bisukan backsound'); b.title = bsMuted() ? 'Backsound: mati' : 'Backsound: nyala'; }
+    }
+    function bindGesture() {
+        if (bsGest) return; bsGest = true;
+        const ev = ['pointerdown', 'touchstart', 'keydown'];
+        const h = () => { bsGest = false; ev.forEach(t => document.removeEventListener(t, h, true)); bsTry(); };
+        ev.forEach(t => document.addEventListener(t, h, true));
+    }
+    function bsTry() {
+        if (!bsAud || !bsWant || !bsAud.paused) return;
+        const p = bsAud.play(); if (p && p.catch) p.catch(() => bindGesture());   // butuh sentuhan pengguna dulu
+    }
+    function bsStop() {
+        bsWant = false; bsTok++; bsKey = '';
+        if (bsAud) { try { bsAud.pause(); } catch (e) {} bsAud.removeAttribute('src'); try { bsAud.load(); } catch (e) {} bsAud = null; }
+        const b = $('ev-bs-btn'); if (b) b.remove();
+    }
+    function bsButton() {
+        if ($('ev-bs-btn')) return;
+        const vp = $('viewport'); if (!vp) return; ensureStyle();
+        const b = document.createElement('button'); b.id = 'ev-bs-btn'; b.type = 'button';
+        ['mousedown', 'touchstart', 'dblclick', 'contextmenu'].forEach(t => b.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+        b.onclick = () => { try { localStorage.setItem('_ev_bs_mute', bsMuted() ? '0' : '1'); } catch (e) {} bsApply(); bsTry(); };
+        vp.appendChild(b); bsApply();
+    }
+    window.evBsSync = function (bs, eid) {
+        if (!bs || (!bs.url && !bs.hasFile)) { if (bsKey || bsAud) bsStop(); return; }
+        const key = String(eid) + '|' + (bs.hasFile ? 'f' + (bs.v || 0) : bs.url);
+        bsVol = Math.max(0, Math.min(1, (bs.vol == null ? 50 : bs.vol) / 100));
+        bsButton();
+        if (key === bsKey && bsAud) { bsWant = true; bsApply(); bsTry(); return; }
+        bsStop(); bsKey = key; const tok = bsTok;
+        (async () => {
+            const src = bs.hasFile ? await loadFile('event_bs') : bs.url;
+            if (tok !== bsTok || !src) return;
+            const a = new Audio(); a.loop = true; a.preload = 'auto'; a.src = src; bsAud = a; bsWant = true; bsButton(); bsApply(); bsTry();
+        })();
+    };
+})();
+</script>
+<script>
 
 // ═══════════════════════════════════════════════════════════════
 // EVENT SPESIAL — diaktifkan admin (app_config/main -> event)
@@ -20728,6 +20973,7 @@
         if (vis && !timer) timer = setInterval(tick, 1000);
         if (!vis && timer) { clearInterval(timer); timer = 0; }
         syncTab(vis && ev.contest.on);
+        try { if (window.evBsSync) window.evBsSync(st === 'live' && ev && ev.backsound ? ev.backsound : null, ev && ev.id); } catch (e) { console.log('bs', e); }
         if (!vis) closePanel(); else if ($('ev-panel')) renderPanel();
     }
     function tick() {
