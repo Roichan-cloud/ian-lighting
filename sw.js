@@ -4,11 +4,11 @@
  * - Setelah itu web bisa dibuka tanpa internet.
  * - Naikkan VERSION setiap kali kamu mengubah index.html, supaya cache lama dibuang.
  */
-const VERSION = '8.8';
+const VERSION = '8.9';
 const CACHE = 'ian-lighting-' + VERSION;
 
 // File milik web sendiri (di repo yang sama)
-const LOCAL_ASSETS = ['./', './index.html', './manifest.json', './app.png', './app-v2-192.png', './app-v2-512.png', './logo.png', './firebase-config.js'];
+const LOCAL_ASSETS = ['./', './index.html', './manifest.json', './app.png', './app-v2-192.png', './app-v2-512.png', './logo.png', './kipas.png', './firebase-config.js'];
 
 // Library wajib: tanpa ini aplikasi tidak bisa jalan.
 const CDN_REQUIRED = [
