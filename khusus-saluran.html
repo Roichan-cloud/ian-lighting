@@ -9076,14 +9076,37 @@
     }
 
     // ── LAMPU KIPAS (FAN LIGHT) — geometri 3D asli, 3 blade muter + tekstur PNG asli dari referensi ──
-    const _fanFrontTexData = 'https://raw.githubusercontent.com/Roichan-cloud/Photonic-Mixer-Remake/refs/heads/main/kipas.png';
+    // Gambar depan lampu kipas: file ./kipas.png di website sendiri (repo GitHub lama sudah dihapus).
+    // Kalau gagal dimuat, dipakai gambar bawaan (tiga bilah) supaya lampu kipas tidak pernah hilang.
+    const _fanTexUrls = ['./kipas.png'];
     let _fanFrontTexture = null;
-    function _getFanFrontTexture() {
-        if (!_fanFrontTexture) {
-            _fanFrontTexture = new THREE.TextureLoader().setCrossOrigin('anonymous').load(_fanFrontTexData);
-            _fanFrontTexture.encoding = _fanFrontTexture.encoding || 3000; // sRGBEncoding fallback
+    function _fanFallbackCanvas() {
+        const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+        g.translate(128, 128);
+        for (let b = 0; b < 3; b++) {
+            g.save(); g.rotate(b * Math.PI * 2 / 3);
+            const gr = g.createLinearGradient(0, 0, 0, -120); gr.addColorStop(0, '#9aa0ac'); gr.addColorStop(1, '#e8ecf4');
+            g.fillStyle = gr; g.beginPath(); g.moveTo(-10, -8); g.bezierCurveTo(-44, -50, -34, -104, 0, -122); g.bezierCurveTo(30, -96, 34, -44, 10, -8); g.closePath(); g.fill();
+            g.restore();
         }
-        return _fanFrontTexture;
+        g.fillStyle = '#c9ced8'; g.beginPath(); g.arc(0, 0, 16, 0, 7); g.fill();
+        return c;
+    }
+    function _getFanFrontTexture() {
+        if (_fanFrontTexture) return _fanFrontTexture;
+        const tex = new THREE.Texture(_fanFallbackCanvas());
+        tex.encoding = tex.encoding || 3000; // sRGBEncoding fallback
+        tex.needsUpdate = true;
+        _fanFrontTexture = tex;
+        const tryLoad = k => {
+            if (k >= _fanTexUrls.length) { console.warn('kipas.png tidak bisa dimuat, memakai gambar bawaan'); return; }
+            const img = new Image(); img.crossOrigin = 'anonymous';
+            img.onload = () => { tex.image = img; tex.needsUpdate = true; };
+            img.onerror = () => tryLoad(k + 1);
+            img.src = _fanTexUrls[k];
+        };
+        tryLoad(0);
+        return tex;
     }
 
     function createFanLampFixture(st, index) {
