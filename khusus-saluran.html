@@ -727,7 +727,7 @@
 <div id="dz-tooltip">Seret filenya ke sini</div>
 
 <div id="viewport">
-    <div id="display">IAN LIGHTING v8.9 — Inspired From IJUL</div>
+    <div id="display">IAN LIGHTING BETA — Inspired From IJUL</div>
     <div id="status-msg"></div>
     <div id="fps-counter" style="display:block;">FPS: --</div>
     <div id="vprec-countdown-overlay" style="display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center; background:rgba(0,0,0,0.35);">
@@ -20790,12 +20790,15 @@
     function ensureStyle() {
         if ($('_aud_style')) return;
         const st = document.createElement('style'); st.id = '_aud_style';
-        st.textContent = '@keyframes _audEq{0%,100%{height:3px}50%{height:16px}}' +
-            '#_aud_card{position:fixed;top:64px;left:50%;transform:translateX(-50%);width:min(92vw,360px);box-sizing:border-box;z-index:999997;background:#0b0f0b;border:1px solid var(--tp,#0f0);border-radius:12px;padding:10px 12px;color:#ddd;font-family:inherit;box-shadow:0 6px 24px rgba(0,0,0,.6),0 0 14px rgba(0,255,0,.18);}' +
-            '#_aud_card button{background:transparent;border:1px solid #333;color:var(--tp,#0f0);border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation;}' +
-            '#_aud_card .eq{display:flex;align-items:flex-end;gap:2px;height:16px;}#_aud_card .eq i{display:block;width:3px;height:3px;background:var(--tp,#0f0);border-radius:1px;}' +
-            '#_aud_card.on .eq i{animation:_audEq .8s ease-in-out infinite;}#_aud_card .eq i:nth-child(2){animation-delay:.15s!important}#_aud_card .eq i:nth-child(3){animation-delay:.3s!important}#_aud_card .eq i:nth-child(4){animation-delay:.45s!important}#_aud_card .eq i:nth-child(5){animation-delay:.6s!important}' +
-            '#_aud_card input[type=range]{accent-color:var(--tp,#0f0);margin:0;}' +
+        st.textContent = '@keyframes _audIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}' +
+            '#_aud_card{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:min(92vw,300px);box-sizing:border-box;z-index:999997;display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;background:rgba(11,15,11,.94);border:1px solid var(--tp,#0f0);border-radius:18px;padding:6px 12px 6px 6px;color:#ddd;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,.5);animation:_audIn .22s ease-out;transition:opacity .35s;}' +
+            '#_aud_card.out{opacity:0;}' +
+            '#_aud_card button{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:transparent;border:1px solid var(--tp,#0f0);color:var(--tp,#0f0);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation;}' +
+            '#_aud_card .t{flex:1;min-width:0;line-height:1.2;}#_aud_card .n{font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}#_aud_card .s{font-size:9px;color:#9a9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+            '#_aud_card .sk{flex:0 0 100%;display:block;width:100%;height:14px;margin:0;padding:0;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;touch-action:none;--p:0%;}' +
+            '#_aud_card .sk::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--tp,#0f0) var(--p),#2a352c var(--p));}#_aud_card .sk::-moz-range-track{height:4px;border-radius:2px;background:#2a352c;}#_aud_card .sk::-moz-range-progress{height:4px;border-radius:2px;background:var(--tp,#0f0);}' +
+            '#_aud_card .sk::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;border:0;margin-top:-4px;}#_aud_card .sk::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:0;}' +
+            '#_aud_card .c{font-size:11px;color:#cfd;font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0;}' +
             '#ev-bs-btn{position:absolute;left:6px;bottom:48px;z-index:60;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;}';
         document.head.appendChild(st);
     }
@@ -20803,46 +20806,34 @@
         ensureStyle();
         aClose();
         const card = document.createElement('div'); card.id = '_aud_card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', 'Audio dari admin');
-        const b = 'width:30px;height:30px;';
-        card.innerHTML =
-            '<div style="display:flex;align-items:center;gap:8px;">' +
-              '<span style="color:var(--tp,#0f0);line-height:0;">' + SVG(IC.vol, 16) + '</span>' +
-              '<div style="flex:1;min-width:0;"><div style="font-size:9px;letter-spacing:.6px;color:#888;">AUDIO DARI ADMIN</div>' +
-              '<div style="font-size:13px;font-weight:bold;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(d.name || 'Admin') + '</div></div>' +
-              '<div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' +
-              '<button type="button" id="_aud_x" aria-label="Tutup" style="' + b + '">' + SVG(IC.close, 16) + '</button>' +
-            '</div>' +
-            (d.title ? '<div style="font-size:11px;color:#bbb;margin:6px 0 2px;line-height:1.35;">' + esc(d.title) + '</div>' : '') +
-            '<div id="_aud_hint" style="font-size:9px;color:#fc0;margin:2px 0;display:none;">Tekan tombol play untuk mendengarkan.</div>' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">' +
-              '<button type="button" id="_aud_pp" aria-label="Putar" style="width:38px;height:38px;border-radius:50%;border-color:var(--tp,#0f0);">' + SVG(IC.play, 18) + '</button>' +
-              '<button type="button" id="_aud_rs" aria-label="Ulangi dari awal" style="' + b + '">' + SVG(IC.restart, 15) + '</button>' +
-              '<div style="flex:1;min-width:0;"><input type="range" id="_aud_seek" min="0" max="1000" value="0" style="width:100%;" aria-label="Posisi audio"><div style="display:flex;justify-content:space-between;font-size:9px;color:#888;"><span id="_aud_cur">0:00</span><span id="_aud_dur">0:00</span></div></div>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">' +
-              '<button type="button" id="_aud_mt" aria-label="Bisukan" style="' + b + '">' + SVG(IC.vol, 15) + '</button>' +
-              '<input type="range" id="_aud_vol" min="0" max="100" value="80" style="flex:1;" aria-label="Volume">' +
-              '<span id="_aud_vd" style="font-size:9px;color:#888;min-width:28px;text-align:right;">80%</span>' +
-            '</div>';
+        card.innerHTML = '<button type="button" id="_aud_pp" aria-label="Putar">' + SVG(IC.play, 15) + '</button>' +
+            '<div class="t"><div class="n"></div><div class="s"></div></div><div class="c" id="_aud_c">0:00</div>' +
+            '<input type="range" class="sk" id="_aud_sk" min="0" max="1000" value="0" aria-label="Posisi audio">';
+        card.querySelector('.n').textContent = d.name || 'Admin';
+        card.querySelector('.s').textContent = d.title || 'Audio dari admin';
         document.body.appendChild(card);
         const a = new Audio(); a.preload = 'auto'; a.loop = !!d.loop; a.src = src; aAud = a;
         let vol = 0.8; try { const sv = parseFloat(localStorage.getItem('_aud_vol')); if (sv >= 0 && sv <= 1) vol = sv; } catch (e) {}
-        a.volume = vol; $('_aud_vol').value = Math.round(vol * 100); $('_aud_vd').textContent = Math.round(vol * 100) + '%';
-        const pp = $('_aud_pp'), seek = $('_aud_seek'); let seeking = false;
-        const setPP = playing => { pp.innerHTML = SVG(playing ? IC.pause : IC.play, 18); pp.setAttribute('aria-label', playing ? 'Jeda' : 'Putar'); card.classList.toggle('on', playing); duck(playing); if (playing) $('_aud_hint').style.display = 'none'; };
-        a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false)); a.addEventListener('ended', () => setPP(false));
-        a.addEventListener('loadedmetadata', () => { $('_aud_dur').textContent = fmtT(a.duration); });
-        a.addEventListener('timeupdate', () => { $('_aud_cur').textContent = fmtT(a.currentTime); if (!seeking && a.duration) seek.value = Math.round(a.currentTime / a.duration * 1000); });
-        a.addEventListener('error', () => { $('_aud_hint').textContent = 'Audio tidak bisa dimuat.'; $('_aud_hint').style.display = 'block'; });
+        a.volume = vol;
+        const pp = $('_aud_pp'), cn = $('_aud_c');
+        const sk = $('_aud_sk'); let seeking = false;
+        const upd = () => {
+            const ok = a.duration && isFinite(a.duration);
+            cn.textContent = fmtT(seeking && ok ? sk.value / 1000 * a.duration : a.currentTime) + (ok ? ' / ' + fmtT(a.duration) : '');
+            if (!seeking) { const v = ok ? Math.round(a.currentTime / a.duration * 1000) : 0; sk.value = v; sk.style.setProperty('--p', (v / 10) + '%'); }
+        };
+        sk.addEventListener('input', () => { seeking = true; sk.style.setProperty('--p', (sk.value / 10) + '%'); upd(); });
+        sk.addEventListener('change', () => { if (a.duration && isFinite(a.duration)) a.currentTime = sk.value / 1000 * a.duration; seeking = false; upd(); });
+        const setPP = playing => { pp.innerHTML = SVG(playing ? IC.pause : IC.play, 15); pp.setAttribute('aria-label', playing ? 'Jeda' : 'Putar'); duck(playing); };
+        a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false));
+        a.addEventListener('loadedmetadata', upd); a.addEventListener('timeupdate', upd);
+        a.addEventListener('ended', () => {   // tanpa loop: kartu hilang sendiri setelah durasi habis
+            setPP(false);
+            if (!a.loop) { card.classList.add('out'); setTimeout(() => { if (aAud === a) aClose(); }, 400); }
+        });
+        a.addEventListener('error', () => { cn.textContent = 'gagal'; });
         pp.onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
-        $('_aud_rs').onclick = () => { a.currentTime = 0; a.play().catch(() => {}); };
-        seek.addEventListener('input', () => { seeking = true; if (a.duration) $('_aud_cur').textContent = fmtT(seek.value / 1000 * a.duration); });
-        seek.addEventListener('change', () => { if (a.duration) a.currentTime = seek.value / 1000 * a.duration; seeking = false; });
-        const mt = $('_aud_mt');
-        mt.onclick = () => { a.muted = !a.muted; mt.innerHTML = SVG(a.muted ? IC.mute : IC.vol, 15); };
-        $('_aud_vol').addEventListener('input', e => { const v = e.target.value / 100; a.volume = v; a.muted = false; mt.innerHTML = SVG(IC.vol, 15); $('_aud_vd').textContent = e.target.value + '%'; try { localStorage.setItem('_aud_vol', String(v)); } catch (er) {} });
-        $('_aud_x').onclick = aClose;
-        const p = a.play(); if (p && p.catch) p.catch(() => { $('_aud_hint').style.display = 'block'; });   // diblokir browser: tombol play tetap tersedia
+        const p = a.play(); if (p && p.catch) p.catch(() => {});   // diblokir browser: tombol play tetap tersedia
     }
     window.handleAdminAudio = async function (d) {
         if (!d || !d.active) { aClose(); try { sessionStorage.removeItem('_aud_ts'); } catch (e) {} return; }
