@@ -2563,7 +2563,7 @@
                 <span>MABAR (MAIN BARENG)</span>
             </div>
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
-                <span id="mabar-set-info" style="font-size:9px; color:#ccc; flex:1;">Mainkan dua project berdampingan di satu viewport bersama temanmu.</span>
+                <span id="mabar-set-info" style="font-size:9px; color:#ccc; flex:1;">Gabungkan project temanmu ke viewport yang sama dan mainkan bersama temanmu.</span>
                 <button class="quality-btn" id="mabar-set-btn" onclick="mabarOpen()" style="min-width:90px;">BUAT / GABUNG</button>
             </div>
             <div style="font-size:8px; color:#666; line-height:1.5;">Satu pemain membuat room dengan kode acak (password opsional), pemain lain memasukkan kode itu. Maksimal 2 pemain, room kedaluwarsa otomatis. Project kamu tampil di kiri, project teman di kanan.</div>
@@ -5153,8 +5153,7 @@
     function _viewSize() {
         if (_s2Active()) return { w: Math.max(1, _screen2.innerWidth), h: Math.max(1, _screen2.innerHeight) };
         const vp = document.getElementById('viewport');
-        const _mw = window._mabarOn ? Math.floor(vp.clientWidth / 2) : vp.clientWidth;   // Mabar: project sendiri di separuh kiri
-        return { w: Math.max(1, _mw), h: Math.max(1, vp.clientHeight) };
+        return { w: Math.max(1, vp.clientWidth), h: Math.max(1, vp.clientHeight) };
     }
     function _animNext() {
         const tok = ++_animToken;
@@ -13003,6 +13002,139 @@
     _cacheSliders();
 
     let _animLastTs = 0;
+    // ═══ MABAR: lampu milik teman tampil di scene yang sama ═══
+    // Project teman dikirim lewat jalur data WebRTC (bukan Firestore/Realtime Database), dibangun sebagai objek 3D di scene ini,
+    // lalu digerakkan oleh nilai akhir lampu mereka (dim, pan, tilt, warna, dst) yang dikirim ±20 kali per detik.
+    // Lampu teman disimpan di array terpisah, jadi tidak ikut efek/chase/simpan project milikmu.
+    let remoteLamps = [], remoteParleds = [], remoteWalls = [], remoteStrobes = [], remoteTrusses = [];
+    const mabarRemote = (function () {
+        const r1 = v => Math.round((+v || 0) * 10) / 10, r3 = v => Math.round((+v || 0) * 1000) / 1000;
+        let off = 0, vis = { p: true, w: true, s: true, t: true };
+        function pack() {
+            return {
+                l: lamps.map(l => { const s = l.state || {}; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ !== undefined ? s.posZ : -25), rz: r1(s.rotZ), bs: r3(s.beamScale !== undefined ? s.beamScale : 1) }; }),
+                p: parleds.map(p => { const s = p.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), sc: r3(s.scale !== undefined ? s.scale : 1) }; }),
+                w: wallwashers.map(w => { const s = w.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), len: r1(s.length) }; }),
+                s: strobes.map(b => { const s = b.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), sx: r3(s.scaleX !== undefined ? s.scaleX : 1), sy: r3(s.scaleY !== undefined ? s.scaleY : 1) }; }),
+                t: trusses.map(t => ({ x: r1(t.x), y: r1(t.y), z: r1(t.z !== undefined ? t.z : -25), ry: r1(t.rotY), rx: r1(t.rotX), len: r1(t.length), sz: r1(t.size), ty: t.type || 'straight' })),
+                v: { p: !!areParledsVisible, w: !!areWallwashersVisible, s: !!areStrobesVisible, t: !!areTrussesVisible }
+            };
+        }
+        function span(P) {
+            let a = Infinity, b = -Infinity;
+            const add = (x, h) => { if (isFinite(x)) { a = Math.min(a, x - (h || 0)); b = Math.max(b, x + (h || 0)); } };
+            (P.l || []).forEach(o => add(o.x, 6)); (P.p || []).forEach(o => add(o.x, 4)); (P.w || []).forEach(o => add(o.x, (o.len || 0) / 2));
+            (P.s || []).forEach(o => add(o.x, 10)); (P.t || []).forEach(o => add(o.x, (o.len || 0) / 2));
+            if (!isFinite(a) || b - a < 40) { const c = isFinite(a) ? (a + b) / 2 : 0; a = c - 20; b = c + 20; }
+            return { min: a, max: b };
+        }
+        function _drop(g) { try { if (g) { scene.remove(g); _disposeTree(g); } } catch (e) {} }
+        function clear() {
+            remoteLamps.forEach((l, i) => {
+                _drop(l.group);
+                if (l._spots) l._spots.forEach(sp => { try { if (sp && sp.parent) sp.parent.remove(sp); } catch (e) {} });
+                if (floorGlowMeshes[500 + i]) floorGlowMeshes[500 + i].visible = false;
+            });
+            remoteParleds.forEach(p => _drop(p.group)); remoteWalls.forEach(w => _drop(w.group)); remoteStrobes.forEach(b => _drop(b.group)); remoteTrusses.forEach(g => _drop(g));
+            remoteLamps = []; remoteParleds = []; remoteWalls = []; remoteStrobes = []; remoteTrusses = [];
+        }
+        // side: +1 = project teman di sebelah kanan project kamu, -1 = di sebelah kiri
+        function setPack(P, side) {
+            clear();
+            const ls = span(pack()), rs = span(P);
+            off = side * ((ls.max - ls.min) / 2 + (rs.max - rs.min) / 2 + 30) + ((ls.min + ls.max) / 2 - (rs.min + rs.max) / 2);
+            vis = Object.assign({ p: true, w: true, s: true, t: true }, P.v || {});
+            (P.t || []).forEach(d => {
+                try {
+                    const g = d.ty === 'circle' ? createCircleTruss(d.len, d.sz) : d.ty === 'papan' ? createPapanTruss(d.len, d.sz) : createTruss(d.len, d.sz);
+                    g.position.set(d.x + off, d.y, d.z); g.rotation.y = THREE.MathUtils.degToRad(d.ry || 0); g.rotation.x = THREE.MathUtils.degToRad(d.rx || 0);
+                    g.visible = !!vis.t; scene.add(g); remoteTrusses.push(g);
+                } catch (e) { console.log('mabar truss', e); }
+            });
+            (P.l || []).forEach((d, i) => {
+                try {
+                    const s = {
+                        dim: 0, pan: 0, tilt: 0, zoom: 40, mode: 'beam', rainbow: 0, sunburst: null, posX: d.x + off, posY: d.y, rot: 0,
+                        curPan: 0, curTilt: 0, curDim: 0, curRot: 0, curRotPrism: 0, curRotFan: 0, curRotDots: 0, curRotMatrix: 0, curRotStar: 0, curZoom: 40,
+                        targetX: d.x + off, targetY: d.y, curGoboX: 0, targetGoboX: 0, colorSteps: [], curColStepIdx: 0, colStepTimer: 0,
+                        activeColor: new THREE.Color(0xffffff), rndPhase: 0, rndSpeed: 0.5, posZ: d.z, rotZ: d.rz || 0, curRotZ: d.rz || 0,
+                        beamScale: d.bs, curBeamScale: d.bs
+                    };
+                    createLamp(s, i); const l = lamps.pop(); l.state = s; l._rm = true; remoteLamps.push(l);
+                } catch (e) { console.log('mabar lamp', e); }
+            });
+            (P.p || []).forEach((d, i) => {
+                try {
+                    createParledFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, colorSteps: [], scale: d.sc, curColStepIdx: 0, colStepTimer: 0, activeColor: new THREE.Color(0x000000), rndPhase: 0, rndSpeed: 0.5 }, i);
+                    const p = parleds.pop(); p._rm = true; if (p.light) p.light.visible = false; p.group.visible = !!vis.p; remoteParleds.push(p);
+                } catch (e) { console.log('mabar parled', e); }
+            });
+            (P.w || []).forEach((d, i) => {
+                try {
+                    createWallwasherFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, length: d.len, rainbow: 0, rainbowCustom: false, rainbowColors: [], colorSteps: [], curColStepIdx: 0, colStepTimer: 0, activeColor: new THREE.Color(0x000000), rndPhase: 0, rndSpeed: 0.5 }, i);
+                    const w = wallwashers.pop(); w._rm = true; (w.lights || []).forEach(x => { if (x) x.visible = false; }); w.group.visible = !!vis.w; remoteWalls.push(w);
+                } catch (e) { console.log('mabar wall', e); }
+            });
+            (P.s || []).forEach((d, i) => {
+                try {
+                    createStrobeFixture({ dim: 1, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, scaleX: d.sx, scaleY: d.sy, color: new THREE.Color(0xffffff), rainbow: 0 }, i);
+                    const b = strobes.pop(); b._rm = true; b.group.visible = !!vis.s; remoteStrobes.push(b);
+                } catch (e) { console.log('mabar strobe', e); }
+            });
+        }
+        // nilai akhir milik kita yang dikirim ke teman
+        function frame() {
+            return {
+                l: lamps.map(l => {
+                    const s = l.state; if (!s) return 0;
+                    return [r3(s.curDim), r3(s.curPan), r3(s.curTilt), r1(s.curZoom), r3(s.curBeamScale !== undefined ? s.curBeamScale : 1), r1(s.targetGoboX), r1(l.group.position.x), r1(l.group.position.y), r1(l.group.position.z),
+                        r1(s.curRotZ), r3(l._ocr), r3(l._ocg), r3(l._ocb), r3(s.rot), s.mode || '', s.sunburst === 'pink' ? 1 : 0, s.rainbowPrism ? 1 : 0];
+                }),
+                p: parleds.map(p => [r3(p.state.curDim), r3(p._ocr), r3(p._ocg), r3(p._ocb)]),
+                w: wallwashers.map(w => {
+                    let bi = -1, bv = 0;
+                    w.segments.forEach((sg, j) => { const v = sg.material.emissiveIntensity; if (v > bv) { bv = v; bi = j; } });
+                    if (bi < 0) return [0, 1, 1, 1];
+                    const c = (w.glows[bi] && w.glows[bi].material.color) || w.segments[bi].material.emissive;
+                    return [r3(Math.min(1, bv / 28)), r3(c.r), r3(c.g), r3(c.b)];
+                }),
+                s: strobes.map(b => {
+                    let bi = 0, bm = 0; const mx = b.leds.map(({ mesh }, k) => { const c = mesh.material.color, m = Math.max(c.r, c.g, c.b); if (m > bm) { bm = m; bi = k; } return m; });
+                    let c = [1, 1, 1]; if (bm > 0.001) { const bc = b.leds[bi].mesh.material.color; c = [r3(bc.r / bm), r3(bc.g / bm), r3(bc.b / bm)]; }
+                    return { c: c, v: mx.map(m => Math.min(15, Math.round(m * 15)).toString(16)).join('') };
+                })
+            };
+        }
+        function apply(f) {
+            if (!f) return;
+            (f.l || []).forEach((a, i) => {
+                const l = remoteLamps[i]; if (!l || !a) return; const s = l.state;
+                s.dim = a[0]; s.pan = a[1]; s.tilt = a[2]; s.zoom = a[3]; s.beamScale = a[4]; s.targetGoboX = a[5];
+                s.targetX = a[6] + off; s.targetY = a[7]; s.posZ = a[8]; s.rotZ = a[9];
+                s.activeColor.setRGB(a[10], a[11], a[12]); s.rot = a[13]; s.mode = a[14]; s.sunburst = a[15] ? 'pink' : null; s.rainbowPrism = !!a[16];
+            });
+            (f.p || []).forEach((a, i) => {
+                const p = remoteParleds[i]; if (!p || !a) return; const s = p.state;
+                s.curDim = a[0]; s.activeColor.setRGB(a[1], a[2], a[3]);
+                p.lens.material.emissive.setRGB(a[1], a[2], a[3]); p.lens.material.emissiveIntensity = a[0] * 25;
+                p.emitter.material.color.setRGB(a[1], a[2], a[3]); p.emitter.material.opacity = a[0] * 0.95;
+            });
+            (f.w || []).forEach((a, i) => {
+                const w = remoteWalls[i]; if (!w || !a) return;
+                w.segments.forEach((sg, j) => {
+                    sg.material.emissive.setRGB(a[1], a[2], a[3]); sg.material.emissiveIntensity = a[0] * 28;
+                    if (w.glows[j]) { w.glows[j].material.color.setRGB(a[1], a[2], a[3]); w.glows[j].material.opacity = a[0] * 0.38; }
+                });
+            });
+            (f.s || []).forEach((a, i) => {
+                const b = remoteStrobes[i]; if (!b || !a || !a.v) return;
+                b.leds.forEach(({ mesh }, k) => { const q = parseInt(a.v.charAt(k) || '0', 16) / 15; mesh.material.color.setRGB(a.c[0] * q, a.c[1] * q, a.c[2] * q); });
+            });
+        }
+        return { pack, frame, apply, setPack, clear };
+    })();
+    window.mabarRemote = mabarRemote;
+
     function animate() {
         _animNext();
         try {
@@ -13312,7 +13444,7 @@
         const sChase13Step = Math.floor(now / (1000 / _cachedSpdSChase13)) % 3;
 
         // --- MH LOOP (persis v7_0) ---
-        lamps.forEach((l, i) => {
+        const _mhBody = (l, i) => {
             const s = l.state;
             if (!s) return;
 
@@ -13320,8 +13452,8 @@
             l.group.rotation.z = THREE.MathUtils.degToRad(s.curRotZ);
 
             // Blackout matikan MH; Flash MB sekarang jadi overlay terpisah (biar smooth-nya gak ganggu pola strobe)
-            let d = isBlackout ? 0 : s.dim;
-            if (!isBlackout) {
+            let d = (l._rm || !isBlackout) ? s.dim : 0;
+            if (!isBlackout && !l._rm) {
                 if      (fxState.sLR)   d = (i === (sLRIdx < total ? sLRIdx : (total*2-1)-sLRIdx)) ? s.dim : 0;
                 else if (fxState.sCt)   { const step = sCtStep < Math.ceil(total/2) ? sCtStep : (Math.ceil(total/2)*2-1)-sCtStep; d = (i===step||(total-1)-i===step) ? s.dim : 0; }
                 else if (fxState.sOdd)  d = ((i%2===0&&sOddPh)||(i%2!==0&&!sOddPh)) ? s.dim : 0;
@@ -13338,8 +13470,8 @@
                 d *= masterDimLevel;
                 ['flyout', 'flyoutB', 'flyoutL', 'flyoutR'].forEach(k => { if (fxState[k]) d *= _flyoutCalc(i, now, k).env; });   // Flyout: cahaya muncul/hilang bergantian antar tim
             }
-            s.curDim += (d - s.curDim) * _lfS;
-            s.curDim *= (1 - _mbFlashLevel); // overlay Flash MB — smooth sesuai slider MB SMOOTH
+            s.curDim += (d - s.curDim) * (l._rm ? _lf(0.6) : _lfS);
+            if (!l._rm) s.curDim *= (1 - _mbFlashLevel); // overlay Flash MB — smooth sesuai slider MB SMOOTH
 
             // FX Generator pergerakan (persis v7_0)
             const tCircle   = (now*0.001 * globalSpeed * fxSpeeds.circle)           - (i * delay);
@@ -13350,6 +13482,7 @@
             const tSweep    = (now*0.001 * globalSpeed * fxSpeeds.pargoySweepUp)    - (i * delay);
 
             let tp = s.pan, tt = s.tilt;
+            if (!l._rm) {   // efek gerak hanya untuk lampu milik sendiri; lampu teman memakai pan/tilt akhir dari teman
 
             if (fxState.circle)  { tp += Math.cos(tCircle*3)*0.8;  tt += Math.sin(tCircle*3)*0.8; }
             if (fxState.circleS) {
@@ -13402,6 +13535,7 @@
                 tp += sweep * dir;
             }
 
+            }
             if (!isFrozen) {
                 s.curPan  += (tp - s.curPan)  * lerpMotor;
                 s.curTilt += (tt - s.curTilt) * lerpMotor;
@@ -13453,7 +13587,9 @@
 
             // Warna MH — gradient > colorChase > rainbow > colorStep
             let col = s.activeColor;
-            if (gradientEnabled && gradColors.length >= 2) {
+            if (l._rm) {
+                // warna lampu teman: langsung dari data teman (s.activeColor)
+            } else if (gradientEnabled && gradColors.length >= 2) {
                 const gt = total > 1 ? i / (total - 1) : 0;
                 const seg = Math.min(Math.floor(gt * (gradColors.length-1)), gradColors.length-2);
                 const lt  = (gt * (gradColors.length-1)) - seg;
@@ -13485,6 +13621,7 @@
 
             // Sunburst pink — persis v7_0
             const isPSB = (s.sunburst === 'pink');
+            l._ocr = col.r; l._ocg = col.g; l._ocb = col.b;   // nilai warna akhir, dikirim ke teman saat Mabar
 
             if (l.ringLight) {
                 l.ringLight.material.opacity = 0.95;
@@ -13514,7 +13651,7 @@
                 _hazeColorAccum.b += col.b * _hazeW;
                 _hazeColorWeight += _hazeW;
             }
-            updateFloorGlow(l, i, bA, isPSB ? _glowWhiteScratch : col);
+            updateFloorGlow(l, l._rm ? 500 + i : i, bA, isPSB ? _glowWhiteScratch : col);
             updateLampFloorSpots(l);
 
             const isRP = s.rainbowPrism;
@@ -13662,7 +13799,9 @@
                     shell.scale.set(0.35 * zf, 0.35 * zf, 1); pink.scale.set(0.16 * zf, 0.16 * zf, 1);
                 });
             });
-        });
+        };
+        lamps.forEach(_mhBody);
+        remoteLamps.forEach(_mhBody);   // lampu teman (Mabar): dipakai rumus gambar yang sama, nilainya dari teman
         updateHazeTint();
 
         // --- PARLED LOOP ---
@@ -13703,6 +13842,7 @@
                 col = _colTmp;
             }
 
+            p._ocr = col.r; p._ocg = col.g; p._ocb = col.b;   // dikirim ke teman saat Mabar
             p.lens.material.emissive.copy(col);
             p.lens.material.emissiveIntensity = s.curDim * 25;
 
@@ -21069,8 +21209,8 @@
 </script>
 <script>
 // ════════════════════════════════════════════════════
-// MABAR — 2 pemain, 2 project berdampingan dalam satu viewport.
-// Kamu melihat project sendiri (kiri) dan siaran langsung 3D milik teman (kanan) lewat WebRTC.
+// MABAR — 2 pemain, 2 project dalam satu viewport 3D.
+// Project teman dikirim lewat jalur data WebRTC lalu dibangun sebagai objek 3D di scene yang sama (lihat mabarRemote di skrip utama).
 // Penghubung (signaling) lewat Realtime Database: mabar/rooms, mabar/sig, mabar/sec (hash password), mabar/join. Tanpa kuota baca/tulis Firestore.
 // ════════════════════════════════════════════════════
 (function () {
@@ -21097,10 +21237,7 @@
     function ensureBtn() {
         if ($('mabar-style')) return;
         const st = document.createElement('style'); st.id = 'mabar-style';
-        st.textContent = '#mabar-right{position:absolute;top:0;right:0;width:50%;height:100%;z-index:20;background:#101010;border-left:1px solid #333;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;}' +
-            '#mabar-right video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;}' +
-            '#mabar-wait{position:relative;z-index:1;color:#9aa;font-size:11px;text-align:center;padding:10px;line-height:1.6;}' +
-            '#mabar-tag{position:absolute;right:6px;bottom:4px;z-index:2;font-size:10px;color:#fff;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:10px;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}' +
+        st.textContent = '#mabar-note{position:absolute;top:40px;left:50%;transform:translateX(-50%);z-index:60;color:#cde;font-size:11px;text-align:center;padding:4px 12px;background:rgba(0,0,0,.65);border-radius:12px;max-width:80%;line-height:1.5;pointer-events:none;}' +
             '#mabar-bar{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:61;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.7);border:1px solid var(--tp,#0f0);border-radius:999px;padding:3px 4px 3px 10px;font-size:10px;color:#ddd;white-space:nowrap;}' +
             '#mabar-bar b{color:var(--tp,#0f0);letter-spacing:2px;font-family:monospace;} #mabar-bar button{background:transparent;border:1px solid #555;color:#ddd;border-radius:999px;font-size:10px;padding:3px 9px;cursor:pointer;}#mabar-bar .x{border-color:#a33;color:#f66;}' +
             '.mb-ov{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:12px;}' +
@@ -21120,7 +21257,7 @@
         if (R) return;
         if (window.ianMabarOff) { say('Mabar sedang dinonaktifkan oleh admin', true); return; }
         if (!rt()) { say('Mabar butuh koneksi internet', true); return; }
-        if (!window.RTCPeerConnection || !(renderer && renderer.domElement && renderer.domElement.captureStream)) { say('Browser ini belum mendukung Mabar (butuh WebRTC dan captureStream)', true); return; }
+        if (!window.RTCPeerConnection || !window.mabarRemote) { say('Browser ini belum mendukung Mabar (butuh WebRTC)', true); return; }
         const ov = document.createElement('div'); ov.className = 'mb-ov'; ov.id = 'mb-ov';
         ov.innerHTML = '<div class="mb-box" role="dialog" aria-modal="true"><h3>MABAR</h3>' +
             '<label>NAMAMU (2-16 karakter)</label><input id="mb-name" maxlength="16" autocomplete="off">' +
@@ -21207,8 +21344,8 @@
 
     // ── sesi ──
     function start(o) {
-        R = Object.assign({ unsubRoom: null, unsubSig: null, pc: null, sid: '', tick: 0, joinedAt: Date.now(), conn: 'wait', queue: [] }, o);
-        applyLayout(true); buildUi();
+        R = Object.assign({ unsubRoom: null, unsubSig: null, pc: null, sid: '', tick: 0, joinedAt: Date.now(), conn: 'wait', queue: [], chP: null, chS: null, pid: 0, rx: null, mySig: '', frameT: 0, sigT: 0 }, o);
+        buildUi();
         const ref = rt().ref('mabar/rooms/' + R.code), sigRef = rt().ref('mabar/sig/' + R.code);
         // otomatis: host menutup room dan tamu keluar kalau koneksinya putus (server yang menjalankan, tidak perlu pagehide)
         if (R.role === 'host') ref.child('c').onDisconnect().set(true); else ref.child('g').onDisconnect().remove();
@@ -21219,7 +21356,7 @@
             if (R.role === 'host') {
                 const g = r.g;
                 if (g && !R.pc) { R.partner = g.n || 'Teman'; startPeer(); }
-                if (!g && R.pc) { closePeer(); R.partner = ''; setStatus('Pemain 2 keluar. Menunggu pemain baru...'); }
+                if (!g && R.pc) { closePeer(); R.partner = ''; setNote('Pemain 2 keluar. Menunggu pemain baru...'); }
             } else if (!r.g || r.g.u !== me()) { leave('Kamu dikeluarkan dari room.', false); }
             updateUi();
         };
@@ -21233,25 +21370,15 @@
             if (left <= 0) { leave('Waktu room habis.', R.role === 'host'); return; }
             const t = $('mabar-time'); if (t) { const s = Math.floor(left / 1000); t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
         }, 1000);
-        if (R.role === 'guest') setStatus('Menyambung ke ' + R.partner + '...');
-        else setStatus('Menunggu pemain 2...');
-    }
-    function applyLayout(on) {
-        window._mabarOn = !!on;
-        const vp = $('viewport'); if (!vp) return;
-        let right = $('mabar-right');
-        if (on && !right) {
-            right = document.createElement('div'); right.id = 'mabar-right';
-            right.innerHTML = '<div id="mabar-wait"></div><div id="mabar-tag" style="display:none;"></div>';
-            vp.appendChild(right);
-        } else if (!on && right) right.remove();
-        window.dispatchEvent(new Event('resize'));
+        if (R.role === 'guest') setNote('Menyambung ke ' + R.partner + '...');
+        else setNote('Menunggu pemain 2...');
     }
     function buildUi() {
         const vp = $('viewport'), bar = document.createElement('div'); bar.id = 'mabar-bar';
-        bar.innerHTML = SV(ICON_USERS, 13) + '<b>' + R.code + '</b><span id="mabar-time">--:--</span><button id="mabar-copy" type="button">Salin</button><button class="x" id="mabar-leave" type="button">Keluar</button>';
+        bar.innerHTML = SV(ICON_USERS, 13) + '<b>' + R.code + '</b><span id="mabar-time">--:--</span><span id="mabar-partner" style="color:#9ef;"></span><button id="mabar-copy" type="button">Salin</button><button class="x" id="mabar-leave" type="button">Keluar</button>';
         ['mousedown', 'touchstart', 'dblclick', 'contextmenu'].forEach(t => bar.addEventListener(t, e => e.stopPropagation(), { passive: true }));
         vp.appendChild(bar);
+        const note = document.createElement('div'); note.id = 'mabar-note'; note.style.display = 'none'; vp.appendChild(note);
         $('mabar-leave').onclick = () => leave('Kamu keluar dari Mabar.', true);
         $('mabar-copy').onclick = async () => { try { await navigator.clipboard.writeText(R.code); say('Kode disalin'); } catch (e) { say('Kode: ' + R.code); } };
         setSetUi();
@@ -21261,45 +21388,85 @@
         btn.disabled = false; btn.style.opacity = '';
         if (!R && window.ianMabarOff) { btn.textContent = 'NONAKTIF'; btn.disabled = true; btn.style.opacity = '.5'; info.textContent = 'Fitur Mabar sedang dinonaktifkan oleh admin.'; return; }
         if (R) { btn.textContent = 'KELUAR'; btn.onclick = () => leave('Kamu keluar dari Mabar.', true); info.textContent = 'Sedang Mabar, kode room: ' + R.code; }
-        else { btn.textContent = 'BUAT / GABUNG'; btn.onclick = openModal; info.textContent = 'Mainkan dua project berdampingan di satu viewport bersama temanmu.'; }
+        else { btn.textContent = 'BUAT / GABUNG'; btn.onclick = openModal; info.textContent = 'Gabungkan project temanmu ke viewport yang sama dan mainkan bersama.'; }
     }
-    function setStatus(t) { const w = $('mabar-wait'); if (w) { w.textContent = t; w.style.display = t ? '' : 'none'; } }
+    function setNote(t) { const w = $('mabar-note'); if (w) { w.textContent = t; w.style.display = t ? '' : 'none'; } }
     function updateUi() {
-        const tag = $('mabar-tag'); if (!tag || !R) return;
-        tag.style.display = R.partner && R.conn === 'ok' ? '' : 'none'; tag.textContent = R.partner || '';
+        const t = $('mabar-partner'); if (!t || !R) return;
+        t.textContent = R.partner && R.conn === 'ok' ? R.partner : '';
     }
 
-    // ── WebRTC ──
+    // ── WebRTC: jalur data langsung antar pemain (tanpa video) ──
+    const CH_CHUNK = 14000;
     function newPc() {
         const pc = new RTCPeerConnection({ iceServers: ICE });
-        try { const st = renderer.domElement.captureStream(30); st.getTracks().forEach(t => pc.addTrack(t, st)); } catch (e) { console.log('captureStream', e); }
-        pc.ontrack = ev => {
-            let v = $('mabar-v'), right = $('mabar-right'); if (!right) return;
-            if (!v) { v = document.createElement('video'); v.id = 'mabar-v'; v.autoplay = true; v.playsInline = true; v.muted = true; right.insertBefore(v, right.firstChild); }
-            v.srcObject = ev.streams[0] || new MediaStream([ev.track]); v.play().catch(() => {});
-            R.conn = 'ok'; setStatus(''); updateUi();
-        };
+        pc.ondatachannel = ev => bindCh(ev.channel, pc);
         pc.onicecandidate = ev => { if (ev.candidate) sendSig({ t: 'ice', sid: R.sid, c: ev.candidate.toJSON() }); };
         pc.onconnectionstatechange = () => {
             if (!R || R.pc !== pc) return;
             const s = pc.connectionState;
-            if (s === 'connected') { R.conn = 'ok'; setStatus(''); updateUi(); }
-            else if (s === 'failed') { R.conn = 'fail'; setStatus('Koneksi gagal. Jaringan seluler tertentu memblokir koneksi langsung. Coba WiFi, lalu buat room baru.'); }
-            else if (s === 'disconnected') setStatus('Koneksi terputus, mencoba menyambung lagi...');
+            if (s === 'failed') { R.conn = 'fail'; setNote('Koneksi gagal. Jaringan seluler tertentu memblokir koneksi langsung. Coba WiFi, lalu buat room baru.'); }
+            else if (s === 'disconnected') setNote('Koneksi terputus, mencoba menyambung lagi...');
+            else if (s === 'connected' && R.conn === 'ok') setNote('');
         };
         return pc;
     }
+    function bindCh(ch, pc) {
+        if (!R || R.pc !== pc) return;
+        if (ch.label === 'p') { R.chP = ch; ch.onmessage = onPackMsg; }
+        else if (ch.label === 's') { R.chS = ch; ch.onmessage = e => { try { window.mabarRemote.apply(JSON.parse(e.data)); } catch (x) {} }; }
+        else return;
+        ch.onopen = chOpen;
+        ch.onclose = () => { if (R && R.pc === pc && R.conn === 'ok') { R.conn = 'wait'; stopFrames(); setNote('Jalur data terputus...'); updateUi(); } };
+        if (ch.readyState === 'open') chOpen();
+    }
+    function chOpen() {
+        if (!R || R.conn === 'ok') return;
+        const a = R.chP, b = R.chS;
+        if (!a || !b || a.readyState !== 'open' || b.readyState !== 'open') return;
+        R.conn = 'ok'; setNote(''); updateUi();
+        sendPack(); startFrames();
+    }
+    function sendPack() {
+        const ch = R && R.chP; if (!ch || ch.readyState !== 'open') return;
+        const txt = JSON.stringify(window.mabarRemote.pack()); R.mySig = txt;
+        const id = ++R.pid, n = Math.max(1, Math.ceil(txt.length / CH_CHUNK));
+        try { for (let i = 0; i < n; i++) ch.send(JSON.stringify({ id: id, i: i, n: n, d: txt.slice(i * CH_CHUNK, (i + 1) * CH_CHUNK) })); } catch (e) { console.log('mabar pack', e); }
+    }
+    function onPackMsg(e) {
+        if (!R) return;
+        let m; try { m = JSON.parse(e.data); } catch (x) { return; }
+        let b = R.rx; if (!b || b.id !== m.id) b = R.rx = { id: m.id, parts: [], got: 0 };
+        b.parts[m.i] = m.d; b.got++;
+        if (b.got >= m.n) {
+            R.rx = null;
+            try { window.mabarRemote.setPack(JSON.parse(b.parts.join('')), R.role === 'host' ? 1 : -1); setNote(''); updateUi(); } catch (x) { console.log('mabar setPack', x); }
+        }
+    }
+    function startFrames() {
+        stopFrames();
+        R.frameT = setInterval(() => {
+            const ch = R && R.chS; if (!ch || ch.readyState !== 'open' || ch.bufferedAmount > 64000) return;
+            try { ch.send(JSON.stringify(window.mabarRemote.frame())); } catch (e) {}
+        }, 50);
+        R.sigT = setInterval(() => {   // susunan lampu berubah (tambah/geser/hapus): kirim ulang project ke teman
+            if (!R || !R.chP || R.chP.readyState !== 'open') return;
+            if (JSON.stringify(window.mabarRemote.pack()) !== R.mySig) sendPack();
+        }, 2000);
+    }
+    function stopFrames() { if (R) { clearInterval(R.frameT); clearInterval(R.sigT); R.frameT = R.sigT = 0; } }
     async function startPeer() {   // host: buat tawaran
-        closePeer(); R.sid = rnd(8); R.conn = 'wait'; setStatus('Menyambungkan dengan ' + R.partner + '...');
+        closePeer(); R.sid = rnd(8); R.conn = 'wait'; setNote('Menyambungkan dengan ' + R.partner + '...');
         const pc = R.pc = newPc();
+        bindCh(pc.createDataChannel('p'), pc);
+        bindCh(pc.createDataChannel('s', { ordered: false, maxRetransmits: 0 }), pc);
         const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
         sendSig({ t: 'offer', sid: R.sid, sdp: pc.localDescription.sdp });
-        setTimeout(() => { if (R && R.pc === pc && R.conn === 'wait') setStatus('Masih menyambung... pastikan temanmu tetap membuka aplikasi.'); }, 15000);
+        setTimeout(() => { if (R && R.pc === pc && R.conn === 'wait') setNote('Masih menyambung... pastikan temanmu tetap membuka aplikasi.'); }, 15000);
     }
     function closePeer() {
-        if (R && R.pc) { try { R.pc.close(); } catch (e) {} R.pc = null; }
-        const v = $('mabar-v'); if (v) { v.srcObject = null; v.remove(); }
-        if (R) { R.conn = 'wait'; R.queue = []; }
+        if (R) { stopFrames(); if (R.pc) { try { R.pc.close(); } catch (e) {} R.pc = null; } R.chP = R.chS = null; R.rx = null; R.mySig = ''; R.conn = 'wait'; R.queue = []; }
+        try { window.mabarRemote.clear(); } catch (e) {}
         updateUi();
     }
     function sendSig(obj) {
@@ -21330,16 +21497,16 @@
     // ── keluar ──
     async function leave(msg, notify) {
         const s = R; if (!s) return; R = null;
-        clearInterval(s.tick); try { s.unsubRoom && s.unsubRoom(); } catch (e) {}
+        clearInterval(s.tick); clearInterval(s.frameT); clearInterval(s.sigT); try { s.unsubRoom && s.unsubRoom(); } catch (e) {}
         try { s.pc && s.pc.close(); } catch (e) {}
         if (rt()) {
             const ref = rt().ref('mabar/rooms/' + s.code);
             try { ref.child('c').onDisconnect().cancel(); ref.child('g').onDisconnect().cancel(); } catch (e) {}
             if (notify) (s.role === 'host' ? ref.child('c').set(true) : ref.child('g').remove()).catch(() => {});
         }
-        const v = $('mabar-v'); if (v) { v.srcObject = null; }
-        ['mabar-bar', 'mabar-right'].forEach(i => { const e = $(i); if (e) e.remove(); });
-        applyLayout(false); setSetUi();
+        try { window.mabarRemote.clear(); } catch (e) {}
+        ['mabar-bar', 'mabar-note'].forEach(i => { const e = $(i); if (e) e.remove(); });
+        setSetUi();
         if (msg) say(msg, !/keluar dari Mabar/.test(msg));
     }
     // pagehide tidak perlu: onDisconnect di server menutup room atau mengeluarkan tamu saat koneksi putus
