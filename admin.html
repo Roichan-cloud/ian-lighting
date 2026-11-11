@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -285,10 +286,11 @@ div.skel{display:block;}
 .pv-ban{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12);}
 .pv-ban img{width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0;}
 .pv-t{font-size:13px;font-weight:700;overflow-wrap:anywhere;} .pv-m{font-size:12px;opacity:.95;overflow-wrap:anywhere;}
-.pv-audio{background:#0b0f0b;color:#ddd;border:1px solid #1f6f3d;border-radius:12px;padding:10px 12px;}
+.pv-audio{background:#0b0f0b;color:#ddd;border:1px solid #22c55e;border-radius:18px;padding:6px 12px 8px 6px;max-width:300px;}
+.pv-a-txt{flex:1;min-width:0;line-height:1.2;} .pv-a-txt b{display:block;font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .pv-a-txt small{display:block;font-size:9px;color:#9a9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .pv-a-c{font-size:11px;color:#cfd;white-space:nowrap;}
 .pv-a-top small{display:block;font-size:9px;letter-spacing:.06em;color:#888;} .pv-a-top b{font-size:13px;color:#fff;}
 .pv-a-t{font-size:11px;color:#bbb;margin:6px 0 2px;}
-.pv-a-bar{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.pv-a-bar{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;} .pv-a-line{flex:0 0 100%;height:4px;border-radius:2px;background:#2a352c;position:relative;} .pv-a-line i{position:absolute;left:0;top:0;bottom:0;width:40%;background:#22c55e;border-radius:2px;}
 .pv-a-play{width:26px;height:26px;border-radius:50%;border:1px solid #22c55e;position:relative;flex-shrink:0;}
 .pv-a-play:after{content:"";position:absolute;left:10px;top:7px;border-left:8px solid #22c55e;border-top:5px solid transparent;border-bottom:5px solid transparent;}
 .pv-a-line{flex:1;height:4px;border-radius:2px;background:#26332a;position:relative;} .pv-a-line i{position:absolute;left:0;top:0;bottom:0;width:30%;background:#22c55e;border-radius:2px;}
@@ -395,6 +397,7 @@ div.skel{display:block;}
     <button data-tab="announcement" class="tab-btn" onclick="switchTab('announcement')"><svg class="ic" aria-hidden="true"><use href="#i-megaphone"/></svg>Announcement</button>
     <button data-tab="event" class="tab-btn" onclick="switchTab('event')"><svg class="ic" aria-hidden="true"><use href="#i-megaphone"/></svg>Event</button>
     <button data-tab="chat" class="tab-btn" onclick="switchTab('chat')"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg>Chat</button>
+    <button data-tab="mabar" class="tab-btn" onclick="switchTab('mabar')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Mabar</button>
     <button data-tab="aiassist" class="tab-btn" onclick="switchTab('aiassist')"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg>Asisten AI</button>
     <button data-tab="newupdate" class="tab-btn" onclick="switchTab('newupdate')"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>New Update</button>
     <div class="nav-group" aria-hidden="true">Sistem</div>
@@ -410,7 +413,7 @@ div.skel{display:block;}
     <!-- DASHBOARD -->
     <div class="tab-panel active" id="tab-dashboard">
       <div class="stats-grid" id="dash-stats">
-        <div class="stat-card"><div class="stat-label">Pengguna online (chat)</div><div class="stat-num" id="ds-online"><span class="skel" style="width:40px;height:26px;"></span></div><div class="stat-sub">aktif 2,5 menit terakhir</div></div>
+        <div class="stat-card"><div class="stat-label">Pengguna online (chat)</div><div class="stat-num" id="ds-online"><span class="skel" style="width:40px;height:26px;"></span></div><div class="stat-sub">sedang membuka chat sekarang</div></div>
         <div class="stat-card"><div class="stat-label">Feedback baru</div><div class="stat-num" id="ds-fb"><span class="skel" style="width:40px;height:26px;"></span></div><div class="stat-sub">belum dibaca</div></div>
         <div class="stat-card"><div class="stat-label">Event</div><div class="stat-num" id="ds-ev" style="font-size:18px;"><span class="skel" style="width:70px;height:20px;"></span></div><div class="stat-sub" id="ds-ev-sub">&nbsp;</div></div>
         <div class="stat-card"><div class="stat-label">Mode aplikasi</div><div class="stat-num" id="ds-mode" style="font-size:18px;"><span class="skel" style="width:70px;height:20px;"></span></div><div class="stat-sub" id="ds-mode-sub">&nbsp;</div></div>
@@ -454,7 +457,7 @@ div.skel{display:block;}
       </div>
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span> Audio dari Admin</div>
-        <div class="toggle-sub" style="margin-bottom:8px;">Muncul di aplikasi sebagai kartu pemutar audio dengan nama admin. Aplikasi mencoba memutar otomatis, kalau diblokir browser pengguna menekan tombol play.</div>
+        <div class="toggle-sub" style="margin-bottom:8px;">Muncul di aplikasi sebagai pil kecil di atas layar: nama admin, tombol play/jeda, dan hitungan durasi. Aplikasi mencoba memutar otomatis, kalau diblokir browser pengguna menekan tombol play. Tanpa loop, kartu hilang sendiri setelah audio selesai.</div>
         <label class="admin-label">Nama admin</label>
         <input class="admin-input" id="aud-name" maxlength="40" placeholder="Contoh: Ian">
         <label class="admin-label">Judul audio</label>
@@ -616,6 +619,11 @@ div.skel{display:block;}
           <div><div class="toggle-label">Disable Chat</div><div class="toggle-sub">Jika aktif, tab Chat disembunyikan dan user tidak bisa membaca atau mengirim pesan.</div></div>
           <label class="switch"><input type="checkbox" id="flag-chat-off" onchange="toggleChatOff()"><span class="slider-sw"></span></label>
         </div>
+        <div class="divider"></div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Disable Mabar</div><div class="toggle-sub">Jika aktif, pengguna tidak bisa membuat atau bergabung ke room Mabar, dan room yang sedang berjalan ditutup.</div></div>
+          <label class="switch"><input type="checkbox" id="flag-mabar-off" onchange="toggleMabarOff()"><span class="slider-sw"></span></label>
+        </div>
       </div>
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></span> Hapus Data Kunjungan</div>
@@ -649,6 +657,47 @@ div.skel{display:block;}
     </div>
 
     <!-- LOGIN LOG -->
+
+    <!-- MABAR -->
+    <div class="tab-panel" id="tab-mabar">
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Fitur Mabar</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Nonaktifkan Mabar</div><div class="toggle-sub" id="mb-state">Memuat...</div></div>
+          <label class="switch"><input type="checkbox" id="mb-flag" onchange="toggleMabarOff(true)"><span class="slider-sw"></span></label>
+        </div>
+      </div>
+      <div class="stats-grid" id="mb-stats">
+        <div class="stat-card"><div class="stat-label">Room aktif</div><div class="stat-num" id="mbs-active">-</div><div class="stat-sub" id="mbs-active-sub">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Sedang bermain</div><div class="stat-num" id="mbs-play">-</div><div class="stat-sub">pemain dalam room berpasangan</div></div>
+        <div class="stat-card"><div class="stat-label">Room 24 jam</div><div class="stat-num" id="mbs-24">-</div><div class="stat-sub" id="mbs-24-sub">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Pemain unik 24 jam</div><div class="stat-num" id="mbs-uniq">-</div><div class="stat-sub">berdasarkan ID perangkat</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-log"/></svg></span> Daftar Room <span id="mb-n" class="badge-info" style="margin-left:6px;">0</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn-gray" style="width:auto;margin:0;" onclick="mbLoad()"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat ulang</button>
+          <button class="btn-red" style="width:auto;margin:0;" onclick="mbCleanup()"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Bersihkan room selesai/kedaluwarsa</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="admin-table" style="min-width:640px;">
+            <thead><tr><th>Kode</th><th>Host</th><th>Tamu</th><th>Status</th><th>Sandi</th><th>Dibuat</th><th>Sisa</th><th></th></tr></thead>
+            <tbody id="mb-rooms"><tr><td colspan="8" style="color:var(--muted);">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="toggle-sub" style="margin-top:8px;">Menampilkan maksimal 50 room terbaru. Tidak memuat ulang otomatis supaya hemat kuota baca Firestore, tekan Muat ulang untuk data terbaru. Data room ada di Realtime Database, jadi tidak memakai kuota baca Firestore.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Pemain</div>
+        <div style="overflow-x:auto;">
+          <table class="admin-table" style="min-width:480px;">
+            <thead><tr><th>Nama</th><th>ID perangkat</th><th>Sebagai host</th><th>Sebagai tamu</th><th>Terakhir</th></tr></thead>
+            <tbody id="mb-players"><tr><td colspan="5" style="color:var(--muted);">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="tab-panel" id="tab-loginlog">
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-log"/></svg></span> Riwayat Login Admin</div>
@@ -701,6 +750,14 @@ div.skel{display:block;}
           <button class="btn-gray" type="button" onclick="evBsClear()" style="margin-bottom:6px;">Hapus file backsound</button>
           <label class="admin-label">Volume: <span id="ev-bs-vol-d">50</span>%</label>
           <input type="range" id="ev-bs-vol" min="0" max="100" value="50" style="width:100%;" oninput="document.getElementById('ev-bs-vol-d').textContent=this.value">
+        </div>
+        <div style="margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
+          <div class="toggle-row" style="border:0;padding:4px 0;">
+            <div><div class="toggle-label">Hitung mundur sinematik</div><div class="toggle-sub">10 detik terakhir sebelum event mulai, layar 3D menggelap dengan angka besar lalu meledak jadi kilatan. Hanya tampil jika "Mulai" diisi.</div></div>
+            <label class="switch"><input type="checkbox" id="ev-cine"><span class="slider-sw"></span></label>
+          </div>
+          <label class="admin-label">Gaya</label>
+          <select class="admin-select" id="ev-cine-style" style="margin-bottom:0;"><option value="neon">Neon (warna tema)</option><option value="api">Api (oranye menyala)</option></select>
         </div>
         <div class="toggle-row" style="margin-top:10px;">
           <div><div class="toggle-label">Kontes project</div><div class="toggle-sub">Pengguna bisa mengirim project, ada galeri dan voting</div></div>
@@ -866,6 +923,7 @@ function switchTab(name) {
   window.scrollTo(0, 0);
   if(name==='dashboard') loadDashboard();
   if(name==='loginlog') loadLoginLog();
+  if(name==='mabar') mbLoad(); else mbStop();
   if(name==='maintenance') loadMaintenance();
   if(name==='newupdate') loadNewUpdate();
   if(name==='event') loadEventAdmin();
@@ -948,6 +1006,7 @@ function evForm() {
     contest: { on: g('ev-contest').checked, rule: g('ev-rule').value.trim().slice(0, 300) },
     chat: { on: g('ev-chat').checked },
     backsound: evBsForm(),
+    cine: { on: g('ev-cine').checked, style: g('ev-cine-style').value },
     prizes: { 1: g('ev-prize1').value.trim().slice(0, 120), 2: g('ev-prize2').value.trim().slice(0, 120), 3: g('ev-prize3').value.trim().slice(0, 120) },
     claimFields: g('ev-claimfields').value.split('\n').map(x => x.trim().replace(/[.\/\[\]*~`]/g, ' ').slice(0, 40)).filter(Boolean).slice(0, 5)
   };
@@ -970,6 +1029,7 @@ function evFill(d) {
   const pz = d.prizes || {};
   g('ev-prize1').value = pz[1] || ''; g('ev-prize2').value = pz[2] || ''; g('ev-prize3').value = pz[3] || '';
   g('ev-claimfields').value = Array.isArray(d.claimFields) ? d.claimFields.join('\n') : '';
+  g('ev-cine').checked = !!(d.cine && d.cine.on); g('ev-cine-style').value = (d.cine && d.cine.style) || 'neon';
   const bs = d.backsound || {};
   g('ev-bs-url').value = bs.url || ''; g('ev-bs-vol').value = bs.vol == null ? 50 : bs.vol; g('ev-bs-vol-d').textContent = g('ev-bs-vol').value;
   _audData.bs = undefined; g('ev-bs-file').value = '';
@@ -1348,8 +1408,9 @@ async function dashStats(cfg) {
   g('ds-mode-sub').textContent = mt ? 'aplikasi dikunci' : (fu ? 'refresh dipaksa' : 'semua berjalan');
   const fb = g('feedback-badge'); g('ds-fb').textContent = fb && fb.style.display !== 'none' ? (fb.innerText || '0') : '0';
   try {
-    const sn = await db.collection('chat_presence').where('seen', '>', new Date(now - 150000)).get();
-    g('ds-online').textContent = sn.size;
+    const rt = firebase.app().database((typeof firebaseConfig !== 'undefined' && firebaseConfig.databaseURL) || 'https://photonic-mixer-remake-default-rtdb.asia-southeast1.firebasedatabase.app');
+    const sn = await rt.ref('chat_presence').once('value');
+    g('ds-online').textContent = sn.numChildren();
   } catch (e) { g('ds-online').textContent = '-'; }
 }
 
@@ -1475,6 +1536,7 @@ async function loadSettings() {
     document.getElementById('flag-feedback-off').checked = !!d.feedbackDisabled;
     document.getElementById('flag-update-ui').checked = d.autoUpdateUiEnabled !== false;   // bawaan: aktif
     document.getElementById('flag-chat-off').checked = !!d.chatDisabled;
+    document.getElementById('flag-mabar-off').checked = !!d.mabarDisabled;
   } catch(e){}
 }
 // Simpan satu flag ke dokumen settings (merge: field lain tidak ikut tertimpa). Gagal -> toggle dikembalikan.
@@ -1486,6 +1548,12 @@ async function setFlag(boxId, field, value, msg) {
 function toggleFeedbackOff() {
   const on = document.getElementById('flag-feedback-off').checked;
   return setFlag('flag-feedback-off', 'feedbackDisabled', on, on ? 'Laporan Bug / Saran dinonaktifkan' : 'Laporan Bug / Saran diaktifkan');
+}
+function toggleMabarOff(fromMabarTab) {
+  const box = document.getElementById(fromMabarTab === true ? 'mb-flag' : 'flag-mabar-off');
+  const on = box.checked;
+  const other = document.getElementById(fromMabarTab === true ? 'flag-mabar-off' : 'mb-flag'); if (other) other.checked = on;
+  return setFlag(box.id, 'mabarDisabled', on, on ? 'Mabar dinonaktifkan' : 'Mabar diaktifkan').then(() => { const o = document.getElementById('flag-mabar-off'), m = document.getElementById('mb-flag'); if (o && m) { if (fromMabarTab === true) o.checked = m.checked; else m.checked = o.checked; } mbStateText(); try { admRtdb().ref('mabar/off').set(!!document.getElementById('flag-mabar-off').checked).catch(() => toast('Saklar tersimpan, tapi penguncian di Realtime Database gagal (cek aturan database)', true)); } catch (e) {} });
 }
 function toggleChatOff() {
   const on = document.getElementById('flag-chat-off').checked;
@@ -1714,6 +1782,95 @@ function renderNuPreview() {
 // Pesan admin: dokumen chat_messages dengan admin:true (hanya bisa dibuat oleh admin yang login, dijaga Firestore rules).
 // Pengaturan (nama admin, sematan, mode lambat, mute, blokir) disimpan di app_config/main — dibaca user lewat 1 listener yang sama.
 // ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// MABAR (dashboard + saklar). Data: Realtime Database mabar/rooms/{kode} (h=host, g=tamu, lg=tamu terakhir).
+// ═══════════════════════════════════════════
+let _mbTimer = 0;
+function admRtdb() { return firebase.app().database((typeof firebaseConfig !== 'undefined' && firebaseConfig.databaseURL) || 'https://photonic-mixer-remake-default-rtdb.asia-southeast1.firebasedatabase.app'); }
+function mbStop() { clearInterval(_mbTimer); _mbTimer = 0; }
+function mbStateText() {
+  const el = document.getElementById('mb-state'), on = document.getElementById('mb-flag');
+  if (el && on) el.textContent = on.checked ? 'Mabar NONAKTIF: pengguna tidak bisa membuat atau bergabung ke room.' : 'Mabar aktif: pengguna bisa membuat dan bergabung ke room.';
+}
+function mbFmtT(ms) { return ms ? new Date(ms).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'; }
+function mbRoomStatus(r, now) {
+  if (r.closed) return { t: 'Ditutup', c: 'badge-info' };
+  if (r.exp <= now) return { t: 'Kedaluwarsa', c: 'badge-info' };
+  if (r.guest) return { t: 'Berlangsung', c: 'badge-success' };
+  return { t: 'Menunggu', c: 'badge-fail' };
+}
+async function mbLoad() {
+  mbStop();   // tanpa muat ulang otomatis: tiap muat membaca semua room yang tampil, jadi hemat kuota baca
+  try {
+    if (!arguments[0]) { const cfg = await getConfig(); const f = (cfg.flags || {}).mabarDisabled; document.getElementById('mb-flag').checked = !!f; const o = document.getElementById('flag-mabar-off'); if (o) o.checked = !!f; mbStateText(); }
+    const snap = await admRtdb().ref('mabar/rooms').orderByChild('ts').limitToLast(50).once('value');
+    const now = Date.now(), rooms = [], u = x => x ? { uid: x.u, name: x.n } : null;
+    snap.forEach(ch => { const r = ch.val(); rooms.push({ _id: ch.key, host: u(r.h), guest: u(r.g), lastGuest: u(r.lg), hasPw: !!r.pw, exp: r.exp || 0, closed: !!r.c, _ts: r.ts || 0 }); });
+    rooms.reverse();
+    const live = rooms.filter(r => !r.closed && r.exp > now);
+    const paired = live.filter(r => r.guest);
+    const day = rooms.filter(r => r._ts >= now - 86400000);
+    const uniq = new Set(); day.forEach(r => { if (r.host) uniq.add(r.host.uid); const g = r.lastGuest || r.guest; if (g) uniq.add(g.uid); });
+    const g = id => document.getElementById(id);
+    g('mbs-active').textContent = live.length; g('mbs-active-sub').textContent = paired.length + ' berpasangan, ' + (live.length - paired.length) + ' menunggu';
+    g('mbs-play').textContent = paired.length * 2;
+    g('mbs-24').textContent = day.length; g('mbs-24-sub').textContent = day.filter(r => r.lastGuest || r.guest).length + ' sempat dimainkan berdua';
+    g('mbs-uniq').textContent = uniq.size;
+    g('mb-n').textContent = rooms.length;
+    const tb = g('mb-rooms'); tb.innerHTML = '';
+    if (!rooms.length) tb.innerHTML = '<tr><td colspan="8">' + emptyHtml('Belum ada room.') + '</td></tr>';
+    rooms.forEach(r => {
+      const st = mbRoomStatus(r, now), left = !r.closed && r.exp > now ? Math.ceil((r.exp - now) / 60000) + ' mnt' : '-';
+      const gu = r.guest || r.lastGuest, tr = document.createElement('tr');
+      const cell = (t) => { const td = document.createElement('td'); td.textContent = t; tr.appendChild(td); return td; };
+      cell(r._id).style.cssText = 'font-family:monospace;font-weight:700;letter-spacing:1px;';
+      cell(r.host ? r.host.name : '-'); cell(gu ? gu.name + (r.guest ? '' : ' (keluar)') : '-');
+      const ts = document.createElement('td'); ts.innerHTML = '<span class="' + st.c + '">' + st.t + '</span>'; tr.appendChild(ts);
+      cell(r.hasPw ? 'Ya' : 'Tidak'); cell(mbFmtT(r._ts)); cell(left);
+      const ac = document.createElement('td'); ac.style.whiteSpace = 'nowrap';
+      if (!r.closed && r.exp > now) { const b = document.createElement('button'); b.className = 'btn-gray'; b.style.cssText = 'width:auto;margin:0 4px 0 0;padding:4px 8px;'; b.textContent = 'Tutup'; b.onclick = () => mbClose(r._id); ac.appendChild(b); }
+      const d = document.createElement('button'); d.className = 'btn-red'; d.style.cssText = 'width:auto;margin:0;padding:4px 8px;'; d.textContent = 'Hapus'; d.onclick = () => mbDelete(r._id, r); ac.appendChild(d);
+      tr.appendChild(ac); tb.appendChild(tr);
+    });
+    // pemain (dari 100 room terbaru)
+    const pl = new Map();
+    const add = (u, role, ts) => { if (!u || !u.uid) return; const e = pl.get(u.uid) || { name: u.name, host: 0, guest: 0, last: 0 }; e[role]++; if (ts >= e.last) { e.last = ts; e.name = u.name; } pl.set(u.uid, e); };
+    rooms.forEach(r => { add(r.host, 'host', r._ts); add(r.lastGuest || r.guest, 'guest', r._ts); });
+    const pb = g('mb-players'); pb.innerHTML = '';
+    if (!pl.size) pb.innerHTML = '<tr><td colspan="5">' + emptyHtml('Belum ada pemain.') + '</td></tr>';
+    Array.from(pl.entries()).sort((a, b) => b[1].last - a[1].last).forEach(([uid, e]) => {
+      const tr = document.createElement('tr');
+      [e.name, uid, e.host, e.guest, mbFmtT(e.last)].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+      tr.children[1].style.cssText = 'font-family:monospace;font-size:10px;'; pb.appendChild(tr);
+    });
+  } catch (e) { document.getElementById('mb-rooms').innerHTML = '<tr><td colspan="8" style="color:#e53e3e;">Gagal memuat: ' + escHtml(e.message || e) + '</td></tr>'; }
+}
+async function mbClose(code) {
+  if (!await uiConfirm('Tutup room ' + code + '? Pemain di dalamnya akan dikeluarkan.', { title: 'Tutup room', yes: 'Tutup' })) return;
+  const ok = await runWrite(() => admRtdb().ref('mabar/rooms/' + code + '/c').set(true), 'Room ' + code + ' ditutup');
+  if (ok) mbLoad(true);
+}
+async function mbPurge(code) {
+  const up = {}; ['rooms', 'sig', 'sec', 'join'].forEach(k => { up['mabar/' + k + '/' + code] = null; });
+  await admRtdb().ref().update(up);
+}
+async function mbDelete(code, r) {
+  if (!await uiConfirm('Hapus room ' + code + ' beserta data sambungannya?', { title: 'Hapus room', yes: 'Hapus' })) return;
+  const ok = await runWrite(() => mbPurge(code), 'Room ' + code + ' dihapus');
+  if (ok) mbLoad(true);
+}
+async function mbCleanup() {
+  if (!await uiConfirm('Hapus semua room yang sudah ditutup atau kedaluwarsa? Pemain aktif tidak terpengaruh.', { title: 'Bersihkan room', yes: 'Bersihkan' })) return;
+  let n = 0;
+  const ok = await runWrite(async () => {
+    const snap = await admRtdb().ref('mabar/rooms').orderByChild('ts').limitToLast(50).once('value'), now = Date.now(), list = [];
+    snap.forEach(ch => { const r = ch.val(); if (r.c || r.exp <= now) list.push(ch.key); });
+    for (const k of list) { await mbPurge(k); n++; }
+  }, null);
+  if (ok) { toast(n + ' room dibersihkan'); mbLoad(true); }
+}
+
 // ═══ AKUN CENTANG HIJAU ═══
 // verified_users/{u}: info publik (nama, salt, chk=sha256(proof)).  verified_keys/{u}: proof rahasia (hanya admin, dipakai rules).
 // proof = PBKDF2-SHA256(password, salt, 100000). Pengguna login: hitung proof, cocokkan chk, lalu tulis verified_sessions/{uidPerangkat}.
@@ -2381,7 +2538,7 @@ function uiConfirm(msg, opt) {
 // pencarian cepat (Ctrl+K)
 const CMDK_ITEMS = [
   ['dashboard', 'Dashboard', 'Umum'], ['announcement', 'Announcement', 'Konten'], ['event', 'Event', 'Konten'], ['chat', 'Chat', 'Konten'],
-  ['aiassist', 'Asisten AI', 'Konten'], ['newupdate', 'New Update', 'Konten'], ['maintenance', 'Maintenance', 'Sistem'], ['settings', 'Settings', 'Sistem'],
+  ['mabar', 'Mabar', 'Konten'], ['aiassist', 'Asisten AI', 'Konten'], ['newupdate', 'New Update', 'Konten'], ['maintenance', 'Maintenance', 'Sistem'], ['settings', 'Settings', 'Sistem'],
   ['loginlog', 'Riwayat Login', 'Data'], ['feedback', 'Feedback', 'Data']
 ];
 let _cmdkSel = 0;
@@ -2435,11 +2592,10 @@ function audPreview() {
   const g = id => document.getElementById(id), box = g('aud-preview'); if (!box) return;
   const n = g('aud-name').value.trim() || 'Nama admin', t = g('aud-title').value.trim();
   box.innerHTML = '';
-  const top = document.createElement('div'); top.className = 'pv-a-top';
-  const l = document.createElement('div'); l.innerHTML = '<small>AUDIO DARI ADMIN</small><b></b>'; l.lastChild.textContent = n;
-  top.appendChild(l); box.appendChild(top);
-  if (t) { const x = document.createElement('div'); x.className = 'pv-a-t'; x.textContent = t; box.appendChild(x); }
-  const bar = document.createElement('div'); bar.className = 'pv-a-bar'; bar.innerHTML = '<span class="pv-a-play"></span><span class="pv-a-line"><i></i></span><small>0:00</small>'; box.appendChild(bar);
+  const bar = document.createElement('div'); bar.className = 'pv-a-bar';
+  bar.innerHTML = '<span class="pv-a-play"></span><span class="pv-a-txt"><b></b><small></small></span><small class="pv-a-c">0:12 / 0:30</small><span class="pv-a-line"><i></i></span>';
+  bar.querySelector('b').textContent = n; bar.querySelector('.pv-a-txt small').textContent = t || 'Audio dari admin';
+  box.appendChild(bar);
 }
 ['ann-title', 'ann-msg', 'ann-type', 'ann-icon'].forEach(id => { const e = document.getElementById(id); if (e) { e.addEventListener('input', annPreview); e.addEventListener('change', annPreview); } });
 ['aud-name', 'aud-title'].forEach(id => { const e = document.getElementById(id); if (e) e.addEventListener('input', audPreview); });
