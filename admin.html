@@ -418,6 +418,18 @@ div.skel{display:block;}
         <div class="stat-card"><div class="stat-label">Event</div><div class="stat-num" id="ds-ev" style="font-size:18px;"><span class="skel" style="width:70px;height:20px;"></span></div><div class="stat-sub" id="ds-ev-sub">&nbsp;</div></div>
         <div class="stat-card"><div class="stat-label">Mode aplikasi</div><div class="stat-num" id="ds-mode" style="font-size:18px;"><span class="skel" style="width:70px;height:20px;"></span></div><div class="stat-sub" id="ds-mode-sub">&nbsp;</div></div>
       </div>
+      <div class="card" id="pc-card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></span> Cek Pengguna Saat Ini</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div class="stat-num" id="pc-total" style="min-width:64px;">-</div>
+          <div style="flex:1;min-width:180px;">
+            <div id="pc-detail" class="toggle-sub">Belum dicek. Angka hanya diperbarui saat tombol ditekan.</div>
+            <div id="pc-status" class="toggle-sub" style="margin-top:4px;">&nbsp;</div>
+          </div>
+          <button class="btn-green" id="pc-btn" type="button" style="width:auto;margin:0;" onclick="presenceCheck()">Cek sekarang</button>
+        </div>
+        <div class="toggle-sub" style="margin-top:10px;">Tidak ada pemantauan berjalan dan tidak ada dokumen per pengguna. Satu kali cek memakai 10 dokumen penghitung: admin menulis 10 + 1, tiap pengunjung menulis 1 (jawaban disebar sekitar 8 detik), admin membaca 10. Pengunjung juga membaca 1 kali karena permintaan, plus 1 baca pengecekan aturan per jawaban. Tiap perangkat dihitung sekali per cek.</div>
+      </div>
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></span> Status App</div>
         <div class="toggle-row">
@@ -1392,6 +1404,36 @@ async function loadDashboard() {
     document.getElementById('dash-force-badge').className = fu.active?'badge-fail':'badge-info';
     dashStats(cfg);
   } catch(e){}
+}
+// ═══ CEK PENGGUNA SAAT INI ═══
+// 10 dokumen penghitung (presence_cnt/s0..s9). Admin me-reset semuanya dengan rid baru, lalu menulis presenceCheck {rid, at} ke app_config/main.
+// Pengunjung yang sedang membuka website menambah satu penghitung acak (+1, dijaga aturan Firestore), lalu admin menjumlahkan 10 dokumen.
+// Tidak ada pemantauan berjalan dan tidak ada dokumen per pengguna.
+let _pcBusy = false;
+async function presenceCheck() {
+  if (_pcBusy) return;
+  const g = id => document.getElementById(id), btn = g('pc-btn');
+  _pcBusy = true; btn.disabled = true;
+  const rid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  try {
+    g('pc-status').textContent = 'Menyiapkan penghitung...';
+    const b = db.batch();
+    for (let k = 0; k < 10; k++) b.set(db.collection('presence_cnt').doc('s' + k), { rid: rid, n: 0, v: 0, c: 0, m: 0 });
+    await b.commit();
+    await saveSection('presenceCheck', { rid: rid, at: Date.now() });
+    for (let s = 11; s > 0; s--) { g('pc-status').textContent = 'Menunggu jawaban pengunjung... ' + s + ' dtk'; await new Promise(r => setTimeout(r, 1000)); }
+    g('pc-status').textContent = 'Menghitung...';
+    const sn = await db.collection('presence_cnt').get();
+    const n = { total: 0, vis: 0, chat: 0, mabar: 0 };
+    sn.forEach(d => { const x = d.data(); if (x.rid !== rid) return; n.total += x.n || 0; n.vis += x.v || 0; n.chat += x.c || 0; n.mabar += x.m || 0; });
+    g('pc-total').textContent = n.total;
+    g('pc-detail').innerHTML = 'Terbuka di layar: <b>' + n.vis + '</b> &nbsp;|&nbsp; Di latar belakang: <b>' + (n.total - n.vis) + '</b> &nbsp;|&nbsp; Sedang chat: <b>' + n.chat + '</b> &nbsp;|&nbsp; Sedang Mabar: <b>' + n.mabar + '</b>';
+    g('pc-status').textContent = 'Dicek pukul ' + new Date().toLocaleTimeString('id-ID') + '. Pengunjung dengan koneksi sangat lambat bisa terlewat; satu perangkat dihitung sekali.';
+  } catch (e) {
+    console.log('presenceCheck', e);
+    g('pc-status').textContent = 'Gagal: ' + (e && e.code === 'permission-denied' ? 'izin ditolak. Pastikan aturan Firestore terbaru sudah dipublish dan kamu login sebagai admin.' : (e && e.message) || 'periksa koneksi');
+    toast('Cek pengguna gagal', true);
+  } finally { _pcBusy = false; btn.disabled = false; }
 }
 async function dashStats(cfg) {
   const g = id => document.getElementById(id);

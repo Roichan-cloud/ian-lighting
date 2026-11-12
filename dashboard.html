@@ -2031,6 +2031,10 @@
                     <span id="banner-img-label" style="font-size:9px;color:#aaa;">Pilih banner dulu, lalu upload gambar</span>
                     <input type="file" id="banner-img-input" accept="image/*" style="display:none;" onchange="handleBannerImageUpload(this)">
                 </div>
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                    <input type="text" id="banner-rbx-input" inputmode="numeric" autocomplete="off" placeholder="ID Decal/Texture Roblox" style="flex:1; min-width:0; background:#1a1a1a; color:#fff; border:1px solid #ff88cc; border-radius:4px; padding:5px 6px; font-size:10px; font-family:monospace;" onkeydown="if(event.key==='Enter')robloxUse('banner')">
+                    <button id="banner-rbx-btn" class="audio-btn" style="border-color:#ff88cc; color:#fff; background:#3a1022;" onclick="robloxUse('banner')">PAKAI ID</button>
+                </div>
                 <div class="sliders-h-row">
                     <div class="setting-col">
                         <label style="color:#ff88cc">POS X (KIRI/KANAN)</label>
@@ -2093,6 +2097,10 @@
                     <button class="audio-btn dropzone-trigger" data-dz-target="photo2d" data-dz-label="Lepaskan file PNG di sini" style="border-color:#44ddff;color:#fff;background:#0f2a33;" onclick="document.getElementById('p2d-img-input').click()">UPLOAD PNG</button>
                     <span id="p2d-img-label" style="font-size:9px;color:#aaa;">Pilih foto dulu, lalu upload PNG</span>
                     <input type="file" id="p2d-img-input" accept="image/png,.png" style="display:none;" onchange="handlePhoto2DUpload(this)">
+                </div>
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                    <input type="text" id="p2d-rbx-input" inputmode="numeric" autocomplete="off" placeholder="ID Decal/Texture Roblox" style="flex:1; min-width:0; background:#1a1a1a; color:#fff; border:1px solid #44ddff; border-radius:4px; padding:5px 6px; font-size:10px; font-family:monospace;" onkeydown="if(event.key==='Enter')robloxUse('photo')">
+                    <button id="p2d-rbx-btn" class="audio-btn" style="border-color:#44ddff; color:#fff; background:#0f2a33;" onclick="robloxUse('photo')">PAKAI ID</button>
                 </div>
                 <div class="sliders-h-row">
                     <div class="setting-col">
@@ -3350,6 +3358,8 @@
     }
 
     let scene, camera, renderer, lamps = [], minibrute;
+    // Mabar: fixture milik teman (dibangun oleh mabarRemote, lihat dekat animate)
+    let remoteLamps = [], remoteParleds = [], remoteWalls = [], remoteStrobes = [], remoteTrusses = [], remoteFans = [], remoteMinis = [], remoteFogs = [], remotePhotos = [], remoteBanners = [], _rmLast = 0;
     let selectedFixtures = [-1]; 
     // MIRROR PAN (toggle dikontrol via toggleMirrorPan)
     let mirrorPanActive = false;
@@ -4532,11 +4542,12 @@
     function _ultraUpdate(g) {
         camera.updateMatrixWorld();
         const list = _ult.list; list.length = 0;
-        lamps.forEach(l => {
+        const _ultAdd = l => {
             if (!l.wc || !l.state || !l._lcol) return;
             const st = (l.state.curDim || 0) * (l._lalpha || 0);
             if (st >= 0.04) list.push({ l, st });
-        });
+        };
+        lamps.forEach(_ultAdd); remoteLamps.forEach(_ultAdd);   // lampu teman (Mabar) ikut asap volumetrik dan light shaft
         list.sort((a, b) => b.st - a.st);
         const n = Math.min(8, list.length); _ult.n = n;
         for (let i = 0; i < n; i++) {
@@ -4776,6 +4787,7 @@
         // sembunyikan objek setinggi lantai supaya tidak ikut terpantul / memantul ke dirinya sendiri
         const hide = [floorMesh, hazeLayerGroup, ENV.floor.plane].concat(floorGlowMeshes);
         lamps.forEach(l => { if (l._spots) l._spots.forEach(m => hide.push(m)); });
+        remoteLamps.forEach(l => { if (l._spots) l._spots.forEach(m => hide.push(m)); });
         const saved = hide.map(o => o ? o.visible : false);
         hide.forEach(o => { if (o) o.visible = false; });
         const sa = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false;
@@ -13006,7 +13018,6 @@
     // Project teman dikirim lewat jalur data WebRTC (bukan Firestore/Realtime Database), dibangun sebagai objek 3D di scene ini,
     // lalu digerakkan oleh nilai akhir lampu mereka (dim, pan, tilt, warna, dst) yang dikirim ±20 kali per detik.
     // Lampu teman disimpan di array terpisah, jadi tidak ikut efek/chase/simpan project milikmu.
-    let remoteLamps = [], remoteParleds = [], remoteWalls = [], remoteStrobes = [], remoteTrusses = [];
     const mabarRemote = (function () {
         const r1 = v => Math.round((+v || 0) * 10) / 10, r3 = v => Math.round((+v || 0) * 1000) / 1000;
         let off = 0, vis = { p: true, w: true, s: true, t: true };
@@ -13017,14 +13028,36 @@
                 w: wallwashers.map(w => { const s = w.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), len: r1(s.length) }; }),
                 s: strobes.map(b => { const s = b.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), sx: r3(s.scaleX !== undefined ? s.scaleX : 1), sy: r3(s.scaleY !== undefined ? s.scaleY : 1) }; }),
                 t: trusses.map(t => ({ x: r1(t.x), y: r1(t.y), z: r1(t.z !== undefined ? t.z : -25), ry: r1(t.rotY), rx: r1(t.rotX), len: r1(t.length), sz: r1(t.size), ty: t.type || 'straight' })),
-                v: { p: !!areParledsVisible, w: !!areWallwashersVisible, s: !!areStrobesVisible, t: !!areTrussesVisible }
+                f: fanLamps.map(f => { const s = f.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), sc: r3(s.scale !== undefined ? s.scale : 1), sp: r3(s.speed !== undefined ? s.speed : 3) }; }),
+                m: minibrutes.map(mb => { const d = mb.bruteData || {}; return { x: r1(mb.targetX), y: r1(mb.targetY), z: r1(mb.group.position.z), sc: r3(d.scale || 1), md: mb.model || '4', rx: r1(d.rotX), ry: r1(d.rotY), rz: r1(d.rotZ), fc: d.flashColor || null }; }),
+                g: (window.foggers || []).map(f => Object.assign({}, f.d)),
+                ph: photos2D.map(e => { const s = e.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), w: r1(s.width), h: r1(s.height), b: r1(s.brightness !== undefined ? s.brightness : 100) }; }),
+                bn: banners.map(e => { const s = e.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), w: r1(s.width), h: r1(s.height), b: r1(s.brightness !== undefined ? s.brightness : 100) }; }),
+                v: { p: !!areParledsVisible, w: !!areWallwashersVisible, s: !!areStrobesVisible, t: !!areTrussesVisible, f: !!areFanLampsVisible, ph: !!arePhotos2DVisible, bn: !!areBannersVisible }
             };
         }
+        // gambar foto/banner milik kita (untuk dikirim sekali ke teman): [{key, el}]
+        function images() {
+            const o = [];
+            photos2D.forEach((e, i) => { if (e.tex && e.tex.image && e.tex.image.width) o.push({ key: 'ph' + i, src: e.state.imageUrl || '', el: e.tex.image }); });
+            banners.forEach((e, i) => { if (e.tex && e.tex.image && e.tex.image.width) o.push({ key: 'bn' + i, src: e.imageUrl || e.state.imageUrl || '', el: e.tex.image }); });
+            return o.slice(0, 16);
+        }
+        const imgCache = {};
+        function _useImg(key) {
+            const url = imgCache[key]; if (!url) return;
+            const n = parseInt(key.slice(2), 10);
+            if (key.slice(0, 2) === 'ph') { const e = remotePhotos[n]; if (e) _applyPhoto2DTexture(e, url, false); }
+            else { const e = remoteBanners[n]; if (e) _applyBannerTexture(e, url); }
+        }
+        function setImage(key, url) { imgCache[key] = url; _useImg(key); }
+        function reset() { Object.keys(imgCache).forEach(k => delete imgCache[k]); }
         function span(P) {
             let a = Infinity, b = -Infinity;
             const add = (x, h) => { if (isFinite(x)) { a = Math.min(a, x - (h || 0)); b = Math.max(b, x + (h || 0)); } };
             (P.l || []).forEach(o => add(o.x, 6)); (P.p || []).forEach(o => add(o.x, 4)); (P.w || []).forEach(o => add(o.x, (o.len || 0) / 2));
             (P.s || []).forEach(o => add(o.x, 10)); (P.t || []).forEach(o => add(o.x, (o.len || 0) / 2));
+            (P.f || []).forEach(o => add(o.x, 3)); (P.m || []).forEach(o => add(o.x, 5)); (P.ph || []).forEach(o => add(o.x, (o.w || 0) / 2)); (P.bn || []).forEach(o => add(o.x, (o.w || 0) / 2));
             if (!isFinite(a) || b - a < 40) { const c = isFinite(a) ? (a + b) / 2 : 0; a = c - 20; b = c + 20; }
             return { min: a, max: b };
         }
@@ -13036,14 +13069,18 @@
                 if (floorGlowMeshes[500 + i]) floorGlowMeshes[500 + i].visible = false;
             });
             remoteParleds.forEach(p => _drop(p.group)); remoteWalls.forEach(w => _drop(w.group)); remoteStrobes.forEach(b => _drop(b.group)); remoteTrusses.forEach(g => _drop(g));
+            remoteFans.forEach(f => _drop(f.group)); remoteMinis.forEach(m => _drop(m.group)); remotePhotos.forEach(e => _drop(e.group)); remoteBanners.forEach(e => _drop(e.group));
+            remoteFogs.forEach(f => { try { window.mabarFog.drop(f); } catch (e) {} });
+            window.mabarFogActive = false;
             remoteLamps = []; remoteParleds = []; remoteWalls = []; remoteStrobes = []; remoteTrusses = [];
+            remoteFans = []; remoteMinis = []; remoteFogs = []; remotePhotos = []; remoteBanners = [];
         }
         // side: +1 = project teman di sebelah kanan project kamu, -1 = di sebelah kiri
         function setPack(P, side) {
             clear();
             const ls = span(pack()), rs = span(P);
             off = side * ((ls.max - ls.min) / 2 + (rs.max - rs.min) / 2 + 30) + ((ls.min + ls.max) / 2 - (rs.min + rs.max) / 2);
-            vis = Object.assign({ p: true, w: true, s: true, t: true }, P.v || {});
+            vis = Object.assign({ p: true, w: true, s: true, t: true, f: true, ph: true, bn: true }, P.v || {});
             (P.t || []).forEach(d => {
                 try {
                     const g = d.ty === 'circle' ? createCircleTruss(d.len, d.sz) : d.ty === 'papan' ? createPapanTruss(d.len, d.sz) : createTruss(d.len, d.sz);
@@ -13081,6 +13118,36 @@
                     const b = strobes.pop(); b._rm = true; b.group.visible = !!vis.s; remoteStrobes.push(b);
                 } catch (e) { console.log('mabar strobe', e); }
             });
+            (P.f || []).forEach((d, i) => {
+                try {
+                    createFanLampFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, scale: d.sc, speed: d.sp, _angle: 0, color: new THREE.Color(0xffffff), rainbow: 0, rndPhase: 0, rndSpeed: 0.5 }, i);
+                    const f = fanLamps.pop(); f._rm = true; f.group.visible = !!vis.f; remoteFans.push(f);
+                } catch (e) { console.log('mabar fan', e); }
+            });
+            (P.m || []).forEach((d, i) => {
+                try {
+                    const keep = minibrute;   // createMinibruteAt menjadikan unit pertama sebagai minibrute utama; jangan sampai milik teman
+                    const mb = createMinibruteAt(d.x + off, d.y, d.z, d.sc, d.md, { rotX: d.rx, rotY: d.ry, rotZ: d.rz, flashColor: d.fc, dimmer: 100, rgb: false });
+                    minibrutes.pop(); minibrute = keep;
+                    mb._rm = true; if (mb.light) mb.light.visible = false; remoteMinis.push(mb);
+                } catch (e) { console.log('mabar minibrute', e); }
+            });
+            (P.g || []).forEach(d => {
+                try { if (window.mabarFog) { const f = window.mabarFog.create(Object.assign({}, d, { x: (+d.x || 0) + off })); remoteFogs.push(f); } } catch (e) { console.log('mabar fogger', e); }
+            });
+            (P.ph || []).forEach((d, i) => {
+                try {
+                    const e = createPhoto2DFixture({ posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, width: d.w, height: d.h, brightness: d.b, imageUrl: null }, i);
+                    photos2D.pop(); e.group.visible = !!vis.ph; remotePhotos.push(e);
+                } catch (e) { console.log('mabar foto', e); }
+            });
+            (P.bn || []).forEach((d, i) => {
+                try {
+                    const e = createBannerFixture({ posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, width: d.w, height: d.h, brightness: d.b, imageUrl: null }, i);
+                    banners.pop(); e.group.visible = !!vis.bn; remoteBanners.push(e);
+                } catch (e) { console.log('mabar banner', e); }
+            });
+            Object.keys(imgCache).forEach(_useImg);   // gambar yang sudah pernah diterima dipakai lagi tanpa kirim ulang
         }
         // nilai akhir milik kita yang dikirim ke teman
         function frame() {
@@ -13102,7 +13169,10 @@
                     let bi = 0, bm = 0; const mx = b.leds.map(({ mesh }, k) => { const c = mesh.material.color, m = Math.max(c.r, c.g, c.b); if (m > bm) { bm = m; bi = k; } return m; });
                     let c = [1, 1, 1]; if (bm > 0.001) { const bc = b.leds[bi].mesh.material.color; c = [r3(bc.r / bm), r3(bc.g / bm), r3(bc.b / bm)]; }
                     return { c: c, v: mx.map(m => Math.min(15, Math.round(m * 15)).toString(16)).join('') };
-                })
+                }),
+                f: fanLamps.map(f => { const s = f.state, c = f._oc || s.color; return [r3(s.curDim), r3(c.r), r3(c.g), r3(c.b), fanLampCenterGlowOn ? 1 : 0, r3(s.speed !== undefined ? s.speed : 3)]; }),
+                m: minibrutes.map(mb => { const c = mb.flashGlowCol || { r: 1, g: 1, b: 1 }, d = ((mb.bruteData && mb.bruteData.dimmer !== undefined ? mb.bruteData.dimmer : 100) / 100); return [r3(_mbFlashLevel * d), r3(c.r), r3(c.g), r3(c.b)]; }),
+                fa: window.isFogActive ? 1 : 0
             };
         }
         function apply(f) {
@@ -13130,8 +13200,22 @@
                 const b = remoteStrobes[i]; if (!b || !a || !a.v) return;
                 b.leds.forEach(({ mesh }, k) => { const q = parseInt(a.v.charAt(k) || '0', 16) / 15; mesh.material.color.setRGB(a.c[0] * q, a.c[1] * q, a.c[2] * q); });
             });
+            (f.f || []).forEach((a, i) => {
+                const fl = remoteFans[i]; if (!fl || !a) return; const s = fl.state;
+                s.curDim = a[0]; s.speed = a[5];
+                const bright = Math.max(0.25, 0.25 + a[0] * 0.9);
+                fl.leds.forEach(({ led, glow }) => { led.color.setRGB(a[1] * bright, a[2] * bright, a[3] * bright); glow.color.setRGB(a[1], a[2], a[3]); glow.opacity = a[4] ? a[0] * 0.85 : 0; });
+                const blur = Math.max(0, Math.min(1, (Math.abs(a[5]) - 4) / 12));
+                fl.ghostMats.forEach((gm, gi) => { gm.color.setRGB(a[1], a[2], a[3]); gm.opacity = a[0] * blur * (gi === 0 ? 0.35 : 0.18); });
+            });
+            (f.m || []).forEach((a, i) => {
+                const mb = remoteMinis[i]; if (!mb || !a) return;
+                mb.glows.forEach(g => { g.material.opacity = Math.min(1, a[0] * 0.98); g.material.color.setRGB(a[1], a[2], a[3]); g.scale.setScalar(1.0 + a[0] * 0.08); });
+                mb.surfaces.forEach(sf => { sf.material.emissive.setRGB(a[1], a[2], a[3]); sf.material.emissiveIntensity = a[0] * 4.0; });
+            });
+            window.mabarFogActive = !!f.fa;
         }
-        return { pack, frame, apply, setPack, clear };
+        return { pack, frame, apply, setPack, clear, images, setImage, reset };
     })();
     window.mabarRemote = mabarRemote;
 
@@ -14219,6 +14303,7 @@
                     col = _colTmp;
                 }
 
+                f._oc = f._oc || new THREE.Color(); f._oc.copy(col);   // dikirim ke teman saat Mabar
                 f.leds.forEach(({led, glow}) => {
                     // led = material plane bertekstur PNG. DIM sekarang ikut ngatur terang-redup gambarnya juga,
                     // gak cuma glow di tengah doang.
@@ -14239,6 +14324,10 @@
             });
         }
 
+        if (remoteFans.length) {   // bilah kipas teman berputar di sisi kita (kecepatan dari teman)
+            const _rd = _rmLast ? Math.min(0.1, Math.max(0, (now - _rmLast) / 1000)) : 0.016; _rmLast = now;
+            remoteFans.forEach(f => { const s = f.state; s._angle = (s._angle || 0) + _rd * (s.speed || 0); f.bladeGroup.rotation.z = s._angle; });
+        } else _rmLast = 0;
         envFrame();
         gfxFrame(performance.now());
         _renderScene();
@@ -15572,11 +15661,89 @@
             if (banners[i].state.imageUrl && banners[i].state.imageUrl.startsWith('blob:')) {
                 URL.revokeObjectURL(banners[i].state.imageUrl);
             }
+            banners[i].state.rbxId = null;
             _applyBannerTexture(banners[i], url);
         });
         document.getElementById('banner-img-label').innerText = file.name;
         input.value = '';
     }
+
+    // ═══ ID TEXTURE / DECAL ROBLOX untuk Banner dan 2D Photo ═══
+    // Gambar diambil lewat API thumbnail Roblox (lewat proxy CORS publik dulu, lalu langsung ke Roblox), diubah jadi blob lokal,
+    // lalu dipakai persis seperti gambar yang diupload. ID disimpan di project (state.rbxId), jadi saat project dibuka gambarnya diambil lagi.
+    const _RBX_HOSTS = ['https://thumbnails.roproxy.com', 'https://thumbnails.roblox.com'];
+    const _rbxBlobs = {};   // id -> Promise<Blob> (supaya ID yang sama tidak diambil berulang)
+    function _rbxParseId(txt) { const m = String(txt || '').match(/\d{4,15}/); return m ? m[0] : null; }
+    // Alamat Cloudflare Worker milikmu (lihat roblox-worker.js). Isi di sini, atau di firebase-config.js: window.ROBLOX_PROXY = 'https://nama.workers.dev';
+    const _RBX_WORKER = '';
+    async function _rbxFetchViaWorker(base, id) {
+        base = base.replace(/\/+$/, '');
+        let msg = 'Worker Roblox tidak bisa dihubungi. Periksa alamatnya di pengaturan.';
+        for (let tr = 0; tr < 3; tr++) {
+            let r;
+            try { r = await fetch(base + '/?id=' + id); } catch (e) { throw new Error(msg); }
+            if (r.ok) return await r.blob();
+            let j = null; try { j = await r.json(); } catch (e) {}
+            msg = (j && j.error) || ('Worker Roblox membalas error ' + r.status + '.');
+            if (r.status !== 503) break;
+            await new Promise(res => setTimeout(res, 1200));
+        }
+        throw new Error(msg);
+    }
+    async function _rbxFetchBlobRaw(id) {
+        const base = (window.ROBLOX_PROXY || _RBX_WORKER || '').trim();
+        if (base) return _rbxFetchViaWorker(base, id);
+        let lastErr = 'Tidak bisa terhubung ke Roblox. Periksa koneksi internet.';
+        for (const host of _RBX_HOSTS) {
+            for (let tr = 0; tr < 4; tr++) {
+                let d;
+                try {
+                    const r = await fetch(host + '/v1/assets?assetIds=' + id + '&size=420x420&format=Png&isCircular=false');
+                    if (!r.ok) break;
+                    const j = await r.json(); d = j && j.data && j.data[0];
+                } catch (e) { break; }
+                if (!d) { lastErr = 'ID tidak ditemukan.'; break; }
+                if (d.state === 'Completed' && d.imageUrl) {
+                    try { const ir = await fetch(d.imageUrl); if (!ir.ok) throw new Error('x'); return await ir.blob(); }
+                    catch (e) { lastErr = 'Gambar Roblox diblokir oleh browser (CORS). Unduh gambarnya lalu upload manual.'; break; }
+                }
+                if (d.state === 'Pending') { await new Promise(r => setTimeout(r, 1200)); continue; }
+                lastErr = d.state === 'Blocked' ? 'Gambar ini diblokir atau dimoderasi oleh Roblox.' : d.state === 'Error' ? 'ID tidak valid atau bukan gambar/decal.' : 'Gambar belum tersedia (status: ' + d.state + ').';
+                break;
+            }
+        }
+        throw new Error(lastErr);
+    }
+    function _rbxBlob(id) {
+        if (!_rbxBlobs[id]) _rbxBlobs[id] = _rbxFetchBlobRaw(id).catch(e => { delete _rbxBlobs[id]; throw e; });
+        return _rbxBlobs[id];
+    }
+    // pasang gambar Roblox ke satu banner/foto
+    async function _rbxApplyEntry(kind, entry, id) {
+        const blob = await _rbxBlob(id), url = URL.createObjectURL(blob);
+        const old = kind === 'banner' ? (entry.state.imageUrl || entry.imageUrl) : entry.state.imageUrl;
+        if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
+        entry.state.rbxId = id;
+        if (kind === 'banner') _applyBannerTexture(entry, url); else _applyPhoto2DTexture(entry, url, true);
+    }
+    async function robloxUse(kind) {
+        const isB = kind === 'banner';
+        const inp = document.getElementById(isB ? 'banner-rbx-input' : 'p2d-rbx-input'), btn = document.getElementById(isB ? 'banner-rbx-btn' : 'p2d-rbx-btn');
+        const id = _rbxParseId(inp && inp.value);
+        if (!id) { showStatus('Masukkan ID Decal/Texture Roblox (angka) atau link-nya.', true); return; }
+        const list = isB ? banners : photos2D, sel = isB ? selectedBanners : selectedPhotos2D;
+        const idx = (sel.includes(-1) ? list.map((_, i) => i) : sel).filter(i => i >= 0 && i < list.length);
+        if (!idx.length) { showStatus(isB ? 'Pilih banner dulu.' : 'Tambah foto dulu dengan tombol + FOTO.', true); return; }
+        if (btn) btn.disabled = true;
+        showStatus('Mengambil gambar Roblox ' + id + '...');
+        try {
+            for (const i of idx) await _rbxApplyEntry(kind, list[i], id);
+            const lb = document.getElementById(isB ? 'banner-img-label' : 'p2d-img-label'); if (lb) lb.innerText = 'Roblox ID ' + id;
+            showStatus('Gambar Roblox ' + id + ' dipakai.');
+        } catch (e) { showStatus(e && e.message ? e.message : 'Gagal mengambil gambar Roblox.', true); }
+        finally { if (btn) btn.disabled = false; }
+    }
+    window.robloxUse = robloxUse;
 
     function changeBannerCount(delta) {
         let next = banners.length + delta;
@@ -15814,6 +15981,7 @@
             if (i < 0 || i >= photos2D.length) return;
             const old = photos2D[i].state.imageUrl;
             if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
+            photos2D[i].state.rbxId = null;
             _applyPhoto2DTexture(photos2D[i], url, true);
         });
         document.getElementById('p2d-img-label').innerText = file.name;
@@ -15966,7 +16134,8 @@
             posX: p.state.posX, posY: p.state.posY, posZ: p.state.posZ,
             rotX: p.state.rotX || 0, rotY: p.state.rotY || 0, rotZ: p.state.rotZ || 0,
             width: p.state.width, height: p.state.height,
-            brightness: p.state.brightness !== undefined ? p.state.brightness : 100
+            brightness: p.state.brightness !== undefined ? p.state.brightness : 100,
+            rbxId: p.state.rbxId || null
             // imageUrl tidak disimpan (blob URL tidak valid antar sesi) — upload ulang PNG setelah load project.
         }));
     }
@@ -17276,7 +17445,8 @@
                     posX: b.state.posX, posY: b.state.posY, posZ: b.state.posZ,
                     rotX: b.state.rotX || 0, rotY: b.state.rotY || 0, rotZ: b.state.rotZ || 0,
                     width: b.state.width, height: b.state.height,
-                    brightness: b.state.brightness !== undefined ? b.state.brightness : 100
+                    brightness: b.state.brightness !== undefined ? b.state.brightness : 100,
+                    rbxId: b.state.rbxId || null
                     // imageUrl sengaja tidak disimpan — blob URL tidak valid antar sesi.
                     // User perlu upload ulang gambar setelah load project.
                 })),
@@ -17883,9 +18053,10 @@
                             brightness: bd.brightness !== undefined ? bd.brightness : 100,
                             imageUrl: null
                         };
-                        createBannerFixture(st, i);
+                        const be = createBannerFixture(st, i);
+                        if (bd.rbxId) _rbxApplyEntry('banner', be, String(bd.rbxId)).catch(e => showStatus('Banner ' + (i + 1) + ': ' + (e && e.message || 'gagal ambil gambar Roblox'), true));
                     });
-                    showStatus(`${banners.length} banner dimuat — upload ulang gambar secara manual.`);
+                    showStatus(`${banners.length} banner dimuat — gambar dari file perlu diupload ulang (gambar dari ID Roblox diambil otomatis).`);
                 }
                 if ('bannersVisible' in data) {
                     areBannersVisible = data.bannersVisible;
@@ -17906,7 +18077,7 @@
                 photos2D = [];
                 if (data.photos2DData && data.photos2DData.length > 0) {
                     data.photos2DData.forEach((pd, i) => {
-                        createPhoto2DFixture({
+                        const pe = createPhoto2DFixture({
                             posX: pd.posX !== undefined ? pd.posX : 0,
                             posY: pd.posY !== undefined ? pd.posY : 20,
                             posZ: pd.posZ !== undefined ? pd.posZ : -30,
@@ -17915,8 +18086,9 @@
                             brightness: pd.brightness !== undefined ? pd.brightness : 100,
                             imageUrl: null
                         }, i);
+                        if (pd.rbxId) _rbxApplyEntry('photo', pe, String(pd.rbxId)).catch(e => showStatus('Foto ' + (i + 1) + ': ' + (e && e.message || 'gagal ambil gambar Roblox'), true));
                     });
-                    showStatus(`${photos2D.length} foto 2D dimuat — upload ulang PNG secara manual.`);
+                    showStatus(`${photos2D.length} foto 2D dimuat — PNG dari file perlu diupload ulang (gambar dari ID Roblox diambil otomatis).`);
                 }
                 if ('photos2DVisible' in data) {
                     arePhotos2DVisible = data.photos2DVisible;
@@ -18187,7 +18359,8 @@
                 posX: b.state.posX, posY: b.state.posY, posZ: b.state.posZ,
                 rotX: b.state.rotX || 0, rotY: b.state.rotY || 0, rotZ: b.state.rotZ || 0,
                 width: b.state.width, height: b.state.height,
-                brightness: b.state.brightness !== undefined ? b.state.brightness : 100
+                brightness: b.state.brightness !== undefined ? b.state.brightness : 100,
+                rbxId: b.state.rbxId || null
             })),
         };
     }
@@ -18605,6 +18778,31 @@
         if (!_nuTimer) _nuTimer = setInterval(nuEval, 20000);   // jadwal tampil / kedaluwarsa
     }
 
+    // ── CEK PENGGUNA DARI ADMIN ──
+    // Tidak ada pengiriman rutin. Hanya saat admin menekan tombol cek (admin me-reset 10 dokumen penghitung presence_cnt/s0..s9 lalu menulis
+    // presenceCheck di app_config/main, yang sudah didengarkan listener di atas), tiap pengunjung yang sedang membuka website menambah
+    // satu penghitung acak dengan increment(1). Aturan Firestore hanya mengizinkan penambahan +1 selama permintaan admin berlaku (±5 menit).
+    let _presRid = null;
+    const PRES_SHARDS = 10;
+    function handlePresenceCheck(d, first) {
+        if (!d || !d.rid || d.rid === _presRid) return;
+        _presRid = d.rid;
+        const age = Date.now() - (+d.at || 0);
+        if (age > 300000 || (first && age > 90000) || age < -60000) return;   // permintaan lama: jangan dijawab
+        setTimeout(() => {
+            try {
+                if (!_db) return;
+                // satu perangkat hanya sekali per permintaan (berlaku juga untuk banyak tab dan muat ulang)
+                try { if (localStorage.getItem('_poth_pres_rid') === d.rid) return; localStorage.setItem('_poth_pres_rid', d.rid); } catch (e) {}
+                const inc = firebase.firestore.FieldValue.increment, vis = document.visibilityState === 'visible';
+                _db.collection('presence_cnt').doc('s' + Math.floor(Math.random() * PRES_SHARDS)).update({
+                    n: inc(1), v: inc(vis ? 1 : 0),
+                    c: inc(window.ianChatIsActive && window.ianChatIsActive() ? 1 : 0),
+                    m: inc(window.ianMabarIsActive && window.ianMabarIsActive() ? 1 : 0)
+                }).catch(() => {});
+            } catch (e) {}
+        }, Math.floor(Math.random() * 8000));   // sebar waktu tulis (0-8 dtk) supaya tidak serentak
+    }
     async function checkAdminConfigs() {
         if(!_db) return;
         try {
@@ -18614,6 +18812,7 @@
                 const first = firstSnap; firstSnap = false;
                 const changed = k => JSON.stringify(cfg[k]) !== JSON.stringify(prev[k]);
                 if(first || changed('flags'))        applyAdminFlags(cfg.flags || {});
+                if(first || changed('presenceCheck')) { try { handlePresenceCheck(cfg.presenceCheck || {}, first); } catch(e) {} }
                 if(first || changed('maintenance'))  handleMaintenance(cfg.maintenance || {});
                 if(first || changed('forceUpdate'))  handleForceUpdate(cfg.forceUpdate || {}, first);
                 if(first || changed('announcement')) handleAnnouncement(cfg.announcement || {});
@@ -19724,6 +19923,7 @@
     };
 
     let unsubMsg = null, unsubPres = null, hbTimer = null, tickTimer = null, active = false;
+    window.ianChatIsActive = () => active;   // dipakai pengecekan pengguna dari admin
     let sheetOpenedAt = 0, myName = '', replyTo = null, lastSend = 0, lastTypingWrite = 0, lastMsgs = [], presence = [], cleaned = false, loadedOnce = false, sheetMsg = null;
 
     function db() { return (typeof _db !== 'undefined') ? _db : null; }
@@ -20152,6 +20352,8 @@
     const fogTargets = () => selectedFoggers[0] === -1 ? foggers.map((_, i) => i) : selectedFoggers.filter(i => foggers[i]);
     const fogSyncPrimary = () => { const t = fogTargets(); selectedFogger = t.length ? t[0] : 0; };
     window.isFogActive = false;
+    window.mabarFogActive = false;   // Mabar: apakah fogger teman sedang menyembur
+    window.foggersRemote = [];       // fogger milik teman (tidak ikut daftar/project/UI milikmu)
 
     // ── tekstur dibagi antar unit (hemat memori di HP) ──
     const _texCache = {};
@@ -20326,6 +20528,10 @@
         g.rotation.set(THREE.MathUtils.degToRad(d.rotX), THREE.MathUtils.degToRad(d.rotY), THREE.MathUtils.degToRad(d.rotZ));
         f.smoke.mat.uniforms.uColor.value.set(d.color);
     }
+    window.mabarFog = {
+        create: d => { const f = createFoggerAt(d); foggers.pop(); window.foggersRemote.push(f); return f; },
+        drop: f => { const i = window.foggersRemote.indexOf(f); if (i >= 0) window.foggersRemote.splice(i, 1); disposeFogger(f); }
+    };
     function disposeFogger(f) {
         scene.remove(f.group);
         f.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });   // tekstur dibagi, tidak dibuang
@@ -20433,16 +20639,17 @@
 
     // ── update per frame (dipanggil dari animate) ──
     // Semburan seperti fogger asli: kolom padat sempit yang melesat ke depan dari nozzle, melebar jadi awan, melambat, lalu naik dan menipis.
-    let _last = 0, _lvl = 0;
+    let _last = 0, _lvl = 0, _lvlR = 0;
     const _tmp = new THREE.Vector3(), _dir = new THREE.Vector3();
     window.fogUpdate = function () {
-        if (!foggers.length) { _last = 0; return; }
+        if (!foggers.length && !window.foggersRemote.length) { _last = 0; return; }
         const t = performance.now(); let dt = _last ? (t - _last) / 1000 : 0.016; _last = t;
         dt = Math.min(dt, 0.1);
         // tekanan semburan: naik cepat saat tombol ditekan, putus seketika saat dilepas
         _lvl = isFogActive ? Math.min(1, _lvl + dt * 5) : 0;
+        _lvlR = window.mabarFogActive ? Math.min(1, _lvlR + dt * 5) : 0;
         const drag = Math.exp(-0.95 * dt);
-        foggers.forEach(f => {
+        const _fgStep = (f, _lvl) => {
             const S = f.smoke, d = f.d, sc = d.scale, dens = d.density / 100;
             if (_lvl > 0 && dens > 0) {
                 S.acc += dt * (14 + 58 * dens) * _lvl;
@@ -20500,7 +20707,9 @@
                 S.geo.attributes.position.needsUpdate = true; S.geo.attributes.aA.needsUpdate = true; S.geo.attributes.aS.needsUpdate = true; S.geo.attributes.aSd.needsUpdate = true;
             }
             S._wasAlive = alive > 0;
-        });
+        };
+        foggers.forEach(f => _fgStep(f, _lvl));
+        window.foggersRemote.forEach(f => _fgStep(f, _lvlR));
     };
 
     window.addEventListener('blur', () => { if (isFogActive) fogSet(false); });
@@ -21424,14 +21633,36 @@
         if (!R || R.conn === 'ok') return;
         const a = R.chP, b = R.chS;
         if (!a || !b || a.readyState !== 'open' || b.readyState !== 'open') return;
-        R.conn = 'ok'; setNote(''); updateUi();
-        sendPack(); startFrames();
+        R.conn = 'ok'; R.sentImg = {}; setNote(''); updateUi();
+        sendPack(); sendImages(); startFrames();
+    }
+    function sendChunks(txt) {
+        const ch = R && R.chP; if (!ch || ch.readyState !== 'open') return;
+        const id = ++R.pid, n = Math.max(1, Math.ceil(txt.length / CH_CHUNK));
+        try { for (let i = 0; i < n; i++) ch.send(JSON.stringify({ id: id, i: i, n: n, d: txt.slice(i * CH_CHUNK, (i + 1) * CH_CHUNK) })); } catch (e) { console.log('mabar kirim', e); }
     }
     function sendPack() {
-        const ch = R && R.chP; if (!ch || ch.readyState !== 'open') return;
-        const txt = JSON.stringify(window.mabarRemote.pack()); R.mySig = txt;
-        const id = ++R.pid, n = Math.max(1, Math.ceil(txt.length / CH_CHUNK));
-        try { for (let i = 0; i < n; i++) ch.send(JSON.stringify({ id: id, i: i, n: n, d: txt.slice(i * CH_CHUNK, (i + 1) * CH_CHUNK) })); } catch (e) { console.log('mabar pack', e); }
+        if (!R || !R.chP || R.chP.readyState !== 'open') return;
+        const txt = JSON.stringify(window.mabarRemote.pack()); R.mySig = txt; sendChunks(txt);
+    }
+    // foto 2D dan banner: gambar dikecilkan (maks 384 px, WebP) lalu dikirim sekali saja
+    function encodeImg(el) {
+        for (const mx of [384, 256, 160, 96]) {
+            const k = Math.min(1, mx / Math.max(el.width, el.height)), w = Math.max(1, Math.round(el.width * k)), h = Math.max(1, Math.round(el.height * k));
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            let u = ''; try { c.getContext('2d').drawImage(el, 0, 0, w, h); u = c.toDataURL('image/webp', 0.8); } catch (e) { return ''; }
+            if (u.length <= 140000) return u;
+        }
+        return '';
+    }
+    function sendImages() {
+        if (!R || !R.chP || R.chP.readyState !== 'open') return;
+        const sent = R.sentImg || (R.sentImg = {});
+        window.mabarRemote.images().forEach(im => {
+            if (sent[im.key] === im.src) return;
+            sent[im.key] = im.src;
+            const u = encodeImg(im.el); if (u) sendChunks(JSON.stringify({ t: 'img', k: im.key, u: u }));
+        });
     }
     function onPackMsg(e) {
         if (!R) return;
@@ -21440,7 +21671,11 @@
         b.parts[m.i] = m.d; b.got++;
         if (b.got >= m.n) {
             R.rx = null;
-            try { window.mabarRemote.setPack(JSON.parse(b.parts.join('')), R.role === 'host' ? 1 : -1); setNote(''); updateUi(); } catch (x) { console.log('mabar setPack', x); }
+            try {
+                const o = JSON.parse(b.parts.join(''));
+                if (o && o.t === 'img') window.mabarRemote.setImage(String(o.k), String(o.u));
+                else { window.mabarRemote.setPack(o, R.role === 'host' ? 1 : -1); setNote(''); updateUi(); }
+            } catch (x) { console.log('mabar terima', x); }
         }
     }
     function startFrames() {
@@ -21452,6 +21687,7 @@
         R.sigT = setInterval(() => {   // susunan lampu berubah (tambah/geser/hapus): kirim ulang project ke teman
             if (!R || !R.chP || R.chP.readyState !== 'open') return;
             if (JSON.stringify(window.mabarRemote.pack()) !== R.mySig) sendPack();
+            sendImages();
         }, 2000);
     }
     function stopFrames() { if (R) { clearInterval(R.frameT); clearInterval(R.sigT); R.frameT = R.sigT = 0; } }
@@ -21466,7 +21702,7 @@
     }
     function closePeer() {
         if (R) { stopFrames(); if (R.pc) { try { R.pc.close(); } catch (e) {} R.pc = null; } R.chP = R.chS = null; R.rx = null; R.mySig = ''; R.conn = 'wait'; R.queue = []; }
-        try { window.mabarRemote.clear(); } catch (e) {}
+        try { window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
         updateUi();
     }
     function sendSig(obj) {
@@ -21504,13 +21740,14 @@
             try { ref.child('c').onDisconnect().cancel(); ref.child('g').onDisconnect().cancel(); } catch (e) {}
             if (notify) (s.role === 'host' ? ref.child('c').set(true) : ref.child('g').remove()).catch(() => {});
         }
-        try { window.mabarRemote.clear(); } catch (e) {}
+        try { window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
         ['mabar-bar', 'mabar-note'].forEach(i => { const e = $(i); if (e) e.remove(); });
         setSetUi();
         if (msg) say(msg, !/keluar dari Mabar/.test(msg));
     }
     // pagehide tidak perlu: onDisconnect di server menutup room atau mengeluarkan tamu saat koneksi putus
     window.mabarOpen = openModal;
+    window.ianMabarIsActive = () => !!R;   // dipakai pengecekan pengguna dari admin
     window.mabarFlagChanged = () => { if (R && window.ianMabarOff) leave('Mabar dinonaktifkan oleh admin.', true); else setSetUi(); };
     const init = () => setTimeout(ensureBtn, 700);
     if (document.readyState === 'complete') init(); else window.addEventListener('load', init);
