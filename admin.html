@@ -866,6 +866,33 @@ div.skel{display:block;}
       </div>
 
       <div class="card">
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="#i-message"/></svg></span> Filter Kata Kasar (Anti-Toxic)</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Aktifkan filter</div><div class="toggle-sub">Pesan dicek sebelum terkirim, dan pesan yang tampil juga disensor di sisi penerima. Tidak menambah kuota Firestore.</div></div>
+          <label class="switch"><input type="checkbox" id="cf-on" onchange="cfTest()"><span class="slider-sw"></span></label>
+        </div>
+        <label class="admin-label">Saat ada kata kasar</label>
+        <select class="admin-select" id="cf-mode" onchange="cfTest()">
+          <option value="censor">Sensor kata kasarnya (a*****) dan tetap kirim</option>
+          <option value="block">Tolak pesan dan beri peringatan</option>
+        </select>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Pakai daftar bawaan</div><div class="toggle-sub">Kata kasar Indonesia dan Inggris yang umum (<a href="#" onclick="cfToggleBase();return false;">lihat daftar</a>). Matikan kalau mau memakai daftarmu sendiri saja.</div></div>
+          <label class="switch"><input type="checkbox" id="cf-base" checked onchange="cfTest()"><span class="slider-sw"></span></label>
+        </div>
+        <div id="cf-base-list" style="display:none;font-size:11px;color:#888;background:#f7f7f7;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.7;word-break:break-word;"></div>
+        <label class="admin-label">Kata tambahan (satu per baris, atau pisahkan dengan koma)</label>
+        <textarea class="admin-textarea" id="cf-words" placeholder="contoh: kampungan, dasar kutu" oninput="cfTest()"></textarea>
+        <label class="admin-label">Kata yang dikecualikan (tidak pernah disensor)</label>
+        <textarea class="admin-textarea" id="cf-allow" placeholder="contoh: dick, assistant" oninput="cfTest()"></textarea>
+        <label class="admin-label">Uji kalimat (memakai pengaturan di atas, belum disimpan)</label>
+        <input class="admin-input" id="cf-test" placeholder="ketik kalimat untuk dicoba" autocomplete="off" oninput="cfTest()">
+        <div id="cf-test-out" class="toggle-sub" style="margin:-4px 0 10px;min-height:18px;">&nbsp;</div>
+        <button class="btn-green" onclick="cfSave()">Simpan Filter</button>
+        <div class="toggle-sub">Penulisan dengan tanda bintang di tengah kata (b*doh) tidak dikenali. Kata pendek dicocokkan utuh, kata panjang juga ditangkap di dalam kata gabungan. Tidak ada filter yang sempurna, periksa daftar dan tambahkan slang lokal komunitasmu.</div>
+      </div>
+
+      <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22c55e" stroke="none"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Akun Centang Hijau</div>
         <div class="toggle-sub" style="margin-bottom:8px;">Pengguna memasukkan username dan password ini lewat tombol "Terverifikasi?" di bagian pilih nama chat. Setelah masuk, namanya terkunci ke username dan tampil dengan centang hijau. Password disimpan sebagai hash, tidak bisa dilihat lagi. Membuat akun dengan username yang sudah ada = mengganti password (login lama otomatis tidak berlaku).</div>
         <label class="admin-label">Username (3-16 karakter: huruf kecil/angka/_)</label>
@@ -917,6 +944,73 @@ div.skel{display:block;}
 
 <div id="admin-toast"></div>
 
+<script>
+// ═══ FILTER KATA KASAR CHAT (ianFilter) ═══
+// Daftar bawaan ditulis sendiri (bukan salinan proyek lain). Admin bisa menambah kata, membuat daftar kecuali, atau mematikan daftar bawaan.
+// Penanganan trik penulisan: huruf diulang (bodooooh), angka sebagai huruf (b0d0h, 4nj1ng), huruf dipisah (b o d o h, a.n.j.i.n.g),
+// akhiran umum (-nya, -lah, -kah, -an, -in, -ing, -er). Kata pendek (<=5 huruf) harus cocok utuh; kata panjang (>=6) juga ditangkap
+// di dalam kata gabungan (dasarbangsat). Penulisan dengan tanda bintang di tengah kata (b*doh) tidak dikenali.
+(function (g) {
+    'use strict';
+    const BASE = ('anjing anjink anjng bangsat bajingan brengsek keparat kontol memek pepek ngentot entot jancok jancuk jancik asu tai taik titit lonte pelacur sundal jablay tahi bangke monyet babi sialan tolol goblok idiot dungu bacot bencong banci kampret mampus pantek kimak colmek ngocok pecun perek ' +
+        'fuck fucker fucking motherfucker shit bullshit bitch asshole ass bastard dick cunt pussy whore slut nigger nigga faggot retard wanker cock douche dumbass twat').split(' ');
+    const SUF = ['nya', 'lah', 'kah', 'an', 'in', 'ing', 'er', 'ed', 'es', 's', 'e', 'ku', 'mu', 'y'];
+    const LEET = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b', '9': 'g', '@': 'a' };
+    const sq = s => s.replace(/(.)\1+/g, '$1');
+    const raw = w => { w = String(w).normalize('NFKD').replace(/[̀-ͯ​-‍﻿]/g, '').toLowerCase(); let o = ''; for (const ch of w) o += LEET[ch] || ch; return o.replace(/[^a-z]/g, ''); };
+    function make() {
+        const S = { on: false, mode: 'censor', rawSet: new Set(), sqSet: new Set(), longRaw: [], longSq: [], allowRaw: new Set(), allowSq: new Set() };
+        function build(cfg) {
+            cfg = cfg || {};
+            S.on = !!cfg.on; S.mode = cfg.mode === 'block' ? 'block' : 'censor';
+            S.rawSet = new Set(); S.sqSet = new Set(); S.longRaw = []; S.longSq = []; S.allowRaw = new Set(); S.allowSq = new Set();
+            const words = (cfg.base === false ? [] : BASE).concat(Array.isArray(cfg.words) ? cfg.words : []);
+            words.forEach(w => {
+                const r = raw(w); if (r.length < 2) return; const q = sq(r);
+                S.rawSet.add(r); if (q.length >= 4) S.sqSet.add(q);
+                if (r.length >= 6) S.longRaw.push(r); if (q.length >= 6) S.longSq.push(q);
+            });
+            (Array.isArray(cfg.allow) ? cfg.allow : []).forEach(w => { const r = raw(w); if (r.length >= 1) { S.allowRaw.add(r); S.allowSq.add(sq(r)); } });
+        }
+        function hitTok(t) {
+            const r = raw(t); if (!r) return false; const q = sq(r);
+            if (S.allowRaw.has(r) || S.allowSq.has(q)) return false;
+            if (S.rawSet.has(r) || (q.length >= 4 && S.sqSet.has(q))) return true;
+            for (const suf of SUF) {
+                if (r.length > suf.length + 2 && r.endsWith(suf)) {
+                    const b = r.slice(0, -suf.length), bq = sq(b);
+                    if (S.rawSet.has(b) || (bq.length >= 4 && S.sqSet.has(bq))) return true;
+                }
+            }
+            for (const w of S.longRaw) if (r.includes(w)) return true;
+            for (const w of S.longSq) if (q.includes(w)) return true;
+            return false;
+        }
+        function check(text) {
+            text = String(text || '');
+            const toks = [], re = /[\p{L}\p{N}@]+/gu; let m;
+            while ((m = re.exec(text))) toks.push({ s: m.index, e: m.index + m[0].length, t: m[0] });
+            const spans = [];
+            toks.forEach(k => { if (hitTok(k.t)) spans.push([k.s, k.e, k.t]); });
+            // huruf dipisah: b o d o h, a.n.j.i.n.g
+            for (let i = 0; i < toks.length;) {
+                if (toks[i].t.length !== 1) { i++; continue; }
+                let j = i; while (j + 1 < toks.length && toks[j + 1].t.length === 1 && /^[ .\-_*]+$/.test(text.slice(toks[j].e, toks[j + 1].s))) j++;
+                if (j - i + 1 >= 3) { const joined = toks.slice(i, j + 1).map(k => k.t).join(''); if (hitTok(joined)) spans.push([toks[i].s, toks[j].e, joined]); }
+                i = j + 1;
+            }
+            if (!spans.length) return { hit: false, clean: text, words: [] };
+            const chars = Array.from(text), mark = new Array(text.length).fill(false);
+            spans.forEach(([s, e]) => { for (let k = s + 1; k < e; k++) mark[k] = true; });
+            let out = '', idx = 0;
+            for (const ch of chars) { const n = ch.length; let star = false; for (let k = 0; k < n; k++) if (mark[idx + k]) star = true; out += (star && /[\p{L}\p{N}]/u.test(ch)) ? '*' : ch; idx += n; }
+            return { hit: true, clean: out, words: spans.map(x => x[2]) };
+        }
+        return { build, check, active: () => S.on, mode: () => S.mode, clean: t => check(t).clean };
+    }
+    g.ianFilterMake = make; g.ianFilterBase = BASE; g.ianFilter = make();
+})(window);
+</script>
 <script>
 // firebaseConfig sudah dimuat dari firebase-config.js (lihat <script src> di <head>)
 firebase.initializeApp(firebaseConfig);
@@ -2109,6 +2203,34 @@ async function sendAdminChat() {
 function adminChatStop() {
   if (_chatUnsub) { try { _chatUnsub(); } catch (e) {} _chatUnsub = null; }
 }
+// ═══ FILTER KATA KASAR ═══
+function _cfList(id) { return document.getElementById(id).value.split(/[\n,;]+/).map(x => x.trim()).filter(Boolean).slice(0, 1000); }
+function cfCfg() {
+  return { on: document.getElementById('cf-on').checked, mode: document.getElementById('cf-mode').value, base: document.getElementById('cf-base').checked, words: _cfList('cf-words'), allow: _cfList('cf-allow') };
+}
+function cfFill(c) {
+  document.getElementById('cf-on').checked = !!c.on;
+  document.getElementById('cf-mode').value = c.mode === 'block' ? 'block' : 'censor';
+  document.getElementById('cf-base').checked = c.base !== false;
+  document.getElementById('cf-words').value = (c.words || []).join('\n');
+  document.getElementById('cf-allow').value = (c.allow || []).join('\n');
+  cfTest();
+}
+function cfToggleBase() {
+  const b = document.getElementById('cf-base-list');
+  if (b.style.display === 'none') { b.textContent = (window.ianFilterBase || []).join(', '); b.style.display = 'block'; } else b.style.display = 'none';
+}
+function cfTest() {
+  const out = document.getElementById('cf-test-out'), txt = document.getElementById('cf-test').value;
+  if (!txt.trim()) { out.innerHTML = '&nbsp;'; return; }
+  const f = ianFilterMake(); f.build(Object.assign(cfCfg(), { on: true }));
+  const r = f.check(txt);
+  out.innerHTML = r.hit ? 'Terdeteksi: <b>' + escHtml(r.words.join(', ')) + '</b><br>Hasil sensor: ' + escHtml(r.clean) : 'Tidak ada kata kasar terdeteksi.';
+}
+async function cfSave() {
+  const c = cfCfg();
+  await runWrite(() => saveSection('chatFilter', c), c.on ? 'Filter kata kasar disimpan (aktif)' : 'Filter kata kasar disimpan (nonaktif)');
+}
 async function loadChatAdmin() {
   const st = document.getElementById('chat-live-state');
   try {
@@ -2119,6 +2241,7 @@ async function loadChatAdmin() {
     _chatAdminName = ((cfg.chatAdmin || {}).name) || 'Admin';
     document.getElementById('chat-adm-name').value = _chatAdminName;
     document.getElementById('chat-slow-sel').value = String(((cfg.chatCtl || {}).slow) || 0);
+    cfFill(cfg.chatFilter || {});
     renderChatSide();
   } catch (e) {}
   adminChatStop();
