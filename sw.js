@@ -21,7 +21,8 @@ const CDN_REQUIRED = [
 // Library opsional (Firebase): kalau gagal diunduh, instalasi tetap jalan.
 const CDN_OPTIONAL = [
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js'
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js'
 ];
 
 // Host yang boleh di-cache saat dipakai
@@ -82,7 +83,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.search.indexOf('__chk=') !== -1) return;   // pengecek versi: langsung ke server
   if (url.origin === self.location.origin) {
-    const isPage = req.mode === 'navigate' || /\.(html?)$/i.test(url.pathname) || url.pathname.endsWith('/');
+    const isPage = req.mode === 'navigate' || /\.(html?)$/i.test(url.pathname) || url.pathname.endsWith('/') || /\/firebase-config\.js$/.test(url.pathname);   // firebase-config.js: selalu coba versi terbaru dulu (isinya sering diubah, mis. alamat Worker)
     event.respondWith(isPage ? networkFirst(req, 3500) : cacheFirst(req));
     return;
   }
