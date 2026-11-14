@@ -14412,7 +14412,7 @@
         const ids = _rbxAudioIds(input ? input.value : '');
         if (!ids.length) { showStatus('Masukkan ID audio Roblox (angka)', true); return; }
         const base = String(window.ROBLOX_PROXY || _RBX_WORKER || '').trim().replace(/\/+$/, '');
-        if (!base) { showStatus('Alamat Worker Roblox belum diisi (ROBLOX_PROXY di firebase-config.js)', true); return; }
+        if (!base) { showStatus('Alamat Worker Roblox belum terbaca. Pastikan firebase-config.js berisi ROBLOX_PROXY, lalu tutup dan buka lagi aplikasinya.', true); return; }
         _rbxAudioBusy = true; if (btn) btn.disabled = true;
         let firstNew = -1, ok = 0, lastErr = '';
         for (const id of ids) {
@@ -21642,7 +21642,26 @@
 (function () {
     'use strict';
     const $ = id => document.getElementById(id);
-    const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+    const STUN = ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'];
+    let ICE = [{ urls: STUN }], _iceAt = 0, _icePromise = null;
+    // Server TURN (relay) dari Worker: supaya Mabar tetap tersambung di jaringan seluler / NAT ketat. Tanpa ini hanya STUN (sering gagal di data seluler).
+    function iceBase() { let w = ''; try { w = _RBX_WORKER; } catch (e) {} return String(window.MABAR_ICE_URL || window.ROBLOX_PROXY || w || '').trim().replace(/\/+$/, ''); }
+    function ensureIce() {
+        if (_iceAt && Date.now() - _iceAt < 50 * 60000) return Promise.resolve();
+        if (_icePromise) return _icePromise;
+        const b = iceBase(); if (!b) return Promise.resolve();
+        _icePromise = (async () => {
+            const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 4000);
+            try {
+                const r = await fetch(b + '/?ice=1', { signal: ac.signal });
+                if (!r.ok) return;
+                const j = await r.json(), a = j && j.iceServers;
+                if (Array.isArray(a) && a.length) { ICE = [{ urls: STUN }].concat(a); _iceAt = Date.now(); }
+            } catch (e) { console.log('mabar ice', e); }
+            finally { clearTimeout(tm); _icePromise = null; }
+        })();
+        return _icePromise;
+    }
     const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const db = () => (typeof _db !== 'undefined') ? _db : null;
     const me = () => (typeof _deviceId !== 'undefined') ? _deviceId : 'anon';
@@ -21680,6 +21699,7 @@
 
     // ── jendela buat/gabung ──
     function openModal() {
+        ensureIce();   // siapkan server TURN lebih awal
         if (R) return;
         if (window.ianMabarOff) { say('Mabar sedang dinonaktifkan oleh admin', true); return; }
         if (!rt()) { say('Mabar butuh koneksi internet', true); return; }
@@ -21737,6 +21757,7 @@
         if (pw) await r.ref('mabar/sec/' + code).set({ p: await proofOf(code, pw) });
         const exp = Date.now() + mins * 60000;
         await r.ref('mabar/rooms/' + code).set({ h: { u: me(), n: name }, pw: !!pw, exp: exp, c: false, ts: NOW() });
+        await ensureIce();
         ov.remove();
         start({ code, role: 'host', exp, partner: '' });
         showCode(code, !!pw);
@@ -21756,6 +21777,7 @@
         }
         try { await ref.update({ g: { u: me(), n: name }, lg: { u: me(), n: name } }); }
         catch (e) { throw U(d.pw ? 'Password salah atau room sudah penuh.' : 'Room sudah penuh.'); }
+        await ensureIce();
         ov.remove();
         start({ code, role: 'guest', exp: d.exp, partner: (d.h && d.h.n) || 'Teman' });
     }
@@ -21831,9 +21853,11 @@
         pc.onconnectionstatechange = () => {
             if (!R || R.pc !== pc) return;
             const s = pc.connectionState;
-            if (s === 'failed') { R.conn = 'fail'; setNote('Koneksi gagal. Jaringan seluler tertentu memblokir koneksi langsung. Coba WiFi, lalu buat room baru.'); }
+            if (s === 'failed') {
+                if (!R.rel) { R.conn = 'fail'; setNote('Koneksi langsung gagal. Beralih ke mode cadangan lewat server...'); relayRequest(); }
+            }
             else if (s === 'disconnected') setNote('Koneksi terputus, mencoba menyambung lagi...');
-            else if (s === 'connected' && R.conn === 'ok') setNote('');
+            else if (s === 'connected' && R.conn === 'ok') setNote(relNote());
         };
         return pc;
     }
@@ -21842,7 +21866,7 @@
         if (ch.label === 'p') { R.chP = ch; ch.onmessage = onPackMsg; }
         else if (ch.label === 's') { R.chS = ch; ch.onmessage = e => { try { window.mabarRemote.apply(JSON.parse(e.data)); } catch (x) {} }; }
         else return;
-        ch.onopen = chOpen;
+        ch.onopen = () => { if (R && R.rel && R.pc === pc) { stopRelay(true); R.conn = 'wait'; } chOpen(); };
         ch.onclose = () => { if (R && R.pc === pc && R.conn === 'ok') { R.conn = 'wait'; stopFrames(); setNote('Jalur data terputus...'); updateUi(); } };
         if (ch.readyState === 'open') chOpen();
     }
@@ -21850,7 +21874,7 @@
         if (!R || R.conn === 'ok') return;
         const a = R.chP, b = R.chS;
         if (!a || !b || a.readyState !== 'open' || b.readyState !== 'open') return;
-        R.conn = 'ok'; R.sentImg = {}; setNote(''); updateUi();
+        R.conn = 'ok'; R.sentImg = {}; setNote(relNote()); updateUi();
         sendPack(); sendImages(); startFrames();
     }
     function sendChunks(txt) {
@@ -21860,15 +21884,16 @@
     }
     function sendPack() {
         if (!R || !R.chP || R.chP.readyState !== 'open') return;
-        const txt = JSON.stringify(window.mabarRemote.pack()); R.mySig = txt; sendChunks(txt);
+        const txt = JSON.stringify(window.mabarRemote.pack()); R.mySig = txt; R.lastPackAt = Date.now(); sendChunks(txt);
     }
     // foto 2D dan banner: gambar dikecilkan (maks 384 px, WebP) lalu dikirim sekali saja
-    function encodeImg(el) {
+    function encodeImg(el, lim) {
+        lim = lim || 140000;
         for (const mx of [384, 256, 160, 96]) {
             const k = Math.min(1, mx / Math.max(el.width, el.height)), w = Math.max(1, Math.round(el.width * k)), h = Math.max(1, Math.round(el.height * k));
             const c = document.createElement('canvas'); c.width = w; c.height = h;
             let u = ''; try { c.getContext('2d').drawImage(el, 0, 0, w, h); u = c.toDataURL('image/webp', 0.8); } catch (e) { return ''; }
-            if (u.length <= 140000) return u;
+            if (u.length <= lim) return u;
         }
         return '';
     }
@@ -21878,7 +21903,7 @@
         window.mabarRemote.images().forEach(im => {
             if (sent[im.key] === im.src) return;
             sent[im.key] = im.src;
-            const u = encodeImg(im.el); if (u) sendChunks(JSON.stringify({ t: 'img', k: im.key, u: u }));
+            const u = encodeImg(im.el, R.rel ? 30000 : 140000); if (u) sendChunks(JSON.stringify({ t: 'img', k: im.key, u: u }));
         });
     }
     function onPackMsg(e) {
@@ -21891,7 +21916,7 @@
             try {
                 const o = JSON.parse(b.parts.join(''));
                 if (o && o.t === 'img') window.mabarRemote.setImage(String(o.k), String(o.u));
-                else { window.mabarRemote.setPack(o, R.role === 'host' ? 1 : -1); setNote(''); updateUi(); }
+                else { window.mabarRemote.setPack(o, R.role === 'host' ? 1 : -1); setNote(relNote()); updateUi(); }
             } catch (x) { console.log('mabar terima', x); }
         }
     }
@@ -21903,11 +21928,64 @@
         }, 50);
         R.sigT = setInterval(() => {   // susunan lampu berubah (tambah/geser/hapus): kirim ulang project ke teman
             if (!R || !R.chP || R.chP.readyState !== 'open') return;
-            if (JSON.stringify(window.mabarRemote.pack()) !== R.mySig) sendPack();
+            const chg = JSON.stringify(window.mabarRemote.pack()) !== R.mySig, age = Date.now() - (R.lastPackAt || 0);
+            if (R.rel ? ((chg && age > 4000) || age > 16000) : chg) sendPack();   // mode cadangan: hemat kuota, tapi tetap kirim ulang berkala kalau ada potongan yang hilang
             sendImages();
         }, 2000);
     }
     function stopFrames() { if (R) { clearInterval(R.frameT); clearInterval(R.sigT); R.frameT = R.sigT = 0; } }
+    // ── RELAY CADANGAN lewat Firebase Realtime Database ──
+    // Dipakai kalau jalur langsung WebRTC gagal (mis. data seluler dengan NAT ketat). Data lewat server Firebase: lebih lambat dan memakai kuota Firebase,
+    // jadi frame dijarangkan (sekitar 3 kali per detik, dan dilewati kalau tidak berubah) dan gambar dikecilkan.
+    const REL_FRAME_MS = 300;
+    const REL_NOTE = 'Mode cadangan lewat server (koneksi langsung tidak bisa). Gerakan lampu teman lebih lambat dan gambar dikecilkan.';
+    const relNote = () => (R && R.rel) ? REL_NOTE : '';
+    function relFail(e) {
+        console.log('mabar relay', e);
+        if (R && R.rel && e && /permission/i.test(String(e.code || e.message || ''))) setNote('Mode cadangan ditolak server. Admin perlu memperbarui rules Realtime Database (bagian mabar/rel).');
+    }
+    function startRelay(sid) {
+        if (!R || R.rel || !/^[A-Z0-9]{8}$/.test(String(sid)) || !rt()) return;
+        const base = 'mabar/rel/' + R.code + '/' + sid, me_ = R.role === 'host' ? 'h' : 'g', ot_ = R.role === 'host' ? 'g' : 'h';
+        const mine = rt().ref(base + '/' + me_), other = rt().ref(base + '/' + ot_), keys = [];
+        let lastF = '', lastAt = 0;
+        const rel = { sid: sid, base: base, mine: mine, other: other, keys: keys, cl: 0 };
+        rel.chP = { readyState: 'open', bufferedAmount: 0, send: txt => {
+            if (txt.length > 16000) return;
+            const k = mine.child('p').push({ d: txt, ts: NOW() });
+            if (k && k.catch) k.catch(relFail);
+            if (k && k.key) keys.push([k.key, Date.now()]);
+        } };
+        rel.chS = { readyState: 'open', bufferedAmount: 0, send: txt => {
+            const n = Date.now();
+            if (txt === lastF || n - lastAt < REL_FRAME_MS || txt.length > 30000) return;
+            lastF = txt; lastAt = n;
+            mine.child('f').set({ d: txt, ts: NOW() }).catch(relFail);
+        } };
+        rel.onP = snap => { const v = snap.val(); if (v && typeof v.d === 'string') onPackMsg({ data: v.d }); };
+        rel.onF = snap => { const v = snap.val(); if (!v || typeof v.d !== 'string') return; try { window.mabarRemote.apply(JSON.parse(v.d)); } catch (x) {} };
+        other.child('p').on('child_added', rel.onP);
+        other.child('f').on('value', rel.onF);
+        // potongan lama yang sudah diterima teman dihapus supaya data di Firebase tidak menumpuk
+        rel.cl = setInterval(() => { const lim = Date.now() - 25000; while (keys.length && keys[0][1] < lim) { const k = keys.shift()[0]; mine.child('p').child(k).remove().catch(() => {}); } }, 8000);
+        R.rel = rel; R.chP = rel.chP; R.chS = rel.chS; R.conn = 'wait';
+        chOpen();
+    }
+    function stopRelay(wipe) {
+        const rel = R && R.rel; if (!rel) return;
+        clearInterval(rel.cl);
+        try { rel.other.child('p').off('child_added', rel.onP); rel.other.child('f').off('value', rel.onF); } catch (e) {}
+        if (wipe) { try { rt().ref(rel.base).remove().catch(() => {}); } catch (e) {} }
+        if (R.chP === rel.chP) R.chP = null;
+        if (R.chS === rel.chS) R.chS = null;
+        R.rel = null;
+    }
+    // host membuat sesi relay lalu memberi tahu tamu lewat sinyal; tamu hanya meminta
+    function relayRequest() {
+        if (!R || R.rel) return;
+        if (R.role === 'host') { const sid = rnd(8); sendSig({ t: 'relay', sid: sid }); startRelay(sid); }
+        else if (Date.now() - (R.relReqAt || 0) > 5000) { R.relReqAt = Date.now(); sendSig({ t: 'relayreq' }); }
+    }
     async function startPeer() {   // host: buat tawaran
         closePeer(); R.sid = rnd(8); R.conn = 'wait'; setNote('Menyambungkan dengan ' + R.partner + '...');
         const pc = R.pc = newPc();
@@ -21915,10 +21993,10 @@
         bindCh(pc.createDataChannel('s', { ordered: false, maxRetransmits: 0 }), pc);
         const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
         sendSig({ t: 'offer', sid: R.sid, sdp: pc.localDescription.sdp });
-        setTimeout(() => { if (R && R.pc === pc && R.conn === 'wait') setNote('Masih menyambung... pastikan temanmu tetap membuka aplikasi.'); }, 15000);
+        setTimeout(() => { if (R && R.pc === pc && R.conn === 'wait' && !R.rel) { setNote('Koneksi langsung lambat, mencoba mode cadangan lewat server...'); relayRequest(); } }, 12000);
     }
     function closePeer() {
-        if (R) { stopFrames(); if (R.pc) { try { R.pc.close(); } catch (e) {} R.pc = null; } R.chP = R.chS = null; R.rx = null; R.mySig = ''; R.conn = 'wait'; R.queue = []; }
+        if (R) { stopFrames(); stopRelay(true); if (R.pc) { try { R.pc.close(); } catch (e) {} R.pc = null; } R.chP = R.chS = null; R.rx = null; R.mySig = ''; R.conn = 'wait'; R.queue = []; }
         try { window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
         updateUi();
     }
@@ -21933,6 +22011,8 @@
         if (ms && ms < R.joinedAt - 8000) return;   // sisa sinyal sesi lama
         let m; try { m = JSON.parse(doc.d); } catch (e) { return; }
         try {
+            if (m.t === 'relay') { if (R.role === 'guest') startRelay(m.sid); return; }
+            if (m.t === 'relayreq') { if (R.role === 'host') relayRequest(); return; }
             if (R.role === 'guest' && m.t === 'offer') {
                 if (R.sid === m.sid) return;
                 closePeer(); R.sid = m.sid; const pc = R.pc = newPc();
@@ -21951,6 +22031,7 @@
     async function leave(msg, notify) {
         const s = R; if (!s) return; R = null;
         clearInterval(s.tick); clearInterval(s.frameT); clearInterval(s.sigT); try { s.unsubRoom && s.unsubRoom(); } catch (e) {}
+        if (s.rel) { clearInterval(s.rel.cl); try { s.rel.other.child('p').off('child_added', s.rel.onP); s.rel.other.child('f').off('value', s.rel.onF); } catch (e) {} try { rt() && rt().ref(s.rel.base).remove().catch(() => {}); } catch (e) {} }
         try { s.pc && s.pc.close(); } catch (e) {}
         if (rt()) {
             const ref = rt().ref('mabar/rooms/' + s.code);

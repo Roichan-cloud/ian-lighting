@@ -1988,7 +1988,7 @@ async function mbClose(code) {
   if (ok) mbLoad(true);
 }
 async function mbPurge(code) {
-  const up = {}; ['rooms', 'sig', 'sec', 'join'].forEach(k => { up['mabar/' + k + '/' + code] = null; });
+  const up = {}; ['rooms', 'sig', 'sec', 'join', 'rel'].forEach(k => { up['mabar/' + k + '/' + code] = null; });
   await admRtdb().ref().update(up);
 }
 async function mbDelete(code, r) {
