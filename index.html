@@ -812,6 +812,7 @@
         <button class="tab-btn" onclick="switchTab('settings')" style="color:var(--tp);display:flex;align-items:center;gap:4px;justify-content:center;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span data-i18n="tab_settings">SETTINGS</span>
+            <span id="ann-dot" title="Ada pengumuman belum dibaca" aria-label="Ada pengumuman belum dibaca" style="display:none;width:6px;height:6px;border-radius:50%;background:#f33;flex:none;"></span>
             <span id="net-dot" class="on" role="img" aria-label="Online" title="Online"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="3.5" fill="currentColor"/></svg></span>
         </button>
     </div>
@@ -2214,6 +2215,11 @@
                     <button class="audio-btn" id="brute-model-4" style="background:#555500;border-color:#ffff55;color:#ffff55;" onclick="setBruteModel('4')">4 MATA</button>
                     <button class="audio-btn" id="brute-model-2" style="background:#222;border-color:#ffff55;color:#ffff55;" onclick="setBruteModel('2')">2 MATA</button>
                 </div>
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
+                    <span style="font-size:8px; color:#ffff55;">BEAM SAAT FLASH</span>
+                    <button class="audio-btn" id="brute-beam-off" style="background:#555500;border-color:#ffff55;color:#ffff55;" onclick="setMbBeam(false)">BEAM MATI</button>
+                    <button class="audio-btn" id="brute-beam-on" style="background:#222;border-color:#ffff55;color:#ffff55;" onclick="setMbBeam(true)">BEAM HIDUP</button>
+                </div>
                 <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
                     <span style="font-size:8px; color:#ffff55;">WARNA FLASH</span>
                     <div id="brute-flash-swatch" onclick="openColorWheel(this.dataset.color, v=>setBruteFlashColor(v))" data-color="#fffee5" style="width:44px;height:22px;background:#fffee5;border-radius:4px;border:2px solid #ffff55;cursor:pointer;"></div>
@@ -2587,7 +2593,36 @@
                 <span id="mabar-set-info" style="font-size:9px; color:#ccc; flex:1;">Gabungkan project temanmu ke viewport yang sama dan mainkan bersama temanmu.</span>
                 <button class="quality-btn" id="mabar-set-btn" onclick="mabarOpen()" style="min-width:90px;">BUAT / GABUNG</button>
             </div>
-            <div style="font-size:8px; color:#666; line-height:1.5;">Satu pemain membuat room dengan kode acak (password opsional), pemain lain memasukkan kode itu. Maksimal 2 pemain, room kedaluwarsa otomatis. Project kamu tampil di kiri, project teman di kanan.</div>
+            <div id="mabar-joy" style="display:none; margin:8px 0 6px; padding:8px; border:1px solid #333; border-radius:6px;">
+                <div style="font-size:9px; color:#ccc; margin-bottom:6px; letter-spacing:1px;">GESER PROJECT KAMU (terlihat oleh semua pemain)</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div id="mabar-joy-pad" style="position:relative; width:110px; height:110px; border-radius:50%; background:#1a1a1a; border:1px solid #0a0; touch-action:none; flex:none; cursor:pointer;"><div id="mabar-joy-knob" style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:#0f0; opacity:.8; pointer-events:none;"></div></div>
+                    <div style="font-size:9px; color:#aaa; line-height:1.7; flex:1;">Atas / bawah: maju / mundur<br>Kiri / kanan: geser ke samping<br><span id="mabar-joy-val" style="color:#0f0; font-family:monospace; white-space:pre;">X 0   Z 0</span><br><button class="quality-btn" id="mabar-joy-reset" type="button" style="margin-top:4px;">RESET POSISI</button></div>
+                </div>
+            </div>
+            <div style="font-size:8px; color:#666; line-height:1.5;">Satu pemain membuat room dengan kode acak (password opsional), pemain lain memasukkan kode itu. Maksimal 4 pemain, room kedaluwarsa otomatis. Project para pemain tampil berderet; tiap pemain bisa menggeser project miliknya sendiri dengan joystick di atas (setelah masuk room).</div>
+        </div>
+
+        <!-- PENGUMUMAN -->
+        <div class="settings-section" id="ann-section">
+            <div class="settings-section-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span>PENGUMUMAN</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-size:9px; color:#ccc; flex:1;">Tampilan di viewport</span>
+                <select id="ann-mode-sel" onchange="annSetMode(this.value)" style="background:#1a1a1a; color:#0f0; border:1px solid #0a0; border-radius:5px; padding:5px 6px; font-size:10px;">
+                    <option value="glass">Transparan (disarankan)</option>
+                    <option value="normal">Normal (kartu berwarna)</option>
+                    <option value="hide">Sembunyikan yang ringan</option>
+                </select>
+            </div>
+            <div style="font-size:8px; color:#666; line-height:1.5; margin-bottom:6px;">Banner tidak menghalangi sentuhan ke viewport 3D. Pengumuman penting selalu tampil. Yang disembunyikan atau sudah tertutup tetap bisa dibaca di riwayat di bawah (titik merah di tab Settings = belum dibaca).</div>
+            <div id="ann-hist-list" style="max-height:200px; overflow-y:auto;"></div>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+                <button class="quality-btn" type="button" onclick="annMarkAllRead()" style="flex:1;">TANDAI DIBACA</button>
+                <button class="quality-btn" type="button" onclick="annClearHist()" style="flex:1;">HAPUS RIWAYAT</button>
+            </div>
         </div>
 
         <!-- KEHALUSAN MASTER STROBE -->
@@ -3378,6 +3413,7 @@
     let mirrorPanActive = false;
     let isMinibruteActive = false; 
     let _mbFlashLevel = 0; // 0..1, mengikuti isMinibruteActive secara halus sesuai slider MB SMOOTH
+    let mbKeepBeam = false; // false = beam lampu mati saat Flash MB ditekan (default); true = beam tetap menyala
     let _strobeHeldKey = null; // fx key (mis. 'sLR') yang lagi dinyalakan via hold QWERTYU, null kalau tidak ada
     let _strobeHeldPhysicalKey = null; // tombol fisik (q/w/e/r/t/y/u) yang lagi ditahan, biar keyup tetap benar walau strobeOrder diubah pas ditahan
     let isMinibruteSelected = false; 
@@ -5998,6 +6034,15 @@
         _mbFlashSwatchSync();
     }
     // Mode pelangi (RGB) per minibrute: warna flash berputar otomatis. Mati = kembali ke warna flash biasa.
+    // Pilihan: saat FLASH MB ditekan, beam lampu mati (default) atau tetap menyala.
+    function setMbBeam(keep) {
+        mbKeepBeam = !!keep;
+        const off = document.getElementById('brute-beam-off'), on = document.getElementById('brute-beam-on');
+        if (off) off.style.background = mbKeepBeam ? '#222' : '#555500';
+        if (on) on.style.background = mbKeepBeam ? '#555500' : '#222';
+        showStatus(mbKeepBeam ? 'Beam tetap menyala saat Flash MB' : 'Beam mati saat Flash MB');
+    }
+
     function toggleBruteRgb() {
         const mb = minibrutes[selectedBrute];
         if (!mb) return;
@@ -13037,9 +13082,50 @@
     // Lampu teman disimpan di array terpisah, jadi tidak ikut efek/chase/simpan project milikmu.
     const mabarRemote = (function () {
         const r1 = v => Math.round((+v || 0) * 10) / 10, r3 = v => Math.round((+v || 0) * 1000) / 1000;
-        let off = 0, vis = { p: true, w: true, s: true, t: true };
+        // Banyak pemain: tiap pemain lain punya "slot" sendiri (objek 3D, gambar, geseran). Array global remoteXxx adalah gabungan semua slot.
+        const Z_ = {};            // key pemain -> slot
+        let myOrder = 0, myO = [0, 0];   // urutan kita (0 = host) dan geseran project kita (digerakkan joystick; ikut dikirim ke semua pemain)
+        const h2 = x => Math.round(Math.max(0, Math.min(1, +x || 0)) * 255).toString(16).padStart(2, '0');
+        const newSlot = (key, order) => ({ key: key, order: order, o: [0, 0], sp: null, dx: 0, dz: 0, vis: { p: true, w: true, s: true, t: true, f: true, ph: true, bn: true }, img: {}, fa: 0, l: [], p: [], w: [], s: [], t: [], f: [], m: [], g: [], ph: [], bn: [] });
+        function agg() {
+            const olds = remoteLamps.length, sl = Object.keys(Z_).map(k => Z_[k]).sort((a, b) => a.order - b.order), cat = k => [].concat.apply([], sl.map(z => z[k]));
+            remoteLamps = cat('l'); remoteParleds = cat('p'); remoteWalls = cat('w'); remoteStrobes = cat('s'); remoteTrusses = cat('t');
+            remoteFans = cat('f'); remoteMinis = cat('m'); remoteFogs = cat('g'); remotePhotos = cat('ph'); remoteBanners = cat('bn');
+            for (let i = remoteLamps.length; i < olds; i++) if (floorGlowMeshes[500 + i]) floorGlowMeshes[500 + i].visible = false;
+        }
+        // tata letak: tiap project ditaruh berderet (urut pemain) lalu ditambah geseran joystick milik pemain itu
+        let _sp = null, _spAt = 0;
+        const mySpan = () => { const n = Date.now(); if (!_sp || n - _spAt > 1500) { _sp = span(pack()); _spAt = n; } return _sp; };
+        function layout() {
+            const list = [{ order: myOrder, sp: mySpan(), o: myO, self: true }];
+            Object.keys(Z_).forEach(k => { const z = Z_[k]; if (z.sp) list.push({ order: z.order, sp: z.sp, o: z.o, z: z }); });
+            list.sort((a, b) => a.order - b.order);
+            let C = null, prevH = 0, me_ = null;
+            list.forEach(e => {
+                const c = (e.sp.min + e.sp.max) / 2, hh = (e.sp.max - e.sp.min) / 2;
+                C = C === null ? c : C + prevH + hh + 30; prevH = hh;
+                e.sx = C - c + (e.o[0] || 0); e.sz = e.o[1] || 0; if (e.self) me_ = e;
+            });
+            list.forEach(e => { if (e.z) { e.z.tx = e.sx - me_.sx; e.z.tz = e.sz - me_.sz; } });
+        }
+        function _shift(z, ax, az) {
+            if (!ax && !az) return;
+            const mv = g => { if (g && g.position) { g.position.x += ax; g.position.z += az; } };
+            z.t.forEach(mv); z.p.forEach(o => mv(o.group)); z.w.forEach(o => mv(o.group)); z.s.forEach(o => mv(o.group)); z.f.forEach(o => mv(o.group)); z.ph.forEach(o => mv(o.group)); z.bn.forEach(o => mv(o.group));
+            z.l.forEach(l => { const st = l.state; st.posX += ax; st.targetX += ax; st.posZ += az; });
+            z.m.forEach(m => { m.targetX += ax; mv(m.group); });
+            z.g.forEach(f => { mv(f.group); if (f.d) { f.d.x = (+f.d.x || 0) + ax; f.d.z = (+f.d.z || 0) + az; } });
+        }
+        function place() {
+            layout();
+            Object.keys(Z_).forEach(k => {
+                const z = Z_[k]; if (z.tx === undefined) return;
+                const ax = z.tx - z.dx, az = z.tz - z.dz;
+                if (Math.abs(ax) > 0.01 || Math.abs(az) > 0.01) { _shift(z, ax, az); z.dx = z.tx; z.dz = z.tz; }
+            });
+        }
         function pack() {
-            return {
+            const P = {
                 l: lamps.map(l => { const s = l.state || {}; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ !== undefined ? s.posZ : -25), rz: r1(s.rotZ), bs: r3(s.beamScale !== undefined ? s.beamScale : 1) }; }),
                 p: parleds.map(p => { const s = p.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), sc: r3(s.scale !== undefined ? s.scale : 1) }; }),
                 w: wallwashers.map(w => { const s = w.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), len: r1(s.length) }; }),
@@ -13052,6 +13138,8 @@
                 bn: banners.map(e => { const s = e.state; return { x: r1(s.posX), y: r1(s.posY), z: r1(s.posZ), rx: r1(s.rotX), ry: r1(s.rotY), rz: r1(s.rotZ), w: r1(s.width), h: r1(s.height), b: r1(s.brightness !== undefined ? s.brightness : 100) }; }),
                 v: { p: !!areParledsVisible, w: !!areWallwashersVisible, s: !!areStrobesVisible, t: !!areTrussesVisible, f: !!areFanLampsVisible, ph: !!arePhotos2DVisible, bn: !!areBannersVisible }
             };
+            const sp = span(P); P.sp = [r1(sp.min), r1(sp.max)];
+            return P;
         }
         // gambar foto/banner milik kita (untuk dikirim sekali ke teman): [{key, el}]
         function images() {
@@ -13060,15 +13148,14 @@
             banners.forEach((e, i) => { if (e.tex && e.tex.image && e.tex.image.width) o.push({ key: 'bn' + i, src: e.imageUrl || e.state.imageUrl || '', el: e.tex.image }); });
             return o.slice(0, 16);
         }
-        const imgCache = {};
-        function _useImg(key) {
-            const url = imgCache[key]; if (!url) return;
+        function _useImg(z, key) {
+            const url = z.img[key]; if (!url) return;
             const n = parseInt(key.slice(2), 10);
-            if (key.slice(0, 2) === 'ph') { const e = remotePhotos[n]; if (e) _applyPhoto2DTexture(e, url, false); }
-            else { const e = remoteBanners[n]; if (e) _applyBannerTexture(e, url); }
+            if (key.slice(0, 2) === 'ph') { const e = z.ph[n]; if (e) _applyPhoto2DTexture(e, url, false); }
+            else { const e = z.bn[n]; if (e) _applyBannerTexture(e, url); }
         }
-        function setImage(key, url) { imgCache[key] = url; _useImg(key); }
-        function reset() { Object.keys(imgCache).forEach(k => delete imgCache[k]); }
+        function setImage(pk, key, url) { const z = Z_[pk]; if (!z) return; z.img[key] = url; _useImg(z, key); }
+        function reset() { Object.keys(Z_).forEach(k => { Z_[k].img = {}; }); }
         function span(P) {
             let a = Infinity, b = -Infinity;
             const add = (x, h) => { if (isFinite(x)) { a = Math.min(a, x - (h || 0)); b = Math.max(b, x + (h || 0)); } };
@@ -13079,30 +13166,32 @@
             return { min: a, max: b };
         }
         function _drop(g) { try { if (g) { scene.remove(g); _disposeTree(g); } } catch (e) {} }
-        function clear() {
-            remoteLamps.forEach((l, i) => {
-                _drop(l.group);
-                if (l._spots) l._spots.forEach(sp => { try { if (sp && sp.parent) sp.parent.remove(sp); } catch (e) {} });
-                if (floorGlowMeshes[500 + i]) floorGlowMeshes[500 + i].visible = false;
-            });
-            remoteParleds.forEach(p => _drop(p.group)); remoteWalls.forEach(w => _drop(w.group)); remoteStrobes.forEach(b => _drop(b.group)); remoteTrusses.forEach(g => _drop(g));
-            remoteFans.forEach(f => _drop(f.group)); remoteMinis.forEach(m => _drop(m.group)); remotePhotos.forEach(e => _drop(e.group)); remoteBanners.forEach(e => _drop(e.group));
-            remoteFogs.forEach(f => { try { window.mabarFog.drop(f); } catch (e) {} });
-            window.mabarFogActive = false;
-            remoteLamps = []; remoteParleds = []; remoteWalls = []; remoteStrobes = []; remoteTrusses = [];
-            remoteFans = []; remoteMinis = []; remoteFogs = []; remotePhotos = []; remoteBanners = [];
+        function _clearZ(z) {
+            z.l.forEach((l, i) => { _drop(l.group); if (l._spots) l._spots.forEach(sp => { try { if (sp && sp.parent) sp.parent.remove(sp); } catch (e) {} }); });
+            z.p.forEach(p => _drop(p.group)); z.w.forEach(w => _drop(w.group)); z.s.forEach(b => _drop(b.group)); z.t.forEach(g => _drop(g));
+            z.f.forEach(f => _drop(f.group)); z.m.forEach(m => _drop(m.group)); z.ph.forEach(e => _drop(e.group)); z.bn.forEach(e => _drop(e.group));
+            z.g.forEach(f => { try { window.mabarFog.drop(f); } catch (e) {} });
+            ['l', 'p', 'w', 's', 't', 'f', 'm', 'g', 'ph', 'bn'].forEach(k => { z[k] = []; });
+        }
+        // clear(key): hapus satu pemain; clear(): hapus semua
+        function clear(key) {
+            if (key === undefined) Object.keys(Z_).forEach(k => { _clearZ(Z_[k]); delete Z_[k]; });
+            else if (Z_[key]) { _clearZ(Z_[key]); delete Z_[key]; }
+            window.mabarFogActive = false; agg(); if (key !== undefined) place();
         }
         // side: +1 = project teman di sebelah kanan project kamu, -1 = di sebelah kiri
-        function setPack(P, side) {
-            clear();
-            const ls = span(pack()), rs = span(P);
-            off = side * ((ls.max - ls.min) / 2 + (rs.max - rs.min) / 2 + 30) + ((ls.min + ls.max) / 2 - (rs.min + rs.max) / 2);
-            vis = Object.assign({ p: true, w: true, s: true, t: true, f: true, ph: true, bn: true }, P.v || {});
+        function setPack(pk, order, P) {
+            _sp = null; let Z = Z_[pk]; if (!Z) Z = Z_[pk] = newSlot(pk, order);
+            const keepImg = Z.img, keepO = Z.o; _clearZ(Z); Z.img = keepImg; Z.o = keepO; Z.order = order;
+            Z.sp = (P.sp && isFinite(P.sp[0]) && isFinite(P.sp[1])) ? { min: P.sp[0], max: P.sp[1] } : span(P);
+            layout(); Z.dx = Z.tx || 0; Z.dz = Z.tz || 0;
+            const off = Z.dx, offz = Z.dz;
+            const vis = Z.vis = Object.assign({ p: true, w: true, s: true, t: true, f: true, ph: true, bn: true }, P.v || {});
             (P.t || []).forEach(d => {
                 try {
                     const g = d.ty === 'circle' ? createCircleTruss(d.len, d.sz) : d.ty === 'papan' ? createPapanTruss(d.len, d.sz) : createTruss(d.len, d.sz);
-                    g.position.set(d.x + off, d.y, d.z); g.rotation.y = THREE.MathUtils.degToRad(d.ry || 0); g.rotation.x = THREE.MathUtils.degToRad(d.rx || 0);
-                    g.visible = !!vis.t; scene.add(g); remoteTrusses.push(g);
+                    g.position.set(d.x + off, d.y, (d.z + offz)); g.rotation.y = THREE.MathUtils.degToRad(d.ry || 0); g.rotation.x = THREE.MathUtils.degToRad(d.rx || 0);
+                    g.visible = !!vis.t; scene.add(g); Z.t.push(g);
                 } catch (e) { console.log('mabar truss', e); }
             });
             (P.l || []).forEach((d, i) => {
@@ -13111,60 +13200,61 @@
                         dim: 0, pan: 0, tilt: 0, zoom: 40, mode: 'beam', rainbow: 0, sunburst: null, posX: d.x + off, posY: d.y, rot: 0,
                         curPan: 0, curTilt: 0, curDim: 0, curRot: 0, curRotPrism: 0, curRotFan: 0, curRotDots: 0, curRotMatrix: 0, curRotStar: 0, curZoom: 40,
                         targetX: d.x + off, targetY: d.y, curGoboX: 0, targetGoboX: 0, colorSteps: [], curColStepIdx: 0, colStepTimer: 0,
-                        activeColor: new THREE.Color(0xffffff), rndPhase: 0, rndSpeed: 0.5, posZ: d.z, rotZ: d.rz || 0, curRotZ: d.rz || 0,
+                        activeColor: new THREE.Color(0xffffff), rndPhase: 0, rndSpeed: 0.5, posZ: (d.z + offz), rotZ: d.rz || 0, curRotZ: d.rz || 0,
                         beamScale: d.bs, curBeamScale: d.bs
                     };
-                    createLamp(s, i); const l = lamps.pop(); l.state = s; l._rm = true; remoteLamps.push(l);
+                    createLamp(s, i); const l = lamps.pop(); l.state = s; l._rm = true; Z.l.push(l);
                 } catch (e) { console.log('mabar lamp', e); }
             });
             (P.p || []).forEach((d, i) => {
                 try {
-                    createParledFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, colorSteps: [], scale: d.sc, curColStepIdx: 0, colStepTimer: 0, activeColor: new THREE.Color(0x000000), rndPhase: 0, rndSpeed: 0.5 }, i);
-                    const p = parleds.pop(); p._rm = true; if (p.light) p.light.visible = false; p.group.visible = !!vis.p; remoteParleds.push(p);
+                    createParledFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: (d.z + offz), rotX: d.rx, rotY: d.ry, rotZ: d.rz, colorSteps: [], scale: d.sc, curColStepIdx: 0, colStepTimer: 0, activeColor: new THREE.Color(0x000000), rndPhase: 0, rndSpeed: 0.5 }, i);
+                    const p = parleds.pop(); p._rm = true; if (p.light) p.light.visible = false; p.group.visible = !!vis.p; Z.p.push(p);
                 } catch (e) { console.log('mabar parled', e); }
             });
             (P.w || []).forEach((d, i) => {
                 try {
-                    createWallwasherFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, length: d.len, rainbow: 0, rainbowCustom: false, rainbowColors: [], colorSteps: [], curColStepIdx: 0, colStepTimer: 0, activeColor: new THREE.Color(0x000000), rndPhase: 0, rndSpeed: 0.5 }, i);
-                    const w = wallwashers.pop(); w._rm = true; (w.lights || []).forEach(x => { if (x) x.visible = false; }); w.group.visible = !!vis.w; remoteWalls.push(w);
+                    createWallwasherFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: (d.z + offz), rotX: d.rx, rotY: d.ry, rotZ: d.rz, length: d.len, rainbow: 0, rainbowCustom: false, rainbowColors: [], colorSteps: [], curColStepIdx: 0, colStepTimer: 0, activeColor: new THREE.Color(0x000000), rndPhase: 0, rndSpeed: 0.5 }, i);
+                    const w = wallwashers.pop(); w._rm = true; (w.lights || []).forEach(x => { if (x) x.visible = false; }); w.group.visible = !!vis.w; Z.w.push(w);
                 } catch (e) { console.log('mabar wall', e); }
             });
             (P.s || []).forEach((d, i) => {
                 try {
-                    createStrobeFixture({ dim: 1, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, scaleX: d.sx, scaleY: d.sy, color: new THREE.Color(0xffffff), rainbow: 0 }, i);
-                    const b = strobes.pop(); b._rm = true; b.group.visible = !!vis.s; remoteStrobes.push(b);
+                    createStrobeFixture({ dim: 1, curDim: 0, posX: d.x + off, posY: d.y, posZ: (d.z + offz), rotX: d.rx, rotY: d.ry, rotZ: d.rz, scaleX: d.sx, scaleY: d.sy, color: new THREE.Color(0xffffff), rainbow: 0 }, i);
+                    const b = strobes.pop(); b._rm = true; b.group.visible = !!vis.s; Z.s.push(b);
                 } catch (e) { console.log('mabar strobe', e); }
             });
             (P.f || []).forEach((d, i) => {
                 try {
-                    createFanLampFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, scale: d.sc, speed: d.sp, _angle: 0, color: new THREE.Color(0xffffff), rainbow: 0, rndPhase: 0, rndSpeed: 0.5 }, i);
-                    const f = fanLamps.pop(); f._rm = true; f.group.visible = !!vis.f; remoteFans.push(f);
+                    createFanLampFixture({ dim: 0, curDim: 0, posX: d.x + off, posY: d.y, posZ: (d.z + offz), rotX: d.rx, rotY: d.ry, rotZ: d.rz, scale: d.sc, speed: d.sp, _angle: 0, color: new THREE.Color(0xffffff), rainbow: 0, rndPhase: 0, rndSpeed: 0.5 }, i);
+                    const f = fanLamps.pop(); f._rm = true; f.group.visible = !!vis.f; Z.f.push(f);
                 } catch (e) { console.log('mabar fan', e); }
             });
             (P.m || []).forEach((d, i) => {
                 try {
                     const keep = minibrute;   // createMinibruteAt menjadikan unit pertama sebagai minibrute utama; jangan sampai milik teman
-                    const mb = createMinibruteAt(d.x + off, d.y, d.z, d.sc, d.md, { rotX: d.rx, rotY: d.ry, rotZ: d.rz, flashColor: d.fc, dimmer: 100, rgb: false });
+                    const mb = createMinibruteAt(d.x + off, d.y, (d.z + offz), d.sc, d.md, { rotX: d.rx, rotY: d.ry, rotZ: d.rz, flashColor: d.fc, dimmer: 100, rgb: false });
                     minibrutes.pop(); minibrute = keep;
-                    mb._rm = true; if (mb.light) mb.light.visible = false; remoteMinis.push(mb);
+                    mb._rm = true; if (mb.light) { mb.light.visible = Z.m.length < 2; mb.light.intensity = 0; } Z.m.push(mb);
                 } catch (e) { console.log('mabar minibrute', e); }
             });
             (P.g || []).forEach(d => {
-                try { if (window.mabarFog) { const f = window.mabarFog.create(Object.assign({}, d, { x: (+d.x || 0) + off })); remoteFogs.push(f); } } catch (e) { console.log('mabar fogger', e); }
+                try { if (window.mabarFog) { const f = window.mabarFog.create(Object.assign({}, d, { x: (+d.x || 0) + off, z: (+d.z || 0) + offz })); Z.g.push(f); } } catch (e) { console.log('mabar fogger', e); }
             });
             (P.ph || []).forEach((d, i) => {
                 try {
-                    const e = createPhoto2DFixture({ posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, width: d.w, height: d.h, brightness: d.b, imageUrl: null }, i);
-                    photos2D.pop(); e.group.visible = !!vis.ph; remotePhotos.push(e);
+                    const e = createPhoto2DFixture({ posX: d.x + off, posY: d.y, posZ: (d.z + offz), rotX: d.rx, rotY: d.ry, rotZ: d.rz, width: d.w, height: d.h, brightness: d.b, imageUrl: null }, i);
+                    photos2D.pop(); e.group.visible = !!vis.ph; Z.ph.push(e);
                 } catch (e) { console.log('mabar foto', e); }
             });
             (P.bn || []).forEach((d, i) => {
                 try {
-                    const e = createBannerFixture({ posX: d.x + off, posY: d.y, posZ: d.z, rotX: d.rx, rotY: d.ry, rotZ: d.rz, width: d.w, height: d.h, brightness: d.b, imageUrl: null }, i);
-                    banners.pop(); e.group.visible = !!vis.bn; remoteBanners.push(e);
+                    const e = createBannerFixture({ posX: d.x + off, posY: d.y, posZ: (d.z + offz), rotX: d.rx, rotY: d.ry, rotZ: d.rz, width: d.w, height: d.h, brightness: d.b, imageUrl: null }, i);
+                    banners.pop(); e.group.visible = !!vis.bn; Z.bn.push(e);
                 } catch (e) { console.log('mabar banner', e); }
             });
-            Object.keys(imgCache).forEach(_useImg);   // gambar yang sudah pernah diterima dipakai lagi tanpa kirim ulang
+            Object.keys(Z.img).forEach(k => _useImg(Z, k));   // gambar yang sudah pernah diterima dipakai lagi tanpa kirim ulang
+            agg(); place();
         }
         // nilai akhir milik kita yang dikirim ke teman
         function frame() {
@@ -13175,13 +13265,10 @@
                         r1(s.curRotZ), r3(l._ocr), r3(l._ocg), r3(l._ocb), r3(s.rot), s.mode || '', s.sunburst === 'pink' ? 1 : 0, s.rainbowPrism ? 1 : 0];
                 }),
                 p: parleds.map(p => [r3(p.state.curDim), r3(p._ocr), r3(p._ocg), r3(p._ocb)]),
-                w: wallwashers.map(w => {
-                    let bi = -1, bv = 0;
-                    w.segments.forEach((sg, j) => { const v = sg.material.emissiveIntensity; if (v > bv) { bv = v; bi = j; } });
-                    if (bi < 0) return [0, 1, 1, 1];
-                    const c = (w.glows[bi] && w.glows[bi].material.color) || w.segments[bi].material.emissive;
-                    return [r3(Math.min(1, bv / 28)), r3(c.r), r3(c.g), r3(c.b)];
-                }),
+                w: wallwashers.map(w => w.segments.map((sg, j) => {
+                    const gl = w.glows[j], c = (gl && gl.material.color) || sg.material.emissive;
+                    return h2(sg.material.emissiveIntensity / 28) + h2(c.r) + h2(c.g) + h2(c.b);   // 8 karakter per segmen: terang + warna masing-masing
+                }).join('')),
                 s: strobes.map(b => {
                     let bi = 0, bm = 0; const mx = b.leds.map(({ mesh }, k) => { const c = mesh.material.color, m = Math.max(c.r, c.g, c.b); if (m > bm) { bm = m; bi = k; } return m; });
                     let c = [1, 1, 1]; if (bm > 0.001) { const bc = b.leds[bi].mesh.material.color; c = [r3(bc.r / bm), r3(bc.g / bm), r3(bc.b / bm)]; }
@@ -13189,36 +13276,40 @@
                 }),
                 f: fanLamps.map(f => { const s = f.state, c = f._oc || s.color; return [r3(s.curDim), r3(c.r), r3(c.g), r3(c.b), fanLampCenterGlowOn ? 1 : 0, r3(s.speed !== undefined ? s.speed : 3)]; }),
                 m: minibrutes.map(mb => { const c = mb.flashGlowCol || { r: 1, g: 1, b: 1 }, d = ((mb.bruteData && mb.bruteData.dimmer !== undefined ? mb.bruteData.dimmer : 100) / 100); return [r3(_mbFlashLevel * d), r3(c.r), r3(c.g), r3(c.b)]; }),
-                fa: window.isFogActive ? 1 : 0
+                fa: window.isFogActive ? 1 : 0,
+                o: [r1(myO[0]), r1(myO[1])]
             };
         }
-        function apply(f) {
-            if (!f) return;
+        function apply(pk, f) {
+            const Z = Z_[pk]; if (!f || !Z) return;
+            if (Array.isArray(f.o) && (f.o[0] !== Z.o[0] || f.o[1] !== Z.o[1])) { Z.o = [+f.o[0] || 0, +f.o[1] || 0]; place(); }
             (f.l || []).forEach((a, i) => {
-                const l = remoteLamps[i]; if (!l || !a) return; const s = l.state;
+                const l = Z.l[i]; if (!l || !a) return; const s = l.state;
                 s.dim = a[0]; s.pan = a[1]; s.tilt = a[2]; s.zoom = a[3]; s.beamScale = a[4]; s.targetGoboX = a[5];
-                s.targetX = a[6] + off; s.targetY = a[7]; s.posZ = a[8]; s.rotZ = a[9];
+                s.targetX = a[6] + Z.dx; s.targetY = a[7]; s.posZ = a[8] + Z.dz; s.rotZ = a[9];
                 s.activeColor.setRGB(a[10], a[11], a[12]); s.rot = a[13]; s.mode = a[14]; s.sunburst = a[15] ? 'pink' : null; s.rainbowPrism = !!a[16];
             });
             (f.p || []).forEach((a, i) => {
-                const p = remoteParleds[i]; if (!p || !a) return; const s = p.state;
+                const p = Z.p[i]; if (!p || !a) return; const s = p.state;
                 s.curDim = a[0]; s.activeColor.setRGB(a[1], a[2], a[3]);
                 p.lens.material.emissive.setRGB(a[1], a[2], a[3]); p.lens.material.emissiveIntensity = a[0] * 25;
                 p.emitter.material.color.setRGB(a[1], a[2], a[3]); p.emitter.material.opacity = a[0] * 0.95;
             });
-            (f.w || []).forEach((a, i) => {
-                const w = remoteWalls[i]; if (!w || !a) return;
+            (f.w || []).forEach((str, i) => {
+                const w = Z.w[i]; if (!w || typeof str !== 'string') return;
                 w.segments.forEach((sg, j) => {
-                    sg.material.emissive.setRGB(a[1], a[2], a[3]); sg.material.emissiveIntensity = a[0] * 28;
-                    if (w.glows[j]) { w.glows[j].material.color.setRGB(a[1], a[2], a[3]); w.glows[j].material.opacity = a[0] * 0.38; }
+                    const t = str.substr(j * 8, 8); if (t.length < 8) return;
+                    const v = parseInt(t.substr(0, 2), 16) / 255, r = parseInt(t.substr(2, 2), 16) / 255, g = parseInt(t.substr(4, 2), 16) / 255, b = parseInt(t.substr(6, 2), 16) / 255;
+                    sg.material.emissive.setRGB(r, g, b); sg.material.emissiveIntensity = v * 28;
+                    if (w.glows[j]) { w.glows[j].material.color.setRGB(r, g, b); w.glows[j].material.opacity = v * 0.38; }
                 });
             });
             (f.s || []).forEach((a, i) => {
-                const b = remoteStrobes[i]; if (!b || !a || !a.v) return;
+                const b = Z.s[i]; if (!b || !a || !a.v) return;
                 b.leds.forEach(({ mesh }, k) => { const q = parseInt(a.v.charAt(k) || '0', 16) / 15; mesh.material.color.setRGB(a.c[0] * q, a.c[1] * q, a.c[2] * q); });
             });
             (f.f || []).forEach((a, i) => {
-                const fl = remoteFans[i]; if (!fl || !a) return; const s = fl.state;
+                const fl = Z.f[i]; if (!fl || !a) return; const s = fl.state;
                 s.curDim = a[0]; s.speed = a[5];
                 const bright = Math.max(0.25, 0.25 + a[0] * 0.9);
                 fl.leds.forEach(({ led, glow }) => { led.color.setRGB(a[1] * bright, a[2] * bright, a[3] * bright); glow.color.setRGB(a[1], a[2], a[3]); glow.opacity = a[4] ? a[0] * 0.85 : 0; });
@@ -13226,13 +13317,17 @@
                 fl.ghostMats.forEach((gm, gi) => { gm.color.setRGB(a[1], a[2], a[3]); gm.opacity = a[0] * blur * (gi === 0 ? 0.35 : 0.18); });
             });
             (f.m || []).forEach((a, i) => {
-                const mb = remoteMinis[i]; if (!mb || !a) return;
+                const mb = Z.m[i]; if (!mb || !a) return;
                 mb.glows.forEach(g => { g.material.opacity = Math.min(1, a[0] * 0.98); g.material.color.setRGB(a[1], a[2], a[3]); g.scale.setScalar(1.0 + a[0] * 0.08); });
                 mb.surfaces.forEach(sf => { sf.material.emissive.setRGB(a[1], a[2], a[3]); sf.material.emissiveIntensity = a[0] * 4.0; });
+                if (mb.light && mb.light.visible) { mb.light.color.setRGB(a[1], a[2], a[3]); mb.light.intensity = a[0] * 15; }   // cahaya Flash MB ikut menerangi ruangan
             });
-            window.mabarFogActive = !!f.fa;
+            Z.fa = f.fa ? 1 : 0; Z.g.forEach(fg => { fg._act = !!Z.fa; });
         }
-        return { pack, frame, apply, setPack, clear, images, setImage, reset };
+        function setSelf(order) { myOrder = order; place(); }
+        function setMyOffset(x, z) { myO = [x, z]; place(); }
+        const keys = () => Object.keys(Z_);
+        return { pack, frame, apply, setPack, clear, images, setImage, reset, setSelf, setMyOffset, keys };
     })();
     window.mabarRemote = mabarRemote;
 
@@ -13572,7 +13667,7 @@
                 ['flyout', 'flyoutB', 'flyoutL', 'flyoutR'].forEach(k => { if (fxState[k]) d *= _flyoutCalc(i, now, k).env; });   // Flyout: cahaya muncul/hilang bergantian antar tim
             }
             s.curDim += (d - s.curDim) * (l._rm ? _lf(0.6) : _lfS);
-            if (!l._rm) s.curDim *= (1 - _mbFlashLevel); // overlay Flash MB — smooth sesuai slider MB SMOOTH
+            if (!l._rm && !mbKeepBeam) s.curDim *= (1 - _mbFlashLevel); // overlay Flash MB — smooth sesuai slider MB SMOOTH (opsi BEAM HIDUP di panel Minibrute melewati ini)
 
             // FX Generator pergerakan (persis v7_0)
             const tCircle   = (now*0.001 * globalSpeed * fxSpeeds.circle)           - (i * delay);
@@ -19007,9 +19102,50 @@
         }, 1000);
     }
 
+    // ── Pengumuman: mode tampilan (pengguna), prioritas (admin), dan riwayat ──
+    // Mode: 'glass' (default, transparan, tidak memblokir sentuhan), 'normal' (kartu berwarna seperti dulu), 'hide' (pengumuman ringan hanya masuk riwayat).
+    // Prioritas dari admin: 'penting' selalu tampil; selain itu = 'ringan'.
+    const ANN_MODE_KEY = 'ian_ann_mode', ANN_HIST_KEY = 'ian_ann_hist';
+    function annMode() { try { const v = localStorage.getItem(ANN_MODE_KEY); return v === 'normal' || v === 'hide' ? v : 'glass'; } catch (e) { return 'glass'; } }
+    function annSetMode(v) { try { localStorage.setItem(ANN_MODE_KEY, v); } catch (e) {} }
+    function annHist() { try { const a = JSON.parse(localStorage.getItem(ANN_HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+    function annSave(a) { try { localStorage.setItem(ANN_HIST_KEY, JSON.stringify(a.slice(0, 20))); } catch (e) {} }
+    function annRecord(d, read) {
+        const id = String(d.timestamp || Date.now()), a = annHist(), ex = a.find(x => x.id === id);
+        if (ex) { if (read && !ex.r) { ex.r = 1; annSave(a); } }
+        else { a.unshift({ id: id, t: String(d.title || 'Pengumuman').slice(0, 80), m: String(d.msg || '').slice(0, 300), ty: d.type || 'info', p: d.prio === 'penting' ? 1 : 0, at: Date.now(), r: read ? 1 : 0 }); annSave(a); }
+        annRefreshUi();
+    }
+    function annRefreshUi() {
+        const a = annHist(), unread = a.some(x => !x.r);
+        const dot = document.getElementById('ann-dot'); if (dot) dot.style.display = unread ? '' : 'none';
+        const sel = document.getElementById('ann-mode-sel'); if (sel && sel.value !== annMode()) sel.value = annMode();
+        const box = document.getElementById('ann-hist-list'); if (!box) return;
+        box.textContent = '';
+        if (!a.length) { const e = document.createElement('div'); e.style.cssText = 'font-size:9px;color:#666;padding:6px 0;'; e.textContent = 'Belum ada pengumuman.'; box.appendChild(e); return; }
+        const col = { info: '#3aa0ff', warning: '#ffb020', success: '#2ecc71', error: '#ff5555' };
+        a.forEach(x => {
+            const r = document.createElement('div'); r.style.cssText = 'padding:7px 8px;margin-bottom:5px;background:#1a1a1a;border-radius:6px;border-left:3px solid ' + (col[x.ty] || col.info) + ';';
+            const h = document.createElement('div'); h.style.cssText = 'font-size:10px;font-weight:bold;color:#eee;display:flex;gap:6px;align-items:center;';
+            if (!x.r) { const d = document.createElement('span'); d.style.cssText = 'width:6px;height:6px;border-radius:50%;background:#f33;flex:none;'; h.appendChild(d); }
+            const t = document.createElement('span'); t.textContent = x.t; h.appendChild(t);
+            if (x.p) { const pb = document.createElement('span'); pb.style.cssText = 'font-size:8px;color:#fc6;border:1px solid #fc6;border-radius:3px;padding:0 4px;margin-left:auto;'; pb.textContent = 'PENTING'; h.appendChild(pb); }
+            const m = document.createElement('div'); m.style.cssText = 'font-size:9px;color:#bbb;line-height:1.4;margin-top:2px;white-space:pre-wrap;'; m.textContent = x.m;
+            const w = document.createElement('div'); w.style.cssText = 'font-size:8px;color:#666;margin-top:3px;'; try { w.textContent = new Date(x.at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+            r.append(h, m, w); box.appendChild(r);
+        });
+    }
+    function annMarkAllRead() { const a = annHist(); a.forEach(x => { x.r = 1; }); annSave(a); annRefreshUi(); }
+    function annClearHist() { annSave([]); annRefreshUi(); }
+    window.annSetMode = annSetMode; window.annRefreshUi = annRefreshUi; window.annMarkAllRead = annMarkAllRead; window.annClearHist = annClearHist;
+    window.addEventListener('load', () => setTimeout(annRefreshUi, 300));
+
     function showAnnouncementBanner(d) {
+        const penting = d.prio === 'penting', mode = annMode();
+        if (mode === 'hide' && !penting) { annRecord(d, false); return; }   // hanya masuk riwayat (titik merah di tab Settings); banner yang sedang tampil dibiarkan
         const existing = document.getElementById('_ann_banner');
         if(existing) dismissBanner(existing);
+        annRecord(d, true);
 
         const gradients = {
             info:    'linear-gradient(135deg, #0066ff, #0099ff)',
@@ -19017,6 +19153,7 @@
             success: 'linear-gradient(135deg, #00aa33, #00ff88)',
             error:   'linear-gradient(135deg, #cc0000, #ff4444)'
         };
+        const accents = { info: '#3aa0ff', warning: '#ffb020', success: '#2ecc71', error: '#ff5555' };
         const glows = {
             info:    'rgba(0,150,255,0.6)',
             warning: 'rgba(255,180,0,0.6)',
@@ -19034,9 +19171,11 @@
         const type     = d.type || 'info';
         const gradient = gradients[type] || gradients.info;
         const glow     = glows[type]     || glows.info;
+        const accent   = accents[type]   || accents.info;
         const icon     = icons[type]     || icons.info;
         const duration = d.duration || 0;
-        const iconUrl  = d.iconUrl || '';
+        const iconUrl  = /^https?:\/\//i.test(d.iconUrl || '') ? d.iconUrl : '';
+        const glass = mode !== 'normal', compact = glass && !penting;
 
         if(!document.getElementById('_ann_styles')) {
             const style = document.createElement('style');
@@ -19051,10 +19190,27 @@
             document.head.appendChild(style);
         }
 
+        // pembungkus: tidak menangkap sentuhan sama sekali (viewport 3D di bawahnya tetap bisa disentuh); hanya tombol tutup yang aktif
         const banner = document.createElement('div');
         banner.id = '_ann_banner';
+        const topPx = document.getElementById('mabar-bar') ? 44 : 8;   // jangan menimpa bar Mabar
         banner.style.cssText = `
-            position:fixed; top:8px; left:8px; right:8px; z-index:999998;
+            position:fixed; top:${topPx}px; left:8px; right:8px; z-index:999998; margin:0 auto;
+            max-width:${compact ? 380 : 640}px; pointer-events:none;
+            animation: _annSlideDown 0.45s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+        `;
+        const card = document.createElement('div');
+        card.style.cssText = glass ? `
+            background:${penting ? 'rgba(10,12,16,0.88)' : 'rgba(10,12,16,0.52)'};
+            -webkit-backdrop-filter:blur(${penting ? 8 : 10}px) saturate(1.2); backdrop-filter:blur(${penting ? 8 : 10}px) saturate(1.2);
+            padding:${compact ? '8px 10px' : '12px 14px'};
+            display:flex; align-items:flex-start; gap:10px;
+            font-family:'Segoe UI',sans-serif;
+            box-shadow:0 4px 16px rgba(0,0,0,0.25);
+            border-radius:${compact ? 12 : 16}px;
+            border:1px solid rgba(255,255,255,0.12); border-left:3px solid ${accent};
+            transition:opacity .7s ease;
+        ` : `
             background:${gradient};
             padding:12px 14px;
             display:flex; align-items:flex-start; gap:10px;
@@ -19062,35 +19218,30 @@
             box-shadow: 0 6px 24px ${glow}, 0 2px 8px rgba(0,0,0,0.3);
             border-radius:16px;
             border:1px solid rgba(255,255,255,0.2);
-            animation: _annSlideDown 0.45s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+            transition:opacity .7s ease;
         `;
 
-        const iconHtml = iconUrl
-            ? `<img src="${iconUrl}" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;object-fit:cover;animation:_annIconBounce 0.6s ease 0.4s 2;">`
-            : `<span style="display:flex;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.35));animation:_annIconBounce 0.6s ease 0.4s 2;">${icon}</span>`;
-
-        banner.innerHTML = `
-            ${iconHtml}
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;text-shadow:0 1px 4px rgba(0,0,0,0.3);">${d.title||'Pengumuman'}</div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.92);line-height:1.4;">${d.msg||''}</div>
-                ${duration > 0 ? `
-                <div style="margin-top:7px;height:3px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden;">
-                    <div id="_ann_progress" style="
-                        height:100%;width:100%;border-radius:2px;
-                        background:linear-gradient(90deg,rgba(255,255,255,0.3),rgba(255,255,255,0.9),rgba(255,255,255,0.3));
-                        background-size:200% 100%;
-                        animation:_annShimmer 1.5s linear infinite;
-                        transition:width ${duration}s linear;
-                    "></div>
-                </div>` : ''}
-            </div>
-            <button onclick="dismissBanner(document.getElementById('_ann_banner'))"
-                style="background:rgba(0,0,0,0.2);border:none;color:#fff;font-size:14px;cursor:pointer;
-                       flex-shrink:0;padding:6px 8px;border-radius:8px;line-height:0;" aria-label="Tutup"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        `;
-
+        const mk = (tag, css, txt) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (txt !== undefined) e.textContent = txt; return e; };
+        let ic;
+        if (iconUrl) { ic = mk('img', `width:${compact ? 22 : 28}px;height:${compact ? 22 : 28}px;border-radius:8px;flex-shrink:0;object-fit:cover;animation:_annIconBounce 0.6s ease 0.4s 2;`); ic.src = iconUrl; ic.alt = ''; }
+        else { ic = mk('span', 'display:flex;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.35));animation:_annIconBounce 0.6s ease 0.4s 2;'); ic.innerHTML = glass ? icon.replace('stroke="#fff"', 'stroke="currentColor"') : icon; if (compact) { const sv = ic.firstChild; if (sv && sv.setAttribute) { sv.setAttribute('width', '18'); sv.setAttribute('height', '18'); } } if (glass) ic.style.color = accent; }
+        const body = mk('div', 'flex:1;min-width:0;');
+        body.appendChild(mk('div', `font-size:${compact ? 12 : 13}px;font-weight:800;color:#fff;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,0.3);`, d.title || 'Pengumuman'));
+        body.appendChild(mk('div', `font-size:11px;color:rgba(255,255,255,0.92);line-height:1.4;` + (compact ? 'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;' : ''), d.msg || ''));
+        if (duration > 0) {
+            const tr = mk('div', 'margin-top:7px;height:3px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden;');
+            tr.appendChild(mk('div', `height:100%;width:100%;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0.3),rgba(255,255,255,0.9),rgba(255,255,255,0.3));background-size:200% 100%;animation:_annShimmer 1.5s linear infinite;transition:width ${duration}s linear;`)).id = '_ann_progress';
+            body.appendChild(tr);
+        }
+        const x = mk('button', 'pointer-events:auto;background:rgba(0,0,0,0.25);border:none;color:#fff;cursor:pointer;flex-shrink:0;padding:6px 8px;border-radius:8px;line-height:0;');
+        x.type = 'button'; x.setAttribute('aria-label', 'Tutup');
+        x.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        x.onclick = () => dismissBanner(banner);
+        card.append(ic, body, x); banner.appendChild(card);
         document.body.appendChild(banner);
+
+        // pengumuman ringan: setelah 3,5 detik memudar jadi transparan supaya tidak mengganggu pandangan ke viewport
+        if (glass && !penting) setTimeout(() => { if (banner.parentNode) card.style.opacity = '0.35'; }, 3500);
 
         if(duration > 0) {
             setTimeout(() => {
@@ -20845,7 +20996,6 @@
         dt = Math.min(dt, 0.1);
         // tekanan semburan: naik cepat saat tombol ditekan, putus seketika saat dilepas
         _lvl = isFogActive ? Math.min(1, _lvl + dt * 5) : 0;
-        _lvlR = window.mabarFogActive ? Math.min(1, _lvlR + dt * 5) : 0;
         const drag = Math.exp(-0.95 * dt), dragSlow = Math.exp(-1.4 * dt);
         let _emit = 0;   // total semburan aktif frame ini (untuk kabut ruangan)
         _fogLights();
@@ -20922,7 +21072,7 @@
             S._wasAlive = alive > 0;
         };
         foggers.forEach(f => _fgStep(f, _lvl));
-        window.foggersRemote.forEach(f => _fgStep(f, _lvlR));
+        window.foggersRemote.forEach(f => { f._lv = f._act ? Math.min(1, (f._lv || 0) + dt * 5) : 0; _fgStep(f, f._lv); });
         // kabut ruangan: naik selama menyembur (makin penuh makin lambat naik), lalu turun perlahan (waktu peluruhan sekitar 45 detik)
         let Hz = window.fogRoomHaze || 0;
         Hz += ((1 - Hz) * 0.05 * _emit - Hz / 45) * dt;
@@ -21532,15 +21682,17 @@
     function ensureStyle() {
         if ($('_aud_style')) return;
         const st = document.createElement('style'); st.id = '_aud_style';
-        st.textContent = '@keyframes _audIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}' +
-            '#_aud_card{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:min(92vw,300px);box-sizing:border-box;z-index:999997;display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;background:rgba(11,15,11,.94);border:1px solid var(--tp,#0f0);border-radius:18px;padding:6px 12px 6px 6px;color:#ddd;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,.5);animation:_audIn .22s ease-out;transition:opacity .35s;}' +
+        st.textContent = '@keyframes _audIn{from{opacity:0;transform:translate(-50%,-10px) scale(.92)}to{opacity:1;transform:translate(-50%,0) scale(1)}}' +
+            '@keyframes _audBar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}' +
+            '#_aud_card{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(72vw,230px);height:54px;box-sizing:border-box;z-index:999997;display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(8,12,8,.92);border:1px solid rgba(34,197,94,.4);border-radius:999px;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 14px rgba(34,197,94,.15);overflow:hidden;animation:_audIn .35s ease both;transition:opacity .4s;}' +
             '#_aud_card.out{opacity:0;}' +
-            '#_aud_card button{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:transparent;border:1px solid var(--tp,#0f0);color:var(--tp,#0f0);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation;}' +
-            '#_aud_card .t{flex:1;min-width:0;line-height:1.2;}#_aud_card .n{font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}#_aud_card .s{font-size:9px;color:#9a9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-            '#_aud_card .sk{flex:0 0 100%;display:block;width:100%;height:14px;margin:0;padding:0;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;touch-action:none;--p:0%;}' +
-            '#_aud_card .sk::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--tp,#0f0) var(--p),#2a352c var(--p));}#_aud_card .sk::-moz-range-track{height:4px;border-radius:2px;background:#2a352c;}#_aud_card .sk::-moz-range-progress{height:4px;border-radius:2px;background:var(--tp,#0f0);}' +
-            '#_aud_card .sk::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;border:0;margin-top:-4px;}#_aud_card .sk::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:0;}' +
-            '#_aud_card .c{font-size:11px;color:#cfd;font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0;}' +
+            '#_aud_card .im{width:40px;height:40px;border-radius:50%;flex:none;overflow:hidden;background:#12301b;border:1px solid rgba(34,197,94,.55);display:flex;align-items:center;justify-content:center;color:#22c55e;}#_aud_card .im img{width:100%;height:100%;object-fit:cover;display:block;}' +
+            '#_aud_card .vz{flex:1;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:transparent;border:0;padding:0;margin:0;color:inherit;}' +
+            '#_aud_card .vz i{display:block;width:5px;height:24px;border-radius:3px;background:#22c55e;transform-origin:center;}' +
+            '#_aud_card .vz i:nth-child(1){transform:scaleY(.4);}#_aud_card .vz i:nth-child(2){transform:scaleY(.85);}#_aud_card .vz i:nth-child(3){transform:scaleY(.6);}' +
+            '#_aud_card.pl .vz i{animation:_audBar .8s ease-in-out infinite;}#_aud_card.pl .vz i:nth-child(2){animation-duration:.62s;animation-delay:-.25s;}#_aud_card.pl .vz i:nth-child(3){animation-duration:.95s;animation-delay:-.5s;}' +
+            '#_aud_card .x{width:34px;height:34px;border-radius:50%;flex:none;background:rgba(255,255,255,.14);border:0;color:#dfe;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}' +
+            '#_aud_card .pg{position:absolute;left:20px;right:20px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);pointer-events:none;}#_aud_card .pg i{display:block;height:100%;width:0;background:#22c55e;border-radius:2px;}' +
             '#ev-bs-btn{position:absolute;left:6px;bottom:48px;z-index:60;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;}';
         document.head.appendChild(st);
     }
@@ -21548,34 +21700,30 @@
         ensureStyle();
         aClose();
         const card = document.createElement('div'); card.id = '_aud_card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', 'Audio dari admin');
-        card.innerHTML = '<button type="button" id="_aud_pp" aria-label="Putar">' + SVG(IC.play, 15) + '</button>' +
-            '<div class="t"><div class="n"></div><div class="s"></div></div><div class="c" id="_aud_c">0:00</div>' +
-            '<input type="range" class="sk" id="_aud_sk" min="0" max="1000" value="0" aria-label="Posisi audio">';
-        card.querySelector('.n').textContent = d.name || 'Admin';
-        card.querySelector('.s').textContent = d.title || 'Audio dari admin';
+        const im = document.createElement('div'); im.className = 'im';
+        const fallback = () => { im.innerHTML = SVG('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 18); };
+        if (/^https?:\/\//i.test(d.iconUrl || '')) { const img = document.createElement('img'); img.alt = ''; img.onerror = () => { img.remove(); fallback(); }; img.src = d.iconUrl; im.appendChild(img); } else fallback();
+        const vz = document.createElement('button'); vz.type = 'button'; vz.className = 'vz'; vz.setAttribute('aria-label', 'Putar atau jeda');
+        vz.title = [d.name, d.title].filter(Boolean).join(' - ') || 'Audio dari admin'; vz.innerHTML = '<i></i><i></i><i></i>';
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.setAttribute('aria-label', 'Tutup'); x.innerHTML = SVG(IC.close, 15);
+        const pg = document.createElement('div'); pg.className = 'pg'; const bar = document.createElement('i'); pg.appendChild(bar);
+        card.append(im, vz, x, pg);
         document.body.appendChild(card);
         const a = new Audio(); a.preload = 'auto'; a.loop = !!d.loop; a.src = src; aAud = a;
         let vol = 0.8; try { const sv = parseFloat(localStorage.getItem('_aud_vol')); if (sv >= 0 && sv <= 1) vol = sv; } catch (e) {}
         a.volume = vol;
-        const pp = $('_aud_pp'), cn = $('_aud_c');
-        const sk = $('_aud_sk'); let seeking = false;
-        const upd = () => {
-            const ok = a.duration && isFinite(a.duration);
-            cn.textContent = fmtT(seeking && ok ? sk.value / 1000 * a.duration : a.currentTime) + (ok ? ' / ' + fmtT(a.duration) : '');
-            if (!seeking) { const v = ok ? Math.round(a.currentTime / a.duration * 1000) : 0; sk.value = v; sk.style.setProperty('--p', (v / 10) + '%'); }
-        };
-        sk.addEventListener('input', () => { seeking = true; sk.style.setProperty('--p', (sk.value / 10) + '%'); upd(); });
-        sk.addEventListener('change', () => { if (a.duration && isFinite(a.duration)) a.currentTime = sk.value / 1000 * a.duration; seeking = false; upd(); });
-        const setPP = playing => { pp.innerHTML = SVG(playing ? IC.pause : IC.play, 15); pp.setAttribute('aria-label', playing ? 'Jeda' : 'Putar'); duck(playing); };
+        const upd = () => { const ok = a.duration && isFinite(a.duration); bar.style.width = (ok ? Math.min(100, a.currentTime / a.duration * 100) : 0) + '%'; };
+        const setPP = playing => { card.classList.toggle('pl', playing); duck(playing); };
         a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false));
         a.addEventListener('loadedmetadata', upd); a.addEventListener('timeupdate', upd);
         a.addEventListener('ended', () => {   // tanpa loop: kartu hilang sendiri setelah durasi habis
             setPP(false);
             if (!a.loop) { card.classList.add('out'); setTimeout(() => { if (aAud === a) aClose(); }, 400); }
         });
-        a.addEventListener('error', () => { cn.textContent = 'gagal'; });
-        pp.onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
-        const p = a.play(); if (p && p.catch) p.catch(() => {});   // diblokir browser: tombol play tetap tersedia
+        a.addEventListener('error', () => { aClose(); if (typeof showStatus === 'function') showStatus('Audio admin gagal diputar', true); });
+        vz.onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
+        x.onclick = aClose;
+        const p = a.play(); if (p && p.catch) p.catch(() => {});   // diblokir browser: ketuk batang di tengah untuk memutar
     }
     window.handleAdminAudio = async function (d) {
         if (!d || !d.active) { aClose(); try { sessionStorage.removeItem('_aud_ts'); } catch (e) {} return; }
@@ -21643,25 +21791,7 @@
     'use strict';
     const $ = id => document.getElementById(id);
     const STUN = ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'];
-    let ICE = [{ urls: STUN }], _iceAt = 0, _icePromise = null;
-    // Server TURN (relay) dari Worker: supaya Mabar tetap tersambung di jaringan seluler / NAT ketat. Tanpa ini hanya STUN (sering gagal di data seluler).
-    function iceBase() { let w = ''; try { w = _RBX_WORKER; } catch (e) {} return String(window.MABAR_ICE_URL || window.ROBLOX_PROXY || w || '').trim().replace(/\/+$/, ''); }
-    function ensureIce() {
-        if (_iceAt && Date.now() - _iceAt < 50 * 60000) return Promise.resolve();
-        if (_icePromise) return _icePromise;
-        const b = iceBase(); if (!b) return Promise.resolve();
-        _icePromise = (async () => {
-            const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 4000);
-            try {
-                const r = await fetch(b + '/?ice=1', { signal: ac.signal });
-                if (!r.ok) return;
-                const j = await r.json(), a = j && j.iceServers;
-                if (Array.isArray(a) && a.length) { ICE = [{ urls: STUN }].concat(a); _iceAt = Date.now(); }
-            } catch (e) { console.log('mabar ice', e); }
-            finally { clearTimeout(tm); _icePromise = null; }
-        })();
-        return _icePromise;
-    }
+    const ICE = [{ urls: STUN }];
     const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const db = () => (typeof _db !== 'undefined') ? _db : null;
     const me = () => (typeof _deviceId !== 'undefined') ? _deviceId : 'anon';
@@ -21699,7 +21829,6 @@
 
     // ── jendela buat/gabung ──
     function openModal() {
-        ensureIce();   // siapkan server TURN lebih awal
         if (R) return;
         if (window.ianMabarOff) { say('Mabar sedang dinonaktifkan oleh admin', true); return; }
         if (!rt()) { say('Mabar butuh koneksi internet', true); return; }
@@ -21757,7 +21886,6 @@
         if (pw) await r.ref('mabar/sec/' + code).set({ p: await proofOf(code, pw) });
         const exp = Date.now() + mins * 60000;
         await r.ref('mabar/rooms/' + code).set({ h: { u: me(), n: name }, pw: !!pw, exp: exp, c: false, ts: NOW() });
-        await ensureIce();
         ov.remove();
         start({ code, role: 'host', exp, partner: '' });
         showCode(code, !!pw);
@@ -21769,17 +21897,22 @@
         if (!s.exists()) throw U('Room tidak ditemukan.');
         const d = s.val();
         if (d.c || d.exp <= Date.now()) throw U('Room sudah ditutup atau kedaluwarsa.');
-        if (d.g) throw U('Room sudah penuh (2 pemain).');
         if (d.h && d.h.u === me()) throw U('Ini room milikmu. Minta temanmu yang bergabung.');
+        if (['g', 'g2', 'g3'].some(f => d[f] && d[f].u === me())) throw U('Kamu sudah ada di room ini.');
+        const free = ['g', 'g2', 'g3'].filter(f => !d[f]);
+        if (!free.length) throw U('Room sudah penuh (maksimal 4 pemain).');
         if (d.pw) {
             if (!pw) throw U('Room ini memakai password.');
             await r.ref('mabar/join/' + code + '/' + me()).set({ p: await proofOf(code, pw) });
         }
-        try { await ref.update({ g: { u: me(), n: name }, lg: { u: me(), n: name } }); }
-        catch (e) { throw U(d.pw ? 'Password salah atau room sudah penuh.' : 'Room sudah penuh.'); }
-        await ensureIce();
+        let field = '';
+        for (const f of free) {   // ambil kursi kosong pertama; kalau keduluan pemain lain, coba kursi berikutnya
+            const up = { lg: { u: me(), n: name } }; up[f] = { u: me(), n: name };
+            try { await ref.update(up); field = f; break; } catch (e) {}
+        }
+        if (!field) throw U(d.pw ? 'Password salah atau room sudah penuh.' : 'Room sudah penuh.');
         ov.remove();
-        start({ code, role: 'guest', exp: d.exp, partner: (d.h && d.h.n) || 'Teman' });
+        start({ code, role: 'guest', field, exp: d.exp, partner: (d.h && d.h.n) || 'Teman' });
     }
     function showCode(code, hasPw) {
         const ov = document.createElement('div'); ov.className = 'mb-ov'; ov.id = 'mb-code-ov';
@@ -21791,35 +21924,53 @@
     }
 
     // ── sesi ──
+    // Susunan pemain di room: h (host) = urutan 0, g, g2, g3 = urutan 1-3. Tiap pasangan pemain punya sambungan WebRTC sendiri (mesh);
+    // pemain dengan urutan lebih kecil yang membuat tawaran. Project tiap pemain tampil berderet, digeser joystick milik pemain itu sendiri.
+    const FLD = ['h', 'g', 'g2', 'g3'], MAXP = 4;
+    function roster(r) { const o = []; FLD.forEach((f, i) => { if (r[f] && r[f].u) o.push({ f: f, order: i, u: r[f].u, n: r[f].n || 'Teman' }); }); return o; }
+    function newPeer(x) {
+        return { id: x.u, name: x.n, order: x.order, init: R.myOrder < x.order, pc: null, chP: null, chS: null, sid: '', conn: 'wait', queue: [], rx: null, mySig: '', lastPackAt: 0, sentImg: {}, rel: null, relReqAt: 0, pid: 0 };
+    }
     function start(o) {
-        R = Object.assign({ unsubRoom: null, unsubSig: null, pc: null, sid: '', tick: 0, joinedAt: Date.now(), conn: 'wait', queue: [], chP: null, chS: null, pid: 0, rx: null, mySig: '', frameT: 0, sigT: 0 }, o);
-        buildUi();
+        R = Object.assign({ unsubRoom: null, tick: 0, joinedAt: Date.now(), peers: {}, pend: {}, frameT: 0, sigT: 0, joyT: 0, ox: 0, oz: 0, field: 'h' }, o);
+        R.myOrder = FLD.indexOf(R.role === 'host' ? 'h' : R.field);
+        try { window.mabarRemote.setSelf(R.myOrder); window.mabarRemote.setMyOffset(0, 0); } catch (e) {}
+        buildUi(); joyShow();
         const ref = rt().ref('mabar/rooms/' + R.code), sigRef = rt().ref('mabar/sig/' + R.code);
         // otomatis: host menutup room dan tamu keluar kalau koneksinya putus (server yang menjalankan, tidak perlu pagehide)
-        if (R.role === 'host') ref.child('c').onDisconnect().set(true); else ref.child('g').onDisconnect().remove();
+        if (R.role === 'host') ref.child('c').onDisconnect().set(true); else ref.child(R.field).onDisconnect().remove();
         const onRoom = snap => {
             if (!R) return;
             const r = snap.val();
             if (!r || r.c) { leave('Room ditutup.', false); return; }
-            if (R.role === 'host') {
-                const g = r.g;
-                if (g && !R.pc) { R.partner = g.n || 'Teman'; startPeer(); }
-                if (!g && R.pc) { closePeer(); R.partner = ''; setNote('Pemain 2 keluar. Menunggu pemain baru...'); }
-            } else if (!r.g || r.g.u !== me()) { leave('Kamu dikeluarkan dari room.', false); }
+            const ros = roster(r);
+            if (R.role !== 'host' && !ros.some(x => x.u === me() && x.f === R.field)) { leave('Kamu dikeluarkan dari room.', false); return; }
+            const ids = {};
+            ros.forEach(x => {
+                if (x.u === me()) return;
+                ids[x.u] = 1;
+                let P = R.peers[x.u];
+                if (P) { P.name = x.n; return; }
+                P = R.peers[x.u] = newPeer(x);
+                if (P.init) startPeer(P); else setNote('Menunggu sambungan dari ' + P.name + '...');
+                const q = R.pend[x.u]; delete R.pend[x.u];
+                if (q) q.reduce((pr, m) => pr.then(() => handleSig(P, m)), Promise.resolve());
+            });
+            Object.keys(R.peers).forEach(id => { if (!ids[id]) dropPeer(id); });
+            if (!ros.some(x => x.u !== me())) setNote('Menunggu pemain lain... (1/' + MAXP + ')');
             updateUi();
         };
         ref.on('value', onRoom, e => console.log('mabar room err', e));
         const onSig = snap => { onSignal(snap.val() || {}); };
         sigRef.on('child_added', onSig, e => console.log('mabar sig err', e));
-        R.unsubRoom = () => { ref.off('value', onRoom); sigRef.off('child_added', onSig); }; R.unsubSig = null;
+        R.unsubRoom = () => { ref.off('value', onRoom); sigRef.off('child_added', onSig); };
         R.tick = setInterval(() => {
             if (!R) return;
             const left = R.exp - Date.now();
             if (left <= 0) { leave('Waktu room habis.', R.role === 'host'); return; }
             const t = $('mabar-time'); if (t) { const s = Math.floor(left / 1000); t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
         }, 1000);
-        if (R.role === 'guest') setNote('Menyambung ke ' + R.partner + '...');
-        else setNote('Menunggu pemain 2...');
+        setNote(R.role === 'guest' ? 'Menyambung ke ' + R.partner + '...' : 'Menunggu pemain lain... (1/' + MAXP + ')');
     }
     function buildUi() {
         const vp = $('viewport'), bar = document.createElement('div'); bar.id = 'mabar-bar';
@@ -21832,59 +21983,95 @@
         setSetUi();
     }
     function setSetUi() {
+        const jy = $('mabar-joy'); if (jy) jy.style.display = R ? '' : 'none';
         const btn = $('mabar-set-btn'), info = $('mabar-set-info'); if (!btn || !info) return;
         btn.disabled = false; btn.style.opacity = '';
         if (!R && window.ianMabarOff) { btn.textContent = 'NONAKTIF'; btn.disabled = true; btn.style.opacity = '.5'; info.textContent = 'Fitur Mabar sedang dinonaktifkan oleh admin.'; return; }
-        if (R) { btn.textContent = 'KELUAR'; btn.onclick = () => leave('Kamu keluar dari Mabar.', true); info.textContent = 'Sedang Mabar, kode room: ' + R.code; }
+        if (R) { btn.textContent = 'KELUAR'; btn.onclick = () => leave('Kamu keluar dari Mabar.', true); info.textContent = 'Sedang Mabar, kode room: ' + R.code + ' (maks. 4 pemain)'; }
         else { btn.textContent = 'BUAT / GABUNG'; btn.onclick = openModal; info.textContent = 'Gabungkan project temanmu ke viewport yang sama dan mainkan bersama.'; }
     }
     function setNote(t) { const w = $('mabar-note'); if (w) { w.textContent = t; w.style.display = t ? '' : 'none'; } }
     function updateUi() {
         const t = $('mabar-partner'); if (!t || !R) return;
-        t.textContent = R.partner && R.conn === 'ok' ? R.partner : '';
+        const ok = Object.keys(R.peers).map(k => R.peers[k]).filter(P => P.conn === 'ok').map(P => P.name);
+        t.textContent = ok.length ? ok.join(', ') + ' (' + (ok.length + 1) + '/' + MAXP + ')' : '';
+    }
+    function dropPeer(id) {
+        const P = R && R.peers[id]; if (!P) return;
+        killPeer(P); delete R.peers[id];
+        try { window.mabarRemote.clear(id); } catch (e) {}
+        setNote(P.name + ' keluar dari room.'); setTimeout(() => { if (R) setNote(relNoteAll()); }, 2500); updateUi();
+    }
+
+    // ── joystick: menggeser project kita sendiri (terlihat semua pemain) ──
+    const JOY_MAX = 300, JOY_SPEED = 30;   // batas geser (satuan scene) dan kecepatan penuh (satuan/detik)
+    let joyV = [0, 0], joyInit = false;
+    function joyShow() { const v = $('mabar-joy-val'); if (v && R) v.textContent = 'X ' + Math.round(R.ox) + '   Z ' + Math.round(R.oz); }
+    function joyApply() { try { window.mabarRemote.setMyOffset(R.ox, R.oz); } catch (e) {} joyShow(); }
+    function initJoy() {
+        const pad = $('mabar-joy-pad'), knob = $('mabar-joy-knob'); if (!pad || joyInit) return; joyInit = true;
+        const set = (cx, cy) => {
+            const r = pad.getBoundingClientRect(), rad = r.width / 2 - 8;
+            let dx = cx - (r.left + r.width / 2), dy = cy - (r.top + r.height / 2); const d = Math.hypot(dx, dy);
+            if (d > rad) { dx = dx / d * rad; dy = dy / d * rad; }
+            knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+            joyV = [dx / rad, dy / rad];
+        };
+        const end = () => { joyV = [0, 0]; knob.style.transform = ''; };
+        pad.addEventListener('pointerdown', e => { try { pad.setPointerCapture(e.pointerId); } catch (x) {} set(e.clientX, e.clientY); e.preventDefault(); });
+        pad.addEventListener('pointermove', e => { if (e.buttons || e.pressure > 0) set(e.clientX, e.clientY); });
+        ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => pad.addEventListener(t, end));
+        $('mabar-joy-reset').onclick = () => { if (!R) return; R.ox = R.oz = 0; joyApply(); };
+        setInterval(() => {
+            if (!R || (!joyV[0] && !joyV[1])) return;
+            const k = JOY_SPEED * 0.05, cl = v => Math.max(-JOY_MAX, Math.min(JOY_MAX, v));
+            if (Math.abs(joyV[0]) > 0.08) R.ox = cl(R.ox + joyV[0] * k);
+            if (Math.abs(joyV[1]) > 0.08) R.oz = cl(R.oz + joyV[1] * k);   // atas = maju (menjauh dari kamera), bawah = mundur
+            joyApply();
+        }, 50);
     }
 
     // ── WebRTC: jalur data langsung antar pemain (tanpa video) ──
     const CH_CHUNK = 14000;
-    function newPc() {
+    function newPc(P) {
         const pc = new RTCPeerConnection({ iceServers: ICE });
-        pc.ondatachannel = ev => bindCh(ev.channel, pc);
-        pc.onicecandidate = ev => { if (ev.candidate) sendSig({ t: 'ice', sid: R.sid, c: ev.candidate.toJSON() }); };
+        pc.ondatachannel = ev => bindCh(P, ev.channel, pc);
+        pc.onicecandidate = ev => { if (ev.candidate) sendSig({ t: 'ice', sid: P.sid, c: ev.candidate.toJSON() }, P.id); };
         pc.onconnectionstatechange = () => {
-            if (!R || R.pc !== pc) return;
+            if (!R || P.pc !== pc) return;
             const s = pc.connectionState;
             if (s === 'failed') {
-                if (!R.rel) { R.conn = 'fail'; setNote('Koneksi langsung gagal. Beralih ke mode cadangan lewat server...'); relayRequest(); }
+                if (!P.rel) { P.conn = 'fail'; setNote('Koneksi langsung ke ' + P.name + ' gagal. Beralih ke mode cadangan lewat server...'); relayRequest(P); }
             }
-            else if (s === 'disconnected') setNote('Koneksi terputus, mencoba menyambung lagi...');
-            else if (s === 'connected' && R.conn === 'ok') setNote(relNote());
+            else if (s === 'disconnected') setNote('Koneksi ke ' + P.name + ' terputus, mencoba menyambung lagi...');
+            else if (s === 'connected' && P.conn === 'ok') setNote(relNoteAll());
         };
         return pc;
     }
-    function bindCh(ch, pc) {
-        if (!R || R.pc !== pc) return;
-        if (ch.label === 'p') { R.chP = ch; ch.onmessage = onPackMsg; }
-        else if (ch.label === 's') { R.chS = ch; ch.onmessage = e => { try { window.mabarRemote.apply(JSON.parse(e.data)); } catch (x) {} }; }
+    function bindCh(P, ch, pc) {
+        if (!R || P.pc !== pc) return;
+        if (ch.label === 'p') { P.chP = ch; ch.onmessage = e => onPackMsg(P, e); }
+        else if (ch.label === 's') { P.chS = ch; ch.onmessage = e => { try { window.mabarRemote.apply(P.id, JSON.parse(e.data)); } catch (x) {} }; }
         else return;
-        ch.onopen = () => { if (R && R.rel && R.pc === pc) { stopRelay(true); R.conn = 'wait'; } chOpen(); };
-        ch.onclose = () => { if (R && R.pc === pc && R.conn === 'ok') { R.conn = 'wait'; stopFrames(); setNote('Jalur data terputus...'); updateUi(); } };
-        if (ch.readyState === 'open') chOpen();
+        ch.onopen = () => { if (R && P.rel && P.pc === pc) { stopRelay(P, true); P.conn = 'wait'; } chOpen(P); };
+        ch.onclose = () => { if (R && P.pc === pc && P.conn === 'ok') { P.conn = 'wait'; setNote('Jalur data ke ' + P.name + ' terputus...'); updateUi(); } };
+        if (ch.readyState === 'open') chOpen(P);
     }
-    function chOpen() {
-        if (!R || R.conn === 'ok') return;
-        const a = R.chP, b = R.chS;
+    function chOpen(P) {
+        if (!R || P.conn === 'ok') return;
+        const a = P.chP, b = P.chS;
         if (!a || !b || a.readyState !== 'open' || b.readyState !== 'open') return;
-        R.conn = 'ok'; R.sentImg = {}; setNote(relNote()); updateUi();
-        sendPack(); sendImages(); startFrames();
+        P.conn = 'ok'; P.sentImg = {}; setNote(relNoteAll()); updateUi();
+        sendPack(P); sendImages(P); startFrames();
     }
-    function sendChunks(txt) {
-        const ch = R && R.chP; if (!ch || ch.readyState !== 'open') return;
-        const id = ++R.pid, n = Math.max(1, Math.ceil(txt.length / CH_CHUNK));
+    function sendChunks(P, txt) {
+        const ch = P.chP; if (!ch || ch.readyState !== 'open') return;
+        const id = ++P.pid, n = Math.max(1, Math.ceil(txt.length / CH_CHUNK));
         try { for (let i = 0; i < n; i++) ch.send(JSON.stringify({ id: id, i: i, n: n, d: txt.slice(i * CH_CHUNK, (i + 1) * CH_CHUNK) })); } catch (e) { console.log('mabar kirim', e); }
     }
-    function sendPack() {
-        if (!R || !R.chP || R.chP.readyState !== 'open') return;
-        const txt = JSON.stringify(window.mabarRemote.pack()); R.mySig = txt; R.lastPackAt = Date.now(); sendChunks(txt);
+    function sendPack(P, txt) {
+        if (!R || !P.chP || P.chP.readyState !== 'open') return;
+        txt = txt || JSON.stringify(window.mabarRemote.pack()); P.mySig = txt; P.lastPackAt = Date.now(); sendChunks(P, txt);
     }
     // foto 2D dan banner: gambar dikecilkan (maks 384 px, WebP) lalu dikirim sekali saja
     function encodeImg(el, lim) {
@@ -21897,56 +22084,64 @@
         }
         return '';
     }
-    function sendImages() {
-        if (!R || !R.chP || R.chP.readyState !== 'open') return;
-        const sent = R.sentImg || (R.sentImg = {});
+    function sendImages(P) {
+        if (!R || !P.chP || P.chP.readyState !== 'open') return;
+        const sent = P.sentImg || (P.sentImg = {});
         window.mabarRemote.images().forEach(im => {
             if (sent[im.key] === im.src) return;
             sent[im.key] = im.src;
-            const u = encodeImg(im.el, R.rel ? 30000 : 140000); if (u) sendChunks(JSON.stringify({ t: 'img', k: im.key, u: u }));
+            const u = encodeImg(im.el, P.rel ? 30000 : 140000); if (u) sendChunks(P, JSON.stringify({ t: 'img', k: im.key, u: u }));
         });
     }
-    function onPackMsg(e) {
+    function onPackMsg(P, e) {
         if (!R) return;
         let m; try { m = JSON.parse(e.data); } catch (x) { return; }
-        let b = R.rx; if (!b || b.id !== m.id) b = R.rx = { id: m.id, parts: [], got: 0 };
+        let b = P.rx; if (!b || b.id !== m.id) b = P.rx = { id: m.id, parts: [], got: 0 };
         b.parts[m.i] = m.d; b.got++;
         if (b.got >= m.n) {
-            R.rx = null;
+            P.rx = null;
             try {
                 const o = JSON.parse(b.parts.join(''));
-                if (o && o.t === 'img') window.mabarRemote.setImage(String(o.k), String(o.u));
-                else { window.mabarRemote.setPack(o, R.role === 'host' ? 1 : -1); setNote(relNote()); updateUi(); }
+                if (o && o.t === 'img') window.mabarRemote.setImage(P.id, String(o.k), String(o.u));
+                else { window.mabarRemote.setPack(P.id, P.order, o); setNote(relNoteAll()); updateUi(); }
             } catch (x) { console.log('mabar terima', x); }
         }
     }
+    // satu pengatur waktu untuk semua pemain: frame dibuat sekali lalu dikirim ke tiap sambungan yang terbuka
     function startFrames() {
-        stopFrames();
+        if (!R || R.frameT) return;
         R.frameT = setInterval(() => {
-            const ch = R && R.chS; if (!ch || ch.readyState !== 'open' || ch.bufferedAmount > 64000) return;
-            try { ch.send(JSON.stringify(window.mabarRemote.frame())); } catch (e) {}
+            if (!R) return; let txt = null;
+            for (const id in R.peers) {
+                const ch = R.peers[id].chS; if (!ch || ch.readyState !== 'open' || ch.bufferedAmount > 64000) continue;
+                if (txt === null) txt = JSON.stringify(window.mabarRemote.frame());
+                try { ch.send(txt); } catch (e) {}
+            }
         }, 50);
-        R.sigT = setInterval(() => {   // susunan lampu berubah (tambah/geser/hapus): kirim ulang project ke teman
-            if (!R || !R.chP || R.chP.readyState !== 'open') return;
-            const chg = JSON.stringify(window.mabarRemote.pack()) !== R.mySig, age = Date.now() - (R.lastPackAt || 0);
-            if (R.rel ? ((chg && age > 4000) || age > 16000) : chg) sendPack();   // mode cadangan: hemat kuota, tapi tetap kirim ulang berkala kalau ada potongan yang hilang
-            sendImages();
+        R.sigT = setInterval(() => {   // susunan lampu berubah (tambah/geser/hapus): kirim ulang project ke semua pemain
+            if (!R) return; let txt = null;
+            for (const id in R.peers) {
+                const P = R.peers[id]; if (!P.chP || P.chP.readyState !== 'open') continue;
+                if (txt === null) txt = JSON.stringify(window.mabarRemote.pack());
+                const chg = txt !== P.mySig, age = Date.now() - P.lastPackAt;
+                if (P.rel ? ((chg && age > 4000) || age > 16000) : chg) sendPack(P, txt);   // mode cadangan: hemat kuota, tapi tetap kirim ulang berkala kalau ada potongan yang hilang
+                sendImages(P);
+            }
         }, 2000);
     }
-    function stopFrames() { if (R) { clearInterval(R.frameT); clearInterval(R.sigT); R.frameT = R.sigT = 0; } }
-    // ── RELAY CADANGAN lewat Firebase Realtime Database ──
+    // ── RELAY CADANGAN lewat Firebase Realtime Database (per pasangan pemain) ──
     // Dipakai kalau jalur langsung WebRTC gagal (mis. data seluler dengan NAT ketat). Data lewat server Firebase: lebih lambat dan memakai kuota Firebase,
     // jadi frame dijarangkan (sekitar 3 kali per detik, dan dilewati kalau tidak berubah) dan gambar dikecilkan.
     const REL_FRAME_MS = 300;
-    const REL_NOTE = 'Mode cadangan lewat server (koneksi langsung tidak bisa). Gerakan lampu teman lebih lambat dan gambar dikecilkan.';
-    const relNote = () => (R && R.rel) ? REL_NOTE : '';
+    const REL_NOTE = 'Sebagian sambungan lewat server (koneksi langsung tidak bisa). Gerakan lampu pemain itu lebih lambat dan gambar dikecilkan.';
+    const relNoteAll = () => (R && Object.keys(R.peers).some(k => R.peers[k].rel)) ? REL_NOTE : '';
     function relFail(e) {
         console.log('mabar relay', e);
-        if (R && R.rel && e && /permission/i.test(String(e.code || e.message || ''))) setNote('Mode cadangan ditolak server. Admin perlu memperbarui rules Realtime Database (bagian mabar/rel).');
+        if (R && /permission/i.test(String(e && (e.code || e.message) || ''))) setNote('Mode cadangan ditolak server. Admin perlu memperbarui rules Realtime Database (bagian mabar/rel).');
     }
-    function startRelay(sid) {
-        if (!R || R.rel || !/^[A-Z0-9]{8}$/.test(String(sid)) || !rt()) return;
-        const base = 'mabar/rel/' + R.code + '/' + sid, me_ = R.role === 'host' ? 'h' : 'g', ot_ = R.role === 'host' ? 'g' : 'h';
+    function startRelay(P, sid) {
+        if (!R || P.rel || !/^[A-Z0-9]{8}$/.test(String(sid)) || !rt()) return;
+        const base = 'mabar/rel/' + R.code + '/' + sid, me_ = P.init ? 'h' : 'g', ot_ = P.init ? 'g' : 'h';
         const mine = rt().ref(base + '/' + me_), other = rt().ref(base + '/' + ot_), keys = [];
         let lastF = '', lastAt = 0;
         const rel = { sid: sid, base: base, mine: mine, other: other, keys: keys, cl: 0 };
@@ -21962,67 +22157,79 @@
             lastF = txt; lastAt = n;
             mine.child('f').set({ d: txt, ts: NOW() }).catch(relFail);
         } };
-        rel.onP = snap => { const v = snap.val(); if (v && typeof v.d === 'string') onPackMsg({ data: v.d }); };
-        rel.onF = snap => { const v = snap.val(); if (!v || typeof v.d !== 'string') return; try { window.mabarRemote.apply(JSON.parse(v.d)); } catch (x) {} };
+        rel.onP = snap => { const v = snap.val(); if (v && typeof v.d === 'string') onPackMsg(P, { data: v.d }); };
+        rel.onF = snap => { const v = snap.val(); if (!v || typeof v.d !== 'string') return; try { window.mabarRemote.apply(P.id, JSON.parse(v.d)); } catch (x) {} };
         other.child('p').on('child_added', rel.onP);
         other.child('f').on('value', rel.onF);
-        // potongan lama yang sudah diterima teman dihapus supaya data di Firebase tidak menumpuk
+        // potongan lama yang sudah diterima pemain lain dihapus supaya data di Firebase tidak menumpuk
         rel.cl = setInterval(() => { const lim = Date.now() - 25000; while (keys.length && keys[0][1] < lim) { const k = keys.shift()[0]; mine.child('p').child(k).remove().catch(() => {}); } }, 8000);
-        R.rel = rel; R.chP = rel.chP; R.chS = rel.chS; R.conn = 'wait';
-        chOpen();
+        P.rel = rel; P.chP = rel.chP; P.chS = rel.chS; P.conn = 'wait';
+        chOpen(P);
     }
-    function stopRelay(wipe) {
-        const rel = R && R.rel; if (!rel) return;
+    function stopRelay(P, wipe) {
+        const rel = P.rel; if (!rel) return;
         clearInterval(rel.cl);
         try { rel.other.child('p').off('child_added', rel.onP); rel.other.child('f').off('value', rel.onF); } catch (e) {}
         if (wipe) { try { rt().ref(rel.base).remove().catch(() => {}); } catch (e) {} }
-        if (R.chP === rel.chP) R.chP = null;
-        if (R.chS === rel.chS) R.chS = null;
-        R.rel = null;
+        if (P.chP === rel.chP) P.chP = null;
+        if (P.chS === rel.chS) P.chS = null;
+        P.rel = null;
     }
-    // host membuat sesi relay lalu memberi tahu tamu lewat sinyal; tamu hanya meminta
-    function relayRequest() {
-        if (!R || R.rel) return;
-        if (R.role === 'host') { const sid = rnd(8); sendSig({ t: 'relay', sid: sid }); startRelay(sid); }
-        else if (Date.now() - (R.relReqAt || 0) > 5000) { R.relReqAt = Date.now(); sendSig({ t: 'relayreq' }); }
+    // pemain berurutan lebih kecil membuat sesi relay lalu memberi tahu pasangannya lewat sinyal; yang satunya hanya meminta
+    function relayRequest(P) {
+        if (!R || P.rel) return;
+        if (P.init) { const sid = rnd(8); sendSig({ t: 'relay', sid: sid }, P.id); startRelay(P, sid); }
+        else if (Date.now() - (P.relReqAt || 0) > 5000) { P.relReqAt = Date.now(); sendSig({ t: 'relayreq' }, P.id); }
     }
-    async function startPeer() {   // host: buat tawaran
-        closePeer(); R.sid = rnd(8); R.conn = 'wait'; setNote('Menyambungkan dengan ' + R.partner + '...');
-        const pc = R.pc = newPc();
-        bindCh(pc.createDataChannel('p'), pc);
-        bindCh(pc.createDataChannel('s', { ordered: false, maxRetransmits: 0 }), pc);
+    async function startPeer(P) {   // pemain berurutan lebih kecil: buat tawaran
+        closePeer(P); P.sid = rnd(8); P.conn = 'wait'; setNote('Menyambungkan dengan ' + P.name + '...');
+        const pc = P.pc = newPc(P);
+        bindCh(P, pc.createDataChannel('p'), pc);
+        bindCh(P, pc.createDataChannel('s', { ordered: false, maxRetransmits: 0 }), pc);
         const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-        sendSig({ t: 'offer', sid: R.sid, sdp: pc.localDescription.sdp });
-        setTimeout(() => { if (R && R.pc === pc && R.conn === 'wait' && !R.rel) { setNote('Koneksi langsung lambat, mencoba mode cadangan lewat server...'); relayRequest(); } }, 12000);
+        sendSig({ t: 'offer', sid: P.sid, sdp: pc.localDescription.sdp }, P.id);
+        setTimeout(() => { if (R && P.pc === pc && P.conn === 'wait' && !P.rel) { setNote('Koneksi langsung ke ' + P.name + ' lambat, mencoba mode cadangan lewat server...'); relayRequest(P); } }, 12000);
     }
-    function closePeer() {
-        if (R) { stopFrames(); stopRelay(true); if (R.pc) { try { R.pc.close(); } catch (e) {} R.pc = null; } R.chP = R.chS = null; R.rx = null; R.mySig = ''; R.conn = 'wait'; R.queue = []; }
-        try { window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
+    function killPeer(P) {
+        stopRelay(P, true);
+        if (P.pc) { try { P.pc.close(); } catch (e) {} P.pc = null; }
+        P.chP = P.chS = null; P.rx = null; P.mySig = ''; P.conn = 'wait'; P.queue = [];
+    }
+    function closePeer(P) {
+        killPeer(P);
+        try { window.mabarRemote.clear(P.id); } catch (e) {}
         updateUi();
     }
-    function sendSig(obj) {
+    function sendSig(obj, to) {
         if (!R) return;
-        rt().ref('mabar/sig/' + R.code).push({ f: me(), d: JSON.stringify(obj), ts: NOW() }).catch(e => console.log('sig send', e));
+        rt().ref('mabar/sig/' + R.code).push({ f: me(), d: JSON.stringify(Object.assign({ to: to }, obj)), ts: NOW() }).catch(e => console.log('sig send', e));
     }
-    async function flushQueue() { const q = R.queue; R.queue = []; for (const c of q) { try { await R.pc.addIceCandidate(c); } catch (e) {} } }
-    async function onSignal(doc) {
+    async function flushQueue(P) { const q = P.queue; P.queue = []; for (const c of q) { try { await P.pc.addIceCandidate(c); } catch (e) {} } }
+    function onSignal(doc) {
         if (!R || doc.f === me()) return;
         const ms = typeof doc.ts === 'number' ? doc.ts : 0;
         if (ms && ms < R.joinedAt - 8000) return;   // sisa sinyal sesi lama
         let m; try { m = JSON.parse(doc.d); } catch (e) { return; }
+        if (m.to && m.to !== me()) return;            // sinyal untuk pemain lain
+        const P = R.peers[doc.f];
+        if (!P) { const q = R.pend[doc.f] || (R.pend[doc.f] = []); q.push(m); if (q.length > 60) q.shift(); return; }   // daftar room belum sampai: simpan dulu
+        handleSig(P, m);
+    }
+    async function handleSig(P, m) {
+        if (!R) return;
         try {
-            if (m.t === 'relay') { if (R.role === 'guest') startRelay(m.sid); return; }
-            if (m.t === 'relayreq') { if (R.role === 'host') relayRequest(); return; }
-            if (R.role === 'guest' && m.t === 'offer') {
-                if (R.sid === m.sid) return;
-                closePeer(); R.sid = m.sid; const pc = R.pc = newPc();
-                await pc.setRemoteDescription({ type: 'offer', sdp: m.sdp }); await flushQueue();
+            if (m.t === 'relay') { if (!P.init) startRelay(P, m.sid); return; }
+            if (m.t === 'relayreq') { if (P.init) relayRequest(P); return; }
+            if (!P.init && m.t === 'offer') {
+                if (P.sid === m.sid) return;
+                closePeer(P); P.sid = m.sid; const pc = P.pc = newPc(P);
+                await pc.setRemoteDescription({ type: 'offer', sdp: m.sdp }); await flushQueue(P);
                 const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
-                sendSig({ t: 'answer', sid: R.sid, sdp: pc.localDescription.sdp });
-            } else if (R.role === 'host' && m.t === 'answer' && m.sid === R.sid && R.pc && !R.pc.currentRemoteDescription) {
-                await R.pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }); await flushQueue();
-            } else if (m.t === 'ice' && m.sid === R.sid && m.c) {
-                if (R.pc && R.pc.remoteDescription) { try { await R.pc.addIceCandidate(m.c); } catch (e) {} } else R.queue.push(m.c);
+                sendSig({ t: 'answer', sid: P.sid, sdp: pc.localDescription.sdp }, P.id);
+            } else if (P.init && m.t === 'answer' && m.sid === P.sid && P.pc && !P.pc.currentRemoteDescription) {
+                await P.pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }); await flushQueue(P);
+            } else if (m.t === 'ice' && m.sid === P.sid && m.c) {
+                if (P.pc && P.pc.remoteDescription) { try { await P.pc.addIceCandidate(m.c); } catch (e) {} } else P.queue.push(m.c);
             }
         } catch (e) { console.log('mabar signal', e); }
     }
@@ -22031,14 +22238,14 @@
     async function leave(msg, notify) {
         const s = R; if (!s) return; R = null;
         clearInterval(s.tick); clearInterval(s.frameT); clearInterval(s.sigT); try { s.unsubRoom && s.unsubRoom(); } catch (e) {}
-        if (s.rel) { clearInterval(s.rel.cl); try { s.rel.other.child('p').off('child_added', s.rel.onP); s.rel.other.child('f').off('value', s.rel.onF); } catch (e) {} try { rt() && rt().ref(s.rel.base).remove().catch(() => {}); } catch (e) {} }
-        try { s.pc && s.pc.close(); } catch (e) {}
+        Object.keys(s.peers).forEach(id => killPeer(s.peers[id]));
         if (rt()) {
             const ref = rt().ref('mabar/rooms/' + s.code);
-            try { ref.child('c').onDisconnect().cancel(); ref.child('g').onDisconnect().cancel(); } catch (e) {}
-            if (notify) (s.role === 'host' ? ref.child('c').set(true) : ref.child('g').remove()).catch(() => {});
+            try { ref.child('c').onDisconnect().cancel(); ref.child(s.field).onDisconnect().cancel(); } catch (e) {}
+            if (notify) (s.role === 'host' ? ref.child('c').set(true) : ref.child(s.field).remove()).catch(() => {});
         }
-        try { window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
+        joyV = [0, 0];
+        try { window.mabarRemote.setMyOffset(0, 0); window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
         ['mabar-bar', 'mabar-note'].forEach(i => { const e = $(i); if (e) e.remove(); });
         setSetUi();
         if (msg) say(msg, !/keluar dari Mabar/.test(msg));
@@ -22047,7 +22254,7 @@
     window.mabarOpen = openModal;
     window.ianMabarIsActive = () => !!R;   // dipakai pengecekan pengguna dari admin
     window.mabarFlagChanged = () => { if (R && window.ianMabarOff) leave('Mabar dinonaktifkan oleh admin.', true); else setSetUi(); };
-    const init = () => setTimeout(ensureBtn, 700);
+    const init = () => { setTimeout(ensureBtn, 700); initJoy(); };
     if (document.readyState === 'complete') init(); else window.addEventListener('load', init);
 })();
 </script>

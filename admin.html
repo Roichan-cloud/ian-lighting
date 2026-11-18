@@ -295,6 +295,11 @@ div.skel{display:block;}
 .pv-a-play:after{content:"";position:absolute;left:10px;top:7px;border-left:8px solid #22c55e;border-top:5px solid transparent;border-bottom:5px solid transparent;}
 .pv-a-line{flex:1;height:4px;border-radius:2px;background:#26332a;position:relative;} .pv-a-line i{position:absolute;left:0;top:0;bottom:0;width:30%;background:#22c55e;border-radius:2px;}
 .pv-a-bar small{font-size:9px;color:#888;}
+.pv-pill{position:relative;display:flex;align-items:center;gap:8px;width:230px;max-width:100%;height:54px;box-sizing:border-box;padding:6px 8px;background:#0b110b;border:1px solid rgba(34,197,94,.4);border-radius:999px;overflow:hidden;}
+.pv-pill-im{width:40px;height:40px;border-radius:50%;flex:none;overflow:hidden;background:#12301b;border:1px solid rgba(34,197,94,.55);} .pv-pill-im img{width:100%;height:100%;object-fit:cover;display:block;}
+.pv-pill-vz{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;} .pv-pill-vz i{display:block;width:5px;border-radius:3px;background:#22c55e;} .pv-pill-vz i:nth-child(1){height:10px;} .pv-pill-vz i:nth-child(2){height:20px;} .pv-pill-vz i:nth-child(3){height:14px;}
+.pv-pill-x{width:34px;height:34px;border-radius:50%;flex:none;background:rgba(255,255,255,.14);color:#dfe;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;}
+.pv-pill-pg{position:absolute;left:20px;right:20px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);} .pv-pill-pg i{display:block;height:100%;width:35%;background:#22c55e;border-radius:2px;}
 
 /* modal konfirmasi + pencarian */
 .modal-ov{position:fixed;inset:0;z-index:10000;background:rgba(17,24,39,.45);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:16px;animation:panelIn .15s ease-out;}
@@ -458,6 +463,11 @@ div.skel{display:block;}
           <option value="success">Sukses</option>
           <option value="error">Error</option>
         </select>
+        <label class="admin-label">Prioritas</label>
+        <select class="admin-select" id="ann-prio">
+          <option value="ringan">Ringan (kartu kaca kecil, memudar, bisa disembunyikan pengguna)</option>
+          <option value="penting">Penting (kartu penuh, selalu tampil)</option>
+        </select>
         <label class="admin-label">Custom Icon (URL gambar, opsional)</label>
         <input class="admin-input" id="ann-icon" placeholder="https://... (kosongkan untuk pakai ikon default)">
         <label class="admin-label">Durasi tampil (detik, 0 = permanen)</label>
@@ -474,6 +484,8 @@ div.skel{display:block;}
         <input class="admin-input" id="aud-name" maxlength="40" placeholder="Contoh: Ian">
         <label class="admin-label">Judul audio</label>
         <input class="admin-input" id="aud-title" maxlength="80" placeholder="Contoh: Pesan suara untuk semua pengguna">
+        <label class="admin-label">Gambar di kiri (URL gambar, opsional)</label>
+        <input class="admin-input" id="aud-icon" placeholder="https://... (kosongkan untuk ikon musik)">
         <label class="admin-label">Link audio (URL langsung ke file mp3/ogg/wav)</label>
         <input class="admin-input" id="aud-url" placeholder="https://.../audio.mp3">
         <label class="admin-label">Atau upload file (maks 600 KB, kalau diisi file dipakai, bukan link)</label>
@@ -1574,14 +1586,14 @@ async function audWriteFile(docId, data) {
 }
 async function sendAdminAudio() {
   const g = id => document.getElementById(id);
-  const name = g('aud-name').value.trim().slice(0, 40), title = g('aud-title').value.trim().slice(0, 80), url = g('aud-url').value.trim();
+  const name = g('aud-name').value.trim().slice(0, 40), title = g('aud-title').value.trim().slice(0, 80), url = g('aud-url').value.trim(), iconUrl = /^https?:\/\//i.test(g('aud-icon').value.trim()) ? g('aud-icon').value.trim() : '';
   const hasFile = typeof _audData.ann === 'string' && _audData.ann.length > 0;
   if (!name) { toast('Nama admin wajib diisi', true); return; }
   if (!hasFile && !/^https?:\/\//i.test(url)) { toast('Isi link audio (http/https) atau upload file', true); return; }
   const ts = Date.now();
   const ok = await runWrite(async () => {
     if (hasFile) await audWriteFile('ann', _audData.ann);
-    await saveSection('adminAudio', { active: true, name, title, src: hasFile ? 'file' : 'url', url: hasFile ? '' : url, loop: g('aud-loop').checked, ts });
+    await saveSection('adminAudio', { active: true, name, title, iconUrl, src: hasFile ? 'file' : 'url', url: hasFile ? '' : url, loop: g('aud-loop').checked, ts });
   }, 'Audio dikirim ke pengguna!');
   if (ok) { _audData.ann = undefined; g('aud-file').value = ''; g('aud-file-info').textContent = ''; }
 }
@@ -1601,9 +1613,10 @@ async function sendAnnouncement() {
   const type = document.getElementById('ann-type').value;
   const duration = parseInt(document.getElementById('ann-duration').value) || 0;
   const iconUrl = document.getElementById('ann-icon').value.trim();
+  const prio = document.getElementById('ann-prio').value === 'penting' ? 'penting' : 'ringan';
   if(!title||!msg) { toast('Judul dan pesan harus diisi',true); return; }
   await runWrite(() => saveSection('announcement', {
-    title, msg, type, duration, iconUrl: iconUrl||'', timestamp: Date.now(), active:true
+    title, msg, type, prio, duration, iconUrl: iconUrl||'', timestamp: Date.now(), active:true
   }), 'Pengumuman berhasil dikirim!');
 }
 async function clearAnnouncement() {
@@ -1942,7 +1955,7 @@ async function mbLoad() {
     if (!arguments[0]) { const cfg = await getConfig(); const f = (cfg.flags || {}).mabarDisabled; document.getElementById('mb-flag').checked = !!f; const o = document.getElementById('flag-mabar-off'); if (o) o.checked = !!f; mbStateText(); }
     const snap = await admRtdb().ref('mabar/rooms').orderByChild('ts').limitToLast(50).once('value');
     const now = Date.now(), rooms = [], u = x => x ? { uid: x.u, name: x.n } : null;
-    snap.forEach(ch => { const r = ch.val(); rooms.push({ _id: ch.key, host: u(r.h), guest: u(r.g), lastGuest: u(r.lg), hasPw: !!r.pw, exp: r.exp || 0, closed: !!r.c, _ts: r.ts || 0 }); });
+    snap.forEach(ch => { const r = ch.val(); rooms.push({ _id: ch.key, host: u(r.h), guest: u(r.g) || u(r.g2) || u(r.g3), n: 1 + [r.g, r.g2, r.g3].filter(Boolean).length, lastGuest: u(r.lg), hasPw: !!r.pw, exp: r.exp || 0, closed: !!r.c, _ts: r.ts || 0 }); });
     rooms.reverse();
     const live = rooms.filter(r => !r.closed && r.exp > now);
     const paired = live.filter(r => r.guest);
@@ -1961,7 +1974,7 @@ async function mbLoad() {
       const gu = r.guest || r.lastGuest, tr = document.createElement('tr');
       const cell = (t) => { const td = document.createElement('td'); td.textContent = t; tr.appendChild(td); return td; };
       cell(r._id).style.cssText = 'font-family:monospace;font-weight:700;letter-spacing:1px;';
-      cell(r.host ? r.host.name : '-'); cell(gu ? gu.name + (r.guest ? '' : ' (keluar)') : '-');
+      cell(r.host ? r.host.name : '-'); cell(gu ? gu.name + (r.guest ? (r.n > 2 ? ' +' + (r.n - 2) + ' lainnya' : '') : ' (keluar)') : '-');
       const ts = document.createElement('td'); ts.innerHTML = '<span class="' + st.c + '">' + st.t + '</span>'; tr.appendChild(ts);
       cell(r.hasPw ? 'Ya' : 'Tidak'); cell(mbFmtT(r._ts)); cell(left);
       const ac = document.createElement('td'); ac.style.whiteSpace = 'nowrap';
@@ -1988,8 +2001,11 @@ async function mbClose(code) {
   if (ok) mbLoad(true);
 }
 async function mbPurge(code) {
-  const up = {}; ['rooms', 'sig', 'sec', 'join', 'rel'].forEach(k => { up['mabar/' + k + '/' + code] = null; });
-  await admRtdb().ref().update(up);
+  // hapus per cabang: room dulu (yang utama), sisanya dicoba satu per satu supaya satu aturan yang belum diperbarui tidak menggagalkan semuanya
+  const db = admRtdb(); let bad = [];
+  await db.ref('mabar/rooms/' + code).remove();
+  for (const k of ['sig', 'sec', 'join', 'rel']) { try { await db.ref('mabar/' + k + '/' + code).remove(); } catch (e) { bad.push(k); } }
+  if (bad.length) console.log('mbPurge: cabang tidak terhapus (cek rules):', bad.join(','));
 }
 async function mbDelete(code, r) {
   if (!await uiConfirm('Hapus room ' + code + ' beserta data sambungannya?', { title: 'Hapus room', yes: 'Hapus' })) return;
@@ -2742,11 +2758,14 @@ document.addEventListener('keydown', e => {
 });
 // pratinjau pengumuman + kartu audio
 const PV_GRAD = { info: 'linear-gradient(135deg,#0066ff,#0099ff)', warning: 'linear-gradient(135deg,#ff8800,#ffcc00)', success: 'linear-gradient(135deg,#00aa33,#00ff88)', error: 'linear-gradient(135deg,#cc0000,#ff4444)' };
+const PV_ACC = { info: '#3aa0ff', warning: '#ffb020', success: '#2ecc71', error: '#ff5555' };
 function annPreview() {
   const g = id => document.getElementById(id), box = g('ann-preview'); if (!box) return;
   const t = g('ann-title').value.trim(), m = g('ann-msg').value.trim(), ty = g('ann-type').value, ic = g('ann-icon').value.trim();
   box.innerHTML = '';
-  const d = document.createElement('div'); d.className = 'pv-ban'; d.style.background = PV_GRAD[ty] || PV_GRAD.info;
+  const d = document.createElement('div'); d.className = 'pv-ban';
+  if (g('ann-prio') && g('ann-prio').value === 'ringan') { d.style.background = 'rgba(10,12,16,.6)'; d.style.borderLeft = '3px solid ' + (PV_ACC[ty] || PV_ACC.info); d.style.backdropFilter = 'blur(6px)'; }
+  else d.style.background = PV_GRAD[ty] || PV_GRAD.info;
   if (/^https?:\/\//i.test(ic)) { const im = document.createElement('img'); im.src = ic; im.alt = ''; im.onerror = () => im.remove(); d.appendChild(im); }
   const w = document.createElement('div'); w.style.minWidth = 0;
   const a = document.createElement('div'); a.className = 'pv-t'; a.textContent = t || 'Judul pengumuman';
@@ -2755,15 +2774,18 @@ function annPreview() {
 }
 function audPreview() {
   const g = id => document.getElementById(id), box = g('aud-preview'); if (!box) return;
-  const n = g('aud-name').value.trim() || 'Nama admin', t = g('aud-title').value.trim();
+  const ic = g('aud-icon') ? g('aud-icon').value.trim() : '';
   box.innerHTML = '';
-  const bar = document.createElement('div'); bar.className = 'pv-a-bar';
-  bar.innerHTML = '<span class="pv-a-play"></span><span class="pv-a-txt"><b></b><small></small></span><small class="pv-a-c">0:12 / 0:30</small><span class="pv-a-line"><i></i></span>';
-  bar.querySelector('b').textContent = n; bar.querySelector('.pv-a-txt small').textContent = t || 'Audio dari admin';
-  box.appendChild(bar);
+  const bar = document.createElement('div'); bar.className = 'pv-pill';
+  const im = document.createElement('span'); im.className = 'pv-pill-im';
+  if (/^https?:\/\//i.test(ic)) { const x = document.createElement('img'); x.alt = ''; x.onerror = () => x.remove(); x.src = ic; im.appendChild(x); }
+  const vz = document.createElement('span'); vz.className = 'pv-pill-vz'; vz.innerHTML = '<i></i><i></i><i></i>';
+  const cl = document.createElement('span'); cl.className = 'pv-pill-x'; cl.textContent = '×';
+  const pg = document.createElement('span'); pg.className = 'pv-pill-pg'; pg.innerHTML = '<i></i>';
+  bar.append(im, vz, cl, pg); box.appendChild(bar);
 }
-['ann-title', 'ann-msg', 'ann-type', 'ann-icon'].forEach(id => { const e = document.getElementById(id); if (e) { e.addEventListener('input', annPreview); e.addEventListener('change', annPreview); } });
-['aud-name', 'aud-title'].forEach(id => { const e = document.getElementById(id); if (e) e.addEventListener('input', audPreview); });
+['ann-title', 'ann-msg', 'ann-type', 'ann-prio', 'ann-icon'].forEach(id => { const e = document.getElementById(id); if (e) { e.addEventListener('input', annPreview); e.addEventListener('change', annPreview); } });
+['aud-name', 'aud-title', 'aud-icon'].forEach(id => { const e = document.getElementById(id); if (e) e.addEventListener('input', audPreview); });
 annPreview(); audPreview();
 // penghitung karakter otomatis untuk kolom ber-maxlength
 (function () {
