@@ -21673,8 +21673,9 @@
     function duck(on) { aPlaying = !!on; bsApply(); }
 
     // ── KARTU AUDIO ADMIN ──
-    let aAud = null;
+    let aAud = null, aVz = null;   // aVz: analyser frekuensi asli (kalau gagal, pakai animasi palsu)
     function aClose() {
+        if (aVz) { cancelAnimationFrame(aVz.raf); try { aVz.ctx.close(); } catch (e) {} aVz = null; }
         if (aAud) { try { aAud.pause(); } catch (e) {} aAud.removeAttribute('src'); try { aAud.load(); } catch (e) {} aAud = null; }
         const c = $('_aud_card'); if (c) c.remove();
         duck(false);
@@ -21684,15 +21685,15 @@
         const st = document.createElement('style'); st.id = '_aud_style';
         st.textContent = '@keyframes _audIn{from{opacity:0;transform:translate(-50%,-10px) scale(.92)}to{opacity:1;transform:translate(-50%,0) scale(1)}}' +
             '@keyframes _audBar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}' +
-            '#_aud_card{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(72vw,230px);height:54px;box-sizing:border-box;z-index:999997;display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(8,12,8,.92);border:1px solid rgba(34,197,94,.4);border-radius:999px;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 14px rgba(34,197,94,.15);overflow:hidden;animation:_audIn .35s ease both;transition:opacity .4s;}' +
+            '#_aud_card{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(58vw,168px);height:40px;box-sizing:border-box;z-index:999997;display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(8,12,8,.92);border:1px solid rgba(34,197,94,.4);border-radius:999px;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 14px rgba(34,197,94,.15);overflow:hidden;animation:_audIn .35s ease both;transition:opacity .4s;}' +
             '#_aud_card.out{opacity:0;}' +
-            '#_aud_card .im{width:40px;height:40px;border-radius:50%;flex:none;overflow:hidden;background:#12301b;border:1px solid rgba(34,197,94,.55);display:flex;align-items:center;justify-content:center;color:#22c55e;}#_aud_card .im img{width:100%;height:100%;object-fit:cover;display:block;}' +
-            '#_aud_card .vz{flex:1;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:transparent;border:0;padding:0;margin:0;color:inherit;}' +
-            '#_aud_card .vz i{display:block;width:5px;height:24px;border-radius:3px;background:#22c55e;transform-origin:center;}' +
+            '#_aud_card .im{width:30px;height:30px;border-radius:50%;flex:none;overflow:hidden;background:#12301b;border:1px solid rgba(34,197,94,.55);display:flex;align-items:center;justify-content:center;color:#22c55e;}#_aud_card .im img{width:100%;height:100%;object-fit:cover;display:block;}' +
+            '#_aud_card .vz{flex:1;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:transparent;border:0;padding:0;margin:0;color:inherit;}' +
+            '#_aud_card .vz i{display:block;width:4px;height:18px;border-radius:2px;background:#22c55e;transform-origin:center;will-change:transform;}' +
             '#_aud_card .vz i:nth-child(1){transform:scaleY(.4);}#_aud_card .vz i:nth-child(2){transform:scaleY(.85);}#_aud_card .vz i:nth-child(3){transform:scaleY(.6);}' +
-            '#_aud_card.pl .vz i{animation:_audBar .8s ease-in-out infinite;}#_aud_card.pl .vz i:nth-child(2){animation-duration:.62s;animation-delay:-.25s;}#_aud_card.pl .vz i:nth-child(3){animation-duration:.95s;animation-delay:-.5s;}' +
-            '#_aud_card .x{width:34px;height:34px;border-radius:50%;flex:none;background:rgba(255,255,255,.14);border:0;color:#dfe;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}' +
-            '#_aud_card .pg{position:absolute;left:20px;right:20px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);pointer-events:none;}#_aud_card .pg i{display:block;height:100%;width:0;background:#22c55e;border-radius:2px;}' +
+            '#_aud_card.pl.fk .vz i{animation:_audBar .8s ease-in-out infinite;}#_aud_card.pl.fk .vz i:nth-child(2){animation-duration:.62s;animation-delay:-.25s;}#_aud_card.pl.fk .vz i:nth-child(3){animation-duration:.95s;animation-delay:-.5s;}' +
+            '#_aud_card .x{width:26px;height:26px;border-radius:50%;flex:none;background:rgba(255,255,255,.14);border:0;color:#dfe;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}' +
+            '#_aud_card .pg{position:absolute;left:16px;right:16px;bottom:2px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);pointer-events:none;}#_aud_card .pg i{display:block;height:100%;width:0;background:#22c55e;border-radius:2px;}' +
             '#ev-bs-btn{position:absolute;left:6px;bottom:48px;z-index:60;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;}';
         document.head.appendChild(st);
     }
@@ -21701,26 +21702,66 @@
         aClose();
         const card = document.createElement('div'); card.id = '_aud_card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', 'Audio dari admin');
         const im = document.createElement('div'); im.className = 'im';
-        const fallback = () => { im.innerHTML = SVG('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 18); };
+        const fallback = () => { im.innerHTML = SVG('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 15); };
         if (/^https?:\/\//i.test(d.iconUrl || '')) { const img = document.createElement('img'); img.alt = ''; img.onerror = () => { img.remove(); fallback(); }; img.src = d.iconUrl; im.appendChild(img); } else fallback();
         const vz = document.createElement('button'); vz.type = 'button'; vz.className = 'vz'; vz.setAttribute('aria-label', 'Putar atau jeda');
         vz.title = [d.name, d.title].filter(Boolean).join(' - ') || 'Audio dari admin'; vz.innerHTML = '<i></i><i></i><i></i>';
-        const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.setAttribute('aria-label', 'Tutup'); x.innerHTML = SVG(IC.close, 15);
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.setAttribute('aria-label', 'Tutup'); x.innerHTML = SVG(IC.close, 12);
         const pg = document.createElement('div'); pg.className = 'pg'; const bar = document.createElement('i'); pg.appendChild(bar);
         card.append(im, vz, x, pg);
         document.body.appendChild(card);
-        const a = new Audio(); a.preload = 'auto'; a.loop = !!d.loop; a.src = src; aAud = a;
-        let vol = 0.8; try { const sv = parseFloat(localStorage.getItem('_aud_vol')); if (sv >= 0 && sv <= 1) vol = sv; } catch (e) {}
-        a.volume = vol;
-        const upd = () => { const ok = a.duration && isFinite(a.duration); bar.style.width = (ok ? Math.min(100, a.currentTime / a.duration * 100) : 0) + '%'; };
-        const setPP = playing => { card.classList.toggle('pl', playing); duck(playing); };
-        a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false));
-        a.addEventListener('loadedmetadata', upd); a.addEventListener('timeupdate', upd);
-        a.addEventListener('ended', () => {   // tanpa loop: kartu hilang sendiri setelah durasi habis
-            setPP(false);
-            if (!a.loop) { card.classList.add('out'); setTimeout(() => { if (aAud === a) aClose(); }, 400); }
-        });
-        a.addEventListener('error', () => { aClose(); if (typeof showStatus === 'function') showStatus('Audio admin gagal diputar', true); });
+        const bars = Array.from(vz.children);
+        // Visualizer frekuensi asli: butuh audio yang boleh dibaca (CORS). Dicoba dulu; kalau server audio tidak mengizinkan
+        // (audio gagal dimuat) atau analyser tidak bisa dibuat/hening terus, otomatis pakai animasi palsu. Suara tidak pernah dikorbankan.
+        const fake = on => { card.classList.toggle('fk', on); if (on) bars.forEach(b => { b.style.transform = ''; }); };
+        let a = null, tried = false;
+        function setup(cors) {
+            if (aAud) { try { aAud.pause(); } catch (e) {} aAud.removeAttribute('src'); try { aAud.load(); } catch (e) {} }
+            if (aVz) { cancelAnimationFrame(aVz.raf); try { aVz.ctx.close(); } catch (e) {} aVz = null; }
+            a = new Audio(); a.preload = 'auto'; a.loop = !!d.loop;
+            if (cors && /^https?:/i.test(src)) a.crossOrigin = 'anonymous';
+            a.src = src; aAud = a;
+            let vol = 0.8; try { const sv = parseFloat(localStorage.getItem('_aud_vol')); if (sv >= 0 && sv <= 1) vol = sv; } catch (e) {}
+            a.volume = vol;
+            fake(true);
+            if (cors) {
+                try {
+                    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) throw 0;
+                    const ctx = new AC(), an = ctx.createAnalyser(); an.fftSize = 256; an.smoothingTimeConstant = 0.7;
+                    ctx.createMediaElementSource(a).connect(an); an.connect(ctx.destination);
+                    const buf = new Uint8Array(an.frequencyBinCount), lv = [0, 0, 0], vz_ = { ctx: ctx, raf: 0, seen: false, since: 0 };
+                    aVz = vz_; fake(false);
+                    const band = (lo, hi) => { let m = 0; for (let i = lo; i < hi; i++) m += buf[i]; return m / ((hi - lo) * 255); };
+                    const loop = () => {
+                        if (aVz !== vz_) return;
+                        vz_.raf = requestAnimationFrame(loop);
+                        if (a.paused) return;
+                        an.getByteFrequencyData(buf);
+                        const t = [band(1, 4), band(4, 16), band(16, 56)];   // bass, mid, treble (fftSize 256)
+                        if (t[0] + t[1] + t[2] > 0.001) vz_.seen = true;
+                        else if (!vz_.since) vz_.since = performance.now();
+                        if (!vz_.seen && vz_.since && performance.now() - vz_.since > 2500) { cancelAnimationFrame(vz_.raf); aVz = null; fake(true); return; }   // tidak ada sinyal sama sekali: pakai animasi palsu
+                        const gain = [1.5, 2.4, 3.6];
+                        bars.forEach((b, i) => { const v = Math.min(1, t[i] * gain[i]); lv[i] += (v - lv[i]) * 0.45; b.style.transform = 'scaleY(' + (0.15 + 0.85 * lv[i]).toFixed(3) + ')'; });
+                    };
+                    loop();
+                } catch (e) { aVz = null; fake(true); }
+            }
+            const upd = () => { const ok = a.duration && isFinite(a.duration); bar.style.width = (ok ? Math.min(100, a.currentTime / a.duration * 100) : 0) + '%'; };
+            const setPP = playing => { card.classList.toggle('pl', playing); duck(playing); if (playing && aVz && aVz.ctx.state === 'suspended') aVz.ctx.resume().catch(() => {}); };
+            a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false));
+            a.addEventListener('loadedmetadata', upd); a.addEventListener('timeupdate', upd);
+            a.addEventListener('ended', () => {   // tanpa loop: kartu hilang sendiri setelah durasi habis
+                setPP(false);
+                if (!a.loop) { card.classList.add('out'); setTimeout(() => { if (aAud === a) aClose(); }, 400); }
+            });
+            a.addEventListener('error', () => {
+                if (aAud !== a) return;
+                if (cors && !tried) { tried = true; setup(false); const p = a.play(); if (p && p.catch) p.catch(() => {}); return; }   // server audio tidak mengizinkan CORS: putar biasa + animasi palsu
+                aClose(); if (typeof showStatus === 'function') showStatus('Audio admin gagal diputar', true);
+            });
+        }
+        setup(true);
         vz.onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
         x.onclick = aClose;
         const p = a.play(); if (p && p.catch) p.catch(() => {});   // diblokir browser: ketuk batang di tengah untuk memutar
