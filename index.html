@@ -2600,7 +2600,15 @@
                     <div style="font-size:9px; color:#aaa; line-height:1.7; flex:1;">Atas / bawah: maju / mundur<br>Kiri / kanan: geser ke samping<br><span id="mabar-joy-val" style="color:#0f0; font-family:monospace; white-space:pre;">X 0   Z 0</span><br><button class="quality-btn" id="mabar-joy-reset" type="button" style="margin-top:4px;">RESET POSISI</button></div>
                 </div>
             </div>
-            <div style="font-size:8px; color:#666; line-height:1.5;">Satu pemain membuat room dengan kode acak (password opsional), pemain lain memasukkan kode itu. Maksimal 4 pemain, room kedaluwarsa otomatis. Project para pemain tampil berderet; tiap pemain bisa menggeser project miliknya sendiri dengan joystick di atas (setelah masuk room).</div>
+            <div id="mabar-aud" style="display:none; margin:8px 0 6px; padding:8px; border:1px solid #333; border-radius:6px;">
+                <div style="font-size:9px; color:#ccc; margin-bottom:6px; letter-spacing:1px;">AUDIO BERSAMA (BATTLE AUDIO)</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="mabar-aud-info" style="font-size:9px; color:#aaa; flex:1; line-height:1.5;"></span>
+                    <button class="quality-btn" id="mabar-aud-btn" type="button" style="min-width:96px;">BAGIKAN: MATI</button>
+                </div>
+                <div id="mabar-aud-list" style="margin-top:6px;"></div>
+            </div>
+            <div style="font-size:8px; color:#666; line-height:1.5;">Satu pemain membuat room dengan kode acak (password opsional), pemain lain memasukkan kode itu. Jumlah pemain 2 sampai 4 (dipilih pembuat room), room kedaluwarsa otomatis. Project para pemain tampil berderet; tiap pemain bisa menggeser project miliknya sendiri dengan joystick di atas (setelah masuk room).</div>
         </div>
 
         <!-- PENGUMUMAN -->
@@ -13104,9 +13112,10 @@
             list.forEach(e => {
                 const c = (e.sp.min + e.sp.max) / 2, hh = (e.sp.max - e.sp.min) / 2;
                 C = C === null ? c : C + prevH + hh + 30; prevH = hh;
-                e.sx = C - c + (e.o[0] || 0); e.sz = e.o[1] || 0; if (e.self) me_ = e;
+                e.bx = C - c; e.sx = e.bx + (e.o[0] || 0); e.sz = e.o[1] || 0; if (e.self) me_ = e;
             });
-            list.forEach(e => { if (e.z) { e.z.tx = e.sx - me_.sx; e.z.tz = e.sz - me_.sz; } });
+            // project kita sendiri digeser langsung (lihat animate), jadi pemain lain hanya dikurangi posisi dasar kita, bukan geseran kita
+            list.forEach(e => { if (e.z) { e.z.tx = e.sx - me_.bx; e.z.tz = e.sz; } });
         }
         function _shift(z, ax, az) {
             if (!ax && !az) return;
@@ -13325,13 +13334,28 @@
             Z.fa = f.fa ? 1 : 0; Z.g.forEach(fg => { fg._act = !!Z.fa; });
         }
         function setSelf(order) { myOrder = order; place(); }
-        function setMyOffset(x, z) { myO = [x, z]; place(); }
+        function setMyOffset(x, z) { myO = [x, z]; window.mabarOwn = [x, z]; place(); }
         const keys = () => Object.keys(Z_);
         return { pack, frame, apply, setPack, clear, images, setImage, reset, setSelf, setMyOffset, keys };
     })();
     window.mabarRemote = mabarRemote;
 
+    // Mabar: geseran joystick menggeser project milik sendiri. Geseran dipasang hanya selama satu frame (ditambahkan sebelum
+    // gambar dibuat, dikurangi lagi sesudahnya), jadi data project tidak berubah dan yang dikirim ke pemain lain tetap koordinat asli.
+    function _mabarOwnShift(ox, oz) {
+        const mv = g => { if (g && g.position) { g.position.x += ox; g.position.z += oz; } };
+        lamps.forEach(l => { mv(l.group); if (l.state) l.state.targetX += ox; });
+        parleds.forEach(o => mv(o.group)); wallwashers.forEach(o => mv(o.group)); strobes.forEach(o => mv(o.group)); fanLamps.forEach(o => mv(o.group));
+        trusses.forEach(o => mv(o.group)); photos2D.forEach(o => mv(o.group)); banners.forEach(o => mv(o.group));
+        minibrutes.forEach(m => { mv(m.group); m.targetX += ox; });
+        (window.foggers || []).forEach(f => mv(f.group));
+    }
     function animate() {
+        const _o = window.mabarOwn, _ox = _o ? _o[0] : 0, _oz = _o ? _o[1] : 0, _sh = !!(_ox || _oz);
+        if (_sh) _mabarOwnShift(_ox, _oz);
+        try { _animateCore(); } finally { if (_sh) _mabarOwnShift(-_ox, -_oz); }
+    }
+    function _animateCore() {
         _animNext();
         try {
         const now = Date.now(), total = lamps.length;
@@ -21685,15 +21709,15 @@
         const st = document.createElement('style'); st.id = '_aud_style';
         st.textContent = '@keyframes _audIn{from{opacity:0;transform:translate(-50%,-10px) scale(.92)}to{opacity:1;transform:translate(-50%,0) scale(1)}}' +
             '@keyframes _audBar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}' +
-            '#_aud_card{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(58vw,168px);height:40px;box-sizing:border-box;z-index:999997;display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(8,12,8,.92);border:1px solid rgba(34,197,94,.4);border-radius:999px;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 14px rgba(34,197,94,.15);overflow:hidden;animation:_audIn .35s ease both;transition:opacity .4s;}' +
+            '#_aud_card{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(46vw,132px);height:32px;box-sizing:border-box;z-index:999997;display:flex;align-items:center;gap:5px;padding:3px 5px;background:rgba(8,12,8,.92);border:1px solid rgba(34,197,94,.4);border-radius:999px;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 14px rgba(34,197,94,.15);overflow:hidden;animation:_audIn .35s ease both;transition:opacity .4s;}' +
             '#_aud_card.out{opacity:0;}' +
-            '#_aud_card .im{width:30px;height:30px;border-radius:50%;flex:none;overflow:hidden;background:#12301b;border:1px solid rgba(34,197,94,.55);display:flex;align-items:center;justify-content:center;color:#22c55e;}#_aud_card .im img{width:100%;height:100%;object-fit:cover;display:block;}' +
-            '#_aud_card .vz{flex:1;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:transparent;border:0;padding:0;margin:0;color:inherit;}' +
-            '#_aud_card .vz i{display:block;width:4px;height:18px;border-radius:2px;background:#22c55e;transform-origin:center;will-change:transform;}' +
+            '#_aud_card .im{width:24px;height:24px;border-radius:50%;flex:none;overflow:hidden;background:#12301b;border:1px solid rgba(34,197,94,.55);display:flex;align-items:center;justify-content:center;color:#22c55e;}#_aud_card .im img{width:100%;height:100%;object-fit:cover;display:block;}' +
+            '#_aud_card .vz{flex:1;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:transparent;border:0;padding:0;margin:0;color:inherit;}' +
+            '#_aud_card .vz i{display:block;width:3px;height:14px;border-radius:2px;background:#22c55e;transform-origin:center;will-change:transform;}' +
             '#_aud_card .vz i:nth-child(1){transform:scaleY(.4);}#_aud_card .vz i:nth-child(2){transform:scaleY(.85);}#_aud_card .vz i:nth-child(3){transform:scaleY(.6);}' +
             '#_aud_card.pl.fk .vz i{animation:_audBar .8s ease-in-out infinite;}#_aud_card.pl.fk .vz i:nth-child(2){animation-duration:.62s;animation-delay:-.25s;}#_aud_card.pl.fk .vz i:nth-child(3){animation-duration:.95s;animation-delay:-.5s;}' +
-            '#_aud_card .x{width:26px;height:26px;border-radius:50%;flex:none;background:rgba(255,255,255,.14);border:0;color:#dfe;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}' +
-            '#_aud_card .pg{position:absolute;left:16px;right:16px;bottom:2px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);pointer-events:none;}#_aud_card .pg i{display:block;height:100%;width:0;background:#22c55e;border-radius:2px;}' +
+            '#_aud_card .x{width:22px;height:22px;border-radius:50%;flex:none;background:rgba(255,255,255,.14);border:0;color:#dfe;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}' +
+            '#_aud_card .pg{position:absolute;left:13px;right:13px;bottom:1px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);pointer-events:none;}#_aud_card .pg i{display:block;height:100%;width:0;background:#22c55e;border-radius:2px;}' +
             '#ev-bs-btn{position:absolute;left:6px;bottom:48px;z-index:60;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;}';
         document.head.appendChild(st);
     }
@@ -21702,11 +21726,11 @@
         aClose();
         const card = document.createElement('div'); card.id = '_aud_card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', 'Audio dari admin');
         const im = document.createElement('div'); im.className = 'im';
-        const fallback = () => { im.innerHTML = SVG('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 15); };
+        const fallback = () => { im.innerHTML = SVG('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 12); };
         if (/^https?:\/\//i.test(d.iconUrl || '')) { const img = document.createElement('img'); img.alt = ''; img.onerror = () => { img.remove(); fallback(); }; img.src = d.iconUrl; im.appendChild(img); } else fallback();
         const vz = document.createElement('button'); vz.type = 'button'; vz.className = 'vz'; vz.setAttribute('aria-label', 'Putar atau jeda');
         vz.title = [d.name, d.title].filter(Boolean).join(' - ') || 'Audio dari admin'; vz.innerHTML = '<i></i><i></i><i></i>';
-        const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.setAttribute('aria-label', 'Tutup'); x.innerHTML = SVG(IC.close, 12);
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.setAttribute('aria-label', 'Tutup'); x.innerHTML = SVG(IC.close, 10);
         const pg = document.createElement('div'); pg.className = 'pg'; const bar = document.createElement('i'); pg.appendChild(bar);
         card.append(im, vz, x, pg);
         document.body.appendChild(card);
@@ -21879,6 +21903,7 @@
             '<label>NAMAMU (2-16 karakter)</label><input id="mb-name" maxlength="16" autocomplete="off">' +
             '<div class="mb-tabs" style="margin-top:12px;"><button id="mb-t1" class="on">BUAT ROOM</button><button id="mb-t2">GABUNG</button></div>' +
             '<div id="mb-p1"><label>PASSWORD (opsional)</label><input id="mb-pw1" type="password" maxlength="32" autocomplete="off" placeholder="kosong = tanpa password">' +
+            '<label>JUMLAH PEMAIN</label><select id="mb-max"><option value="2" selected>2 pemain</option><option value="3">3 pemain</option><option value="4">4 pemain</option></select>' +
             '<label>ROOM AKTIF SELAMA</label><select id="mb-dur"><option value="30">30 menit</option><option value="60" selected>1 jam</option><option value="120">2 jam</option></select></div>' +
             '<div id="mb-p2" style="display:none;"><label>KODE ROOM</label><input id="mb-code" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:4px;text-align:center;">' +
             '<label>PASSWORD (kalau ada)</label><input id="mb-pw2" type="password" maxlength="32" autocomplete="off"></div>' +
@@ -21897,7 +21922,7 @@
             try { localStorage.setItem('_poth_mabar_name', name); } catch (e) {}
             $('mb-go').disabled = true; err('');
             try {
-                if (mode === 1) await createRoom(name, $('mb-pw1').value, parseInt($('mb-dur').value, 10) || 60, ov);
+                if (mode === 1) await createRoom(name, $('mb-pw1').value, parseInt($('mb-dur').value, 10) || 60, Math.max(2, Math.min(4, parseInt($('mb-max').value, 10) || 2)), ov);
                 else await joinRoom(name, ($('mb-code').value || '').trim().toUpperCase(), $('mb-pw2').value, ov);
             } catch (e) { err(e && e.userMsg ? e.userMsg : 'Gagal. Periksa koneksi lalu coba lagi.'); console.log('mabar', e); }
             const g = $('mb-go'); if (g) g.disabled = false;
@@ -21920,15 +21945,15 @@
         return _rt;
     }
     const NOW = () => firebase.database.ServerValue.TIMESTAMP;
-    async function createRoom(name, pw, mins, ov) {
+    async function createRoom(name, pw, mins, max, ov) {
         const r = rt(); let code = '', ok = false;
         for (let i = 0; i < 4 && !ok; i++) { code = rnd(6); const s = await r.ref('mabar/rooms/' + code).once('value'); ok = !s.exists(); }
         if (!ok) throw U('Gagal membuat kode unik, coba lagi.');
         if (pw) await r.ref('mabar/sec/' + code).set({ p: await proofOf(code, pw) });
         const exp = Date.now() + mins * 60000;
-        await r.ref('mabar/rooms/' + code).set({ h: { u: me(), n: name }, pw: !!pw, exp: exp, c: false, ts: NOW() });
+        await r.ref('mabar/rooms/' + code).set({ h: { u: me(), n: name }, pw: !!pw, max: max, exp: exp, c: false, ts: NOW() });
         ov.remove();
-        start({ code, role: 'host', exp, partner: '' });
+        start({ code, role: 'host', exp, max, partner: '' });
         showCode(code, !!pw);
     }
     async function joinRoom(name, code, pw, ov) {
@@ -21940,8 +21965,9 @@
         if (d.c || d.exp <= Date.now()) throw U('Room sudah ditutup atau kedaluwarsa.');
         if (d.h && d.h.u === me()) throw U('Ini room milikmu. Minta temanmu yang bergabung.');
         if (['g', 'g2', 'g3'].some(f => d[f] && d[f].u === me())) throw U('Kamu sudah ada di room ini.');
-        const free = ['g', 'g2', 'g3'].filter(f => !d[f]);
-        if (!free.length) throw U('Room sudah penuh (maksimal 4 pemain).');
+        const mx = (d.max | 0) >= 2 && (d.max | 0) <= 4 ? (d.max | 0) : 2;   // room lama tanpa kolom max = 2 pemain
+        const free = ['g', 'g2', 'g3'].slice(0, mx - 1).filter(f => !d[f]);   // hanya kursi yang dibuka pembuat room
+        if (!free.length) throw U('Room sudah penuh (' + mx + ' pemain).');
         if (d.pw) {
             if (!pw) throw U('Room ini memakai password.');
             await r.ref('mabar/join/' + code + '/' + me()).set({ p: await proofOf(code, pw) });
@@ -21953,7 +21979,7 @@
         }
         if (!field) throw U(d.pw ? 'Password salah atau room sudah penuh.' : 'Room sudah penuh.');
         ov.remove();
-        start({ code, role: 'guest', field, exp: d.exp, partner: (d.h && d.h.n) || 'Teman' });
+        start({ code, role: 'guest', field, exp: d.exp, max: mx, partner: (d.h && d.h.n) || 'Teman' });
     }
     function showCode(code, hasPw) {
         const ov = document.createElement('div'); ov.className = 'mb-ov'; ov.id = 'mb-code-ov';
@@ -21967,16 +21993,16 @@
     // ── sesi ──
     // Susunan pemain di room: h (host) = urutan 0, g, g2, g3 = urutan 1-3. Tiap pasangan pemain punya sambungan WebRTC sendiri (mesh);
     // pemain dengan urutan lebih kecil yang membuat tawaran. Project tiap pemain tampil berderet, digeser joystick milik pemain itu sendiri.
-    const FLD = ['h', 'g', 'g2', 'g3'], MAXP = 4;
+    const FLD = ['h', 'g', 'g2', 'g3'];
     function roster(r) { const o = []; FLD.forEach((f, i) => { if (r[f] && r[f].u) o.push({ f: f, order: i, u: r[f].u, n: r[f].n || 'Teman' }); }); return o; }
     function newPeer(x) {
         return { id: x.u, name: x.n, order: x.order, init: R.myOrder < x.order, pc: null, chP: null, chS: null, sid: '', conn: 'wait', queue: [], rx: null, mySig: '', lastPackAt: 0, sentImg: {}, rel: null, relReqAt: 0, pid: 0 };
     }
     function start(o) {
-        R = Object.assign({ unsubRoom: null, tick: 0, joinedAt: Date.now(), peers: {}, pend: {}, frameT: 0, sigT: 0, joyT: 0, ox: 0, oz: 0, field: 'h' }, o);
+        R = Object.assign({ max: 2, unsubRoom: null, tick: 0, joinedAt: Date.now(), peers: {}, pend: {}, frameT: 0, sigT: 0, joyT: 0, ox: 0, oz: 0, field: 'h' }, o);
         R.myOrder = FLD.indexOf(R.role === 'host' ? 'h' : R.field);
         try { window.mabarRemote.setSelf(R.myOrder); window.mabarRemote.setMyOffset(0, 0); } catch (e) {}
-        buildUi(); joyShow();
+        buildUi(); joyShow(); audInit();
         const ref = rt().ref('mabar/rooms/' + R.code), sigRef = rt().ref('mabar/sig/' + R.code);
         // otomatis: host menutup room dan tamu keluar kalau koneksinya putus (server yang menjalankan, tidak perlu pagehide)
         if (R.role === 'host') ref.child('c').onDisconnect().set(true); else ref.child(R.field).onDisconnect().remove();
@@ -21998,7 +22024,7 @@
                 if (q) q.reduce((pr, m) => pr.then(() => handleSig(P, m)), Promise.resolve());
             });
             Object.keys(R.peers).forEach(id => { if (!ids[id]) dropPeer(id); });
-            if (!ros.some(x => x.u !== me())) setNote('Menunggu pemain lain... (1/' + MAXP + ')');
+            if (!ros.some(x => x.u !== me())) setNote('Menunggu pemain lain... (1/' + R.max + ')');
             updateUi();
         };
         ref.on('value', onRoom, e => console.log('mabar room err', e));
@@ -22011,11 +22037,11 @@
             if (left <= 0) { leave('Waktu room habis.', R.role === 'host'); return; }
             const t = $('mabar-time'); if (t) { const s = Math.floor(left / 1000); t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
         }, 1000);
-        setNote(R.role === 'guest' ? 'Menyambung ke ' + R.partner + '...' : 'Menunggu pemain lain... (1/' + MAXP + ')');
+        setNote(R.role === 'guest' ? 'Menyambung ke ' + R.partner + '...' : 'Menunggu pemain lain... (1/' + R.max + ')');
     }
     function buildUi() {
         const vp = $('viewport'), bar = document.createElement('div'); bar.id = 'mabar-bar';
-        bar.innerHTML = SV(ICON_USERS, 13) + '<b>' + R.code + '</b><span id="mabar-time">--:--</span><span id="mabar-partner" style="color:#9ef;"></span><button id="mabar-copy" type="button">Salin</button><button class="x" id="mabar-leave" type="button">Keluar</button>';
+        bar.innerHTML = SV(ICON_USERS, 13) + '<b>' + R.code + '</b><span id="mabar-time">--:--</span><span id="mabar-partner" style="color:#9ef;"></span><button id="mabar-rel" type="button" title="Sebagian sambungan lewat server" style="display:none;">SERVER</button><button id="mabar-copy" type="button">Salin</button><button class="x" id="mabar-leave" type="button">Keluar</button>';
         ['mousedown', 'touchstart', 'dblclick', 'contextmenu'].forEach(t => bar.addEventListener(t, e => e.stopPropagation(), { passive: true }));
         vp.appendChild(bar);
         const note = document.createElement('div'); note.id = 'mabar-note'; note.style.display = 'none'; vp.appendChild(note);
@@ -22025,23 +22051,111 @@
     }
     function setSetUi() {
         const jy = $('mabar-joy'); if (jy) jy.style.display = R ? '' : 'none';
+        const ja = $('mabar-aud'); if (ja) ja.style.display = R ? '' : 'none';
         const btn = $('mabar-set-btn'), info = $('mabar-set-info'); if (!btn || !info) return;
         btn.disabled = false; btn.style.opacity = '';
         if (!R && window.ianMabarOff) { btn.textContent = 'NONAKTIF'; btn.disabled = true; btn.style.opacity = '.5'; info.textContent = 'Fitur Mabar sedang dinonaktifkan oleh admin.'; return; }
-        if (R) { btn.textContent = 'KELUAR'; btn.onclick = () => leave('Kamu keluar dari Mabar.', true); info.textContent = 'Sedang Mabar, kode room: ' + R.code + ' (maks. 4 pemain)'; }
+        if (R) { btn.textContent = 'KELUAR'; btn.onclick = () => leave('Kamu keluar dari Mabar.', true); info.textContent = 'Sedang Mabar, kode room: ' + R.code + ' (maks. ' + R.max + ' pemain)'; }
         else { btn.textContent = 'BUAT / GABUNG'; btn.onclick = openModal; info.textContent = 'Gabungkan project temanmu ke viewport yang sama dan mainkan bersama.'; }
     }
-    function setNote(t) { const w = $('mabar-note'); if (w) { w.textContent = t; w.style.display = t ? '' : 'none'; } }
+    // pesan status tampil sebentar lalu hilang sendiri supaya tidak menutupi viewport (ms = lama tampil)
+    let noteT = 0;
+    function setNote(t, ms) {
+        const w = $('mabar-note'); clearTimeout(noteT); noteT = 0;
+        if (!w) return;
+        w.textContent = t || ''; w.style.display = t ? '' : 'none';
+        if (t) noteT = setTimeout(() => { const e = $('mabar-note'); if (e) e.style.display = 'none'; }, ms || 6000);
+    }
+    // keterangan mode server: muncul sekali saja saat mulai, selanjutnya cukup lencana kecil "SERVER" di bar (ketuk untuk melihat keterangannya)
+    function relHint() {
+        if (!R) return;
+        if (!relNoteAll()) { R.relShown = false; return; }
+        if (!R.relShown) { R.relShown = true; setNote(REL_NOTE, 5000); }
+    }
     function updateUi() {
         const t = $('mabar-partner'); if (!t || !R) return;
         const ok = Object.keys(R.peers).map(k => R.peers[k]).filter(P => P.conn === 'ok').map(P => P.name);
-        t.textContent = ok.length ? ok.join(', ') + ' (' + (ok.length + 1) + '/' + MAXP + ')' : '';
+        audList();
+        const rc = $('mabar-rel'); if (rc) { rc.style.display = relNoteAll() ? '' : 'none'; rc.onclick = () => setNote(REL_NOTE, 6000); }
+        t.textContent = ok.length ? ok.join(', ') + ' (' + (ok.length + 1) + '/' + R.max + ')' : '';
     }
     function dropPeer(id) {
         const P = R && R.peers[id]; if (!P) return;
         killPeer(P); delete R.peers[id];
         try { window.mabarRemote.clear(id); } catch (e) {}
-        setNote(P.name + ' keluar dari room.'); setTimeout(() => { if (R) setNote(relNoteAll()); }, 2500); updateUi();
+        setNote(P.name + ' keluar dari room.', 4000); updateUi();
+    }
+
+
+    // ── AUDIO BERSAMA (battle audio) ──
+    // Semua pemain boleh membagikan audio dari tab Audio miliknya (lagu, file, atau ID Roblox). Suaranya dikirim lewat jalur audio WebRTC
+    // ke semua pemain lain, jadi beberapa audio bisa terdengar bersamaan. Tidak jalan di mode cadangan relay (itu hanya jalur data).
+    let shareOn = false, shareDest = null, shareT = 0;
+    function shareTrack() {
+        try {
+            if (typeof audioContext === 'undefined' || !audioContext) return null;
+            const out = (typeof audioOutNode !== 'undefined' && audioOutNode) || (typeof fadeGainNode !== 'undefined' && fadeGainNode);
+            if (!out) return null;   // belum ada lagu yang dimuat di tab Audio
+            if (!shareDest || shareDest.context !== audioContext || shareDest._out !== out) {
+                if (shareDest) { try { shareDest._out.disconnect(shareDest); } catch (e) {} }
+                shareDest = audioContext.createMediaStreamDestination(); out.connect(shareDest); shareDest._out = out;
+            }
+            return shareDest.stream.getAudioTracks()[0] || null;
+        } catch (e) { return null; }
+    }
+    function applyShare() {
+        if (!R) return;
+        const tr = shareOn ? shareTrack() : null;
+        Object.keys(R.peers).forEach(id => {
+            const P = R.peers[id]; if (!P.aTr || P.aTrk === tr) return;
+            P.aTrk = tr; try { const pr = P.aTr.sender.replaceTrack(tr); if (pr && pr.catch) pr.catch(() => { P.aTrk = undefined; }); } catch (e) { P.aTrk = undefined; }
+        });
+        audInfo(tr);
+    }
+    function audInfo(tr) {
+        const i = $('mabar-aud-info'), b = $('mabar-aud-btn'); if (!i || !b) return;
+        b.textContent = shareOn ? 'BAGIKAN: HIDUP' : 'BAGIKAN: MATI';
+        b.style.color = shareOn ? '#0f0' : ''; b.style.borderColor = shareOn ? '#0f0' : '';
+        i.textContent = !shareOn ? 'Bagikan audio dari tab Audio ke semua pemain. Audio kamu terdengar bersama audio pemain lain.'
+            : tr ? 'Audio dari tab Audio kamu sedang dibagikan.' : 'Menunggu audio: buka tab Audio lalu muat atau mainkan lagu.';
+    }
+    function shareOff() { shareOn = false; clearInterval(shareT); shareT = 0; if (shareDest) { try { shareDest._out.disconnect(shareDest); } catch (e) {} shareDest = null; } }
+    function audInit() {
+        const b = $('mabar-aud-btn'); if (!b) return;
+        b.onclick = () => {
+            shareOn = !shareOn; clearInterval(shareT); shareT = 0;
+            if (shareOn) shareT = setInterval(applyShare, 2000);   // lagu bisa dimuat belakangan: pasang otomatis begitu siap
+            applyShare(); audInfo(shareOn ? shareTrack() : null);
+        };
+        audInfo(null); audList();
+    }
+    function attachAudio(P, ev) {
+        if (!ev.track || ev.track.kind !== 'audio') return;
+        if (!P.aEl) { P.aEl = new Audio(); P.aEl.autoplay = true; P.aVol = 1; P.aMute = false; }
+        P.aEl.srcObject = (ev.streams && ev.streams[0]) || new MediaStream([ev.track]);
+        P.aEl.volume = P.aVol; P.aEl.muted = P.aMute;
+        const pr = P.aEl.play();
+        if (pr && pr.catch) pr.catch(() => { const h = () => { document.removeEventListener('pointerdown', h, true); try { P.aEl.play(); } catch (e) {} }; document.addEventListener('pointerdown', h, true); });
+    }
+    // daftar pemain lain: volume dan bisukan per pemain (baris dibuat sekali agar slider tidak ter-reset)
+    function audList() {
+        const box = $('mabar-aud-list'); if (!box) return;
+        if (!R) { box.textContent = ''; return; }
+        const ids = Object.keys(R.peers);
+        Array.from(box.children).forEach(r => { if (!R.peers[r.dataset.id]) r.remove(); });
+        ids.forEach(id => {
+            const P = R.peers[id]; let row = Array.from(box.children).find(r => r.dataset.id === id);
+            if (!row) {
+                row = document.createElement('div'); row.dataset.id = id; row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-top:4px;';
+                const nm = document.createElement('span'); nm.className = 'n'; nm.style.cssText = 'font-size:9px;color:#ddd;width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                const sl = document.createElement('input'); sl.type = 'range'; sl.min = 0; sl.max = 100; sl.value = Math.round((P.aVol == null ? 1 : P.aVol) * 100); sl.style.cssText = 'flex:1;min-width:0;';
+                const mu = document.createElement('button'); mu.type = 'button'; mu.className = 'quality-btn'; mu.style.minWidth = '56px'; mu.textContent = P.aMute ? 'MUTE' : 'SUARA';
+                sl.oninput = () => { P.aVol = sl.value / 100; if (P.aEl) P.aEl.volume = P.aVol; };
+                mu.onclick = () => { P.aMute = !P.aMute; mu.textContent = P.aMute ? 'MUTE' : 'SUARA'; mu.style.opacity = P.aMute ? '.6' : ''; if (P.aEl) P.aEl.muted = P.aMute; };
+                row.append(nm, sl, mu); box.appendChild(row);
+            }
+            row.querySelector('.n').textContent = P.name;
+        });
     }
 
     // ── joystick: menggeser project kita sendiri (terlihat semua pemain) ──
@@ -22077,6 +22191,7 @@
     function newPc(P) {
         const pc = new RTCPeerConnection({ iceServers: ICE });
         pc.ondatachannel = ev => bindCh(P, ev.channel, pc);
+        pc.ontrack = ev => attachAudio(P, ev);
         pc.onicecandidate = ev => { if (ev.candidate) sendSig({ t: 'ice', sid: P.sid, c: ev.candidate.toJSON() }, P.id); };
         pc.onconnectionstatechange = () => {
             if (!R || P.pc !== pc) return;
@@ -22085,7 +22200,7 @@
                 if (!P.rel) { P.conn = 'fail'; setNote('Koneksi langsung ke ' + P.name + ' gagal. Beralih ke mode cadangan lewat server...'); relayRequest(P); }
             }
             else if (s === 'disconnected') setNote('Koneksi ke ' + P.name + ' terputus, mencoba menyambung lagi...');
-            else if (s === 'connected' && P.conn === 'ok') setNote(relNoteAll());
+            else if (s === 'connected' && P.conn === 'ok') relHint();
         };
         return pc;
     }
@@ -22102,7 +22217,7 @@
         if (!R || P.conn === 'ok') return;
         const a = P.chP, b = P.chS;
         if (!a || !b || a.readyState !== 'open' || b.readyState !== 'open') return;
-        P.conn = 'ok'; P.sentImg = {}; setNote(relNoteAll()); updateUi();
+        P.conn = 'ok'; P.sentImg = {}; relHint(); updateUi();
         sendPack(P); sendImages(P); startFrames();
     }
     function sendChunks(P, txt) {
@@ -22144,7 +22259,7 @@
             try {
                 const o = JSON.parse(b.parts.join(''));
                 if (o && o.t === 'img') window.mabarRemote.setImage(P.id, String(o.k), String(o.u));
-                else { window.mabarRemote.setPack(P.id, P.order, o); setNote(relNoteAll()); updateUi(); }
+                else { window.mabarRemote.setPack(P.id, P.order, o); relHint(); updateUi(); }
             } catch (x) { console.log('mabar terima', x); }
         }
     }
@@ -22174,7 +22289,7 @@
     // Dipakai kalau jalur langsung WebRTC gagal (mis. data seluler dengan NAT ketat). Data lewat server Firebase: lebih lambat dan memakai kuota Firebase,
     // jadi frame dijarangkan (sekitar 3 kali per detik, dan dilewati kalau tidak berubah) dan gambar dikecilkan.
     const REL_FRAME_MS = 300;
-    const REL_NOTE = 'Sebagian sambungan lewat server (koneksi langsung tidak bisa). Gerakan lampu pemain itu lebih lambat dan gambar dikecilkan.';
+    const REL_NOTE = 'Sebagian sambungan lewat server: gerakan lampu pemain itu lebih lambat dan gambar dikecilkan.';
     const relNoteAll = () => (R && Object.keys(R.peers).some(k => R.peers[k].rel)) ? REL_NOTE : '';
     function relFail(e) {
         console.log('mabar relay', e);
@@ -22225,16 +22340,18 @@
     async function startPeer(P) {   // pemain berurutan lebih kecil: buat tawaran
         closePeer(P); P.sid = rnd(8); P.conn = 'wait'; setNote('Menyambungkan dengan ' + P.name + '...');
         const pc = P.pc = newPc(P);
+        try { P.aTr = pc.addTransceiver('audio', { direction: 'sendrecv' }); } catch (e) { P.aTr = null; }   // jalur audio dua arah; isinya diganti lewat replaceTrack tanpa negosiasi ulang
         bindCh(P, pc.createDataChannel('p'), pc);
         bindCh(P, pc.createDataChannel('s', { ordered: false, maxRetransmits: 0 }), pc);
         const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-        sendSig({ t: 'offer', sid: P.sid, sdp: pc.localDescription.sdp }, P.id);
+        sendSig({ t: 'offer', sid: P.sid, sdp: pc.localDescription.sdp }, P.id); applyShare();
         setTimeout(() => { if (R && P.pc === pc && P.conn === 'wait' && !P.rel) { setNote('Koneksi langsung ke ' + P.name + ' lambat, mencoba mode cadangan lewat server...'); relayRequest(P); } }, 12000);
     }
     function killPeer(P) {
         stopRelay(P, true);
         if (P.pc) { try { P.pc.close(); } catch (e) {} P.pc = null; }
-        P.chP = P.chS = null; P.rx = null; P.mySig = ''; P.conn = 'wait'; P.queue = [];
+        P.chP = P.chS = null; P.rx = null; P.mySig = ''; P.conn = 'wait'; P.queue = []; P.aTr = null; P.aTrk = undefined;
+        if (P.aEl) { try { P.aEl.pause(); P.aEl.srcObject = null; } catch (e) {} }
     }
     function closePeer(P) {
         killPeer(P);
@@ -22265,8 +22382,9 @@
                 if (P.sid === m.sid) return;
                 closePeer(P); P.sid = m.sid; const pc = P.pc = newPc(P);
                 await pc.setRemoteDescription({ type: 'offer', sdp: m.sdp }); await flushQueue(P);
+                try { const tr = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'audio'); if (tr) { tr.direction = 'sendrecv'; P.aTr = tr; } } catch (e) { P.aTr = null; }
                 const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
-                sendSig({ t: 'answer', sid: P.sid, sdp: pc.localDescription.sdp }, P.id);
+                sendSig({ t: 'answer', sid: P.sid, sdp: pc.localDescription.sdp }, P.id); applyShare();
             } else if (P.init && m.t === 'answer' && m.sid === P.sid && P.pc && !P.pc.currentRemoteDescription) {
                 await P.pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }); await flushQueue(P);
             } else if (m.t === 'ice' && m.sid === P.sid && m.c) {
@@ -22285,7 +22403,7 @@
             try { ref.child('c').onDisconnect().cancel(); ref.child(s.field).onDisconnect().cancel(); } catch (e) {}
             if (notify) (s.role === 'host' ? ref.child('c').set(true) : ref.child(s.field).remove()).catch(() => {});
         }
-        joyV = [0, 0];
+        joyV = [0, 0]; shareOff(); Object.keys(s.peers).forEach(id => { const E = s.peers[id].aEl; if (E) { try { E.pause(); E.srcObject = null; } catch (e) {} } });
         try { window.mabarRemote.setMyOffset(0, 0); window.mabarRemote.clear(); window.mabarRemote.reset(); } catch (e) {}
         ['mabar-bar', 'mabar-note'].forEach(i => { const e = $(i); if (e) e.remove(); });
         setSetUi();
