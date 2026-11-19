@@ -1176,7 +1176,7 @@ async function evWriteReplace(data) {
 async function evLaunch() {
   const f = evForm(), err = evValidate(f);
   if (err) { toast(err, true); return; }
-  const data = Object.assign({}, f, { active: true, id: Date.now() });
+  const data = Object.assign({}, f, { active: true, id: adminNow() });
   const ok = await runWrite(async () => { await evBsPersist(); await evWriteReplace(data); }, 'Event diluncurkan!');
   if (ok) { _audData.bs = undefined; _evCur = data; document.getElementById('ev-status').textContent = evStatusText(data); evLoadEntries(); evLoadClaims(); evLoadChat(); }
 }
@@ -1584,13 +1584,24 @@ async function audWriteFile(docId, data) {
   await ensureConfigDoc();
   await db.collection('app_audio').doc(docId).set({ data, ts: Date.now() });
 }
+// jam server (lewat Worker ?time=1, kalau ROBLOX_PROXY diisi) supaya waktu mulai siaran audio/event sama dengan jam yang dipakai pengguna
+let _tOff = 0;
+(async function () {
+  const base = String(window.ROBLOX_PROXY || '').trim().replace(/\/+$/, ''); if (!base) return;
+  let best = null;
+  for (let i = 0; i < 3; i++) {
+    try { const t0 = Date.now(), r = await fetch(base + '/?time=1', { cache: 'no-store' }), j = await r.json(), t1 = Date.now(); if (j && typeof j.now === 'number') { const rtt = t1 - t0; if (!best || rtt < best.rtt) best = { rtt, off: j.now - (t0 + rtt / 2) }; } } catch (e) { break; }
+  }
+  if (best && best.rtt < 4000) _tOff = best.off;
+})();
+const adminNow = () => Date.now() + _tOff;
 async function sendAdminAudio() {
   const g = id => document.getElementById(id);
   const name = g('aud-name').value.trim().slice(0, 40), title = g('aud-title').value.trim().slice(0, 80), url = g('aud-url').value.trim(), iconUrl = /^https?:\/\//i.test(g('aud-icon').value.trim()) ? g('aud-icon').value.trim() : '';
   const hasFile = typeof _audData.ann === 'string' && _audData.ann.length > 0;
   if (!name) { toast('Nama admin wajib diisi', true); return; }
   if (!hasFile && !/^https?:\/\//i.test(url)) { toast('Isi link audio (http/https) atau upload file', true); return; }
-  const ts = Date.now();
+  const ts = adminNow();
   const ok = await runWrite(async () => {
     if (hasFile) await audWriteFile('ann', _audData.ann);
     await saveSection('adminAudio', { active: true, name, title, iconUrl, src: hasFile ? 'file' : 'url', url: hasFile ? '' : url, loop: g('aud-loop').checked, ts });

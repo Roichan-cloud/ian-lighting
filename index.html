@@ -21749,6 +21749,42 @@
     }
     const fmtT = t => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
 
+    // ── WAKTU BERSAMA & SINKRON POSISI PUTAR ──
+    // Audio yang disiarkan ke banyak pengguna (audio pengumuman, backsound event) dihitung dari waktu mulai yang sama:
+    // posisi putar = (waktu sekarang - waktu mulai) [mod durasi kalau berulang]. Jadi pengguna yang baru masuk, lag, atau menjeda lalu
+    // memutar lagi langsung loncat ke detik yang sama dengan pemain lain. Jam perangkat dikoreksi lewat Worker (?time=1) kalau alamatnya ada.
+    let tOff = 0;
+    async function syncClock() {
+        const base = String(window.ROBLOX_PROXY || '').trim().replace(/\/+$/, ''); if (!base) return;
+        let best = null;
+        for (let i = 0; i < 3; i++) {
+            try {
+                const t0 = Date.now(), r = await fetch(base + '/?time=1', { cache: 'no-store' }), j = await r.json(), t1 = Date.now();
+                if (j && typeof j.now === 'number') { const rtt = t1 - t0; if (!best || rtt < best.rtt) best = { rtt: rtt, off: j.now - (t0 + rtt / 2) }; }
+            } catch (e) { break; }
+        }
+        if (best && best.rtt < 4000) tOff = best.off;
+    }
+    window.ianNow = () => Date.now() + tOff;
+    window.ianClockOffset = () => tOff;
+    setTimeout(syncClock, 1500); setInterval(syncClock, 15 * 60 * 1000);
+    // posisi yang seharusnya (detik); -1 = audio tanpa ulang sudah selesai; null = durasi belum diketahui
+    function expectPos(a, ref, loop) {
+        const dur = a.duration; if (!ref || !dur || !isFinite(dur)) return null;
+        let el = (window.ianNow() - ref) / 1000; if (el < 0) el = 0;
+        if (loop) return el % dur;
+        return el >= dur ? -1 : el;
+    }
+    // samakan posisi putar kalau selisihnya lebih dari 0,6 detik (force = selalu loncat); mengembalikan -1 kalau sudah selesai
+    function seekSync(a, ref, loop, force) {
+        const exp = expectPos(a, ref, loop); if (exp === null) return 0;
+        if (exp < 0) return -1;
+        let diff = a.currentTime - exp;
+        if (loop) { const d = a.duration; if (diff > d / 2) diff -= d; else if (diff < -d / 2) diff += d; }
+        if (force || Math.abs(diff) > 0.6) { try { a.currentTime = exp; } catch (e) {} }
+        return 1;
+    }
+
     // ── ducking: backsound event mengecil saat audio admin diputar ──
     let aPlaying = false;
     function duck(on) { aPlaying = !!on; bsApply(); }
@@ -21796,6 +21832,7 @@
         // (audio gagal dimuat) atau analyser tidak bisa dibuat/hening terus, otomatis pakai animasi palsu. Suara tidak pernah dikorbankan.
         const fake = on => { card.classList.toggle('fk', on); if (on) bars.forEach(b => { b.style.transform = ''; }); };
         let a = null, tried = false;
+        const ref = +d.ts || 0, lp = !!d.loop;   // waktu mulai siaran (dari admin) dan apakah berulang
         function setup(cors) {
             if (aAud) { try { aAud.pause(); } catch (e) {} aAud.removeAttribute('src'); try { aAud.load(); } catch (e) {} }
             if (aVz) { cancelAnimationFrame(aVz.raf); try { aVz.ctx.close(); } catch (e) {} aVz = null; }
@@ -21830,8 +21867,12 @@
             }
             const upd = () => { const ok = a.duration && isFinite(a.duration); bar.style.width = (ok ? Math.min(100, a.currentTime / a.duration * 100) : 0) + '%'; };
             const setPP = playing => { card.classList.toggle('pl', playing); duck(playing); if (playing && aVz && aVz.ctx.state === 'suspended') aVz.ctx.resume().catch(() => {}); };
-            a.addEventListener('play', () => setPP(true)); a.addEventListener('pause', () => setPP(false));
-            a.addEventListener('loadedmetadata', upd); a.addEventListener('timeupdate', upd);
+            const gone = () => { if (aAud === a) aClose(); };   // siaran sudah lewat durasinya: tidak ada yang diputar
+            a.addEventListener('play', () => { setPP(true); if (seekSync(a, ref, lp, true) < 0) gone(); });   // lanjut setelah jeda: kembali ke posisi siaran
+            a.addEventListener('pause', () => setPP(false));
+            a.addEventListener('loadedmetadata', () => { upd(); if (seekSync(a, ref, lp, true) < 0) gone(); });
+            a.addEventListener('timeupdate', upd);
+            const syT = setInterval(() => { if (aAud !== a) { clearInterval(syT); return; } if (!a.paused && seekSync(a, ref, lp, false) < 0) gone(); }, 4000);
             a.addEventListener('ended', () => {   // tanpa loop: kartu hilang sendiri setelah durasi habis
                 setPP(false);
                 if (!a.loop) { card.classList.add('out'); setTimeout(() => { if (aAud === a) aClose(); }, 400); }
@@ -21859,7 +21900,7 @@
     };
 
     // ── BACKSOUND EVENT (hanya saat event LIVE) ──
-    let bsAud = null, bsKey = '', bsVol = 0.5, bsWant = false, bsGest = false, bsTok = 0;
+    let bsAud = null, bsKey = '', bsVol = 0.5, bsWant = false, bsGest = false, bsTok = 0, bsRef = 0, bsSyT = 0;
     const bsMuted = () => { try { return localStorage.getItem('_ev_bs_mute') === '1'; } catch (e) { return false; } };
     function bsApply() {
         if (bsAud) { bsAud.volume = Math.max(0, Math.min(1, bsVol * (aPlaying ? 0.25 : 1))); bsAud.muted = bsMuted(); }
@@ -21876,7 +21917,7 @@
         const p = bsAud.play(); if (p && p.catch) p.catch(() => bindGesture());   // butuh sentuhan pengguna dulu
     }
     function bsStop() {
-        bsWant = false; bsTok++; bsKey = '';
+        bsWant = false; bsTok++; bsKey = ''; clearInterval(bsSyT); bsSyT = 0;
         if (bsAud) { try { bsAud.pause(); } catch (e) {} bsAud.removeAttribute('src'); try { bsAud.load(); } catch (e) {} bsAud = null; }
         const b = $('ev-bs-btn'); if (b) b.remove();
     }
@@ -21888,9 +21929,10 @@
         b.onclick = () => { try { localStorage.setItem('_ev_bs_mute', bsMuted() ? '0' : '1'); } catch (e) {} bsApply(); bsTry(); };
         vp.appendChild(b); bsApply();
     }
-    window.evBsSync = function (bs, eid) {
+    window.evBsSync = function (bs, eid, startAt) {
         if (!bs || (!bs.url && !bs.hasFile)) { if (bsKey || bsAud) bsStop(); return; }
-        const key = String(eid) + '|' + (bs.hasFile ? 'f' + (bs.v || 0) : bs.url);
+        bsRef = Number(startAt) || Number(eid) || 0;   // waktu mulai event (atau saat event disimpan) = titik nol posisi backsound untuk semua pengguna
+        const key = String(eid) + '|' + (startAt || 0) + '|' + (bs.hasFile ? 'f' + (bs.v || 0) : bs.url);
         bsVol = Math.max(0, Math.min(1, (bs.vol == null ? 50 : bs.vol) / 100));
         bsButton();
         if (key === bsKey && bsAud) { bsWant = true; bsApply(); bsTry(); return; }
@@ -21899,6 +21941,9 @@
             const src = bs.hasFile ? await loadFile('event_bs') : bs.url;
             if (tok !== bsTok || !src) return;
             const a = new Audio(); a.loop = true; a.preload = 'auto'; a.src = src; bsAud = a; bsWant = true; bsButton(); bsApply(); bsTry();
+            a.addEventListener('loadedmetadata', () => seekSync(a, bsRef, true, true));
+            a.addEventListener('play', () => seekSync(a, bsRef, true, true));
+            clearInterval(bsSyT); bsSyT = setInterval(() => { if (bsAud === a && !a.paused) seekSync(a, bsRef, true, false); }, 4000);
         })();
     };
 })();
@@ -22528,7 +22573,7 @@
     // ── status ──
     function state() {
         if (!ev || !ev.active) return 'off';
-        const now = Date.now();
+        const now = window.ianNow ? window.ianNow() : Date.now();
         if (ev.startAt && now < ev.startAt) return 'pending';
         if (ev.endAt && now >= ev.endAt) return 'ended';
         return 'live';
@@ -22582,7 +22627,7 @@
         if (!vis && timer) { clearInterval(timer); timer = 0; }
         syncTab(vis && ev.contest.on);
         try { cineSync(); } catch (e) { console.log('cine', e); }
-        try { if (window.evBsSync) window.evBsSync(st === 'live' && ev && ev.backsound ? ev.backsound : null, ev && ev.id); } catch (e) { console.log('bs', e); }
+        try { if (window.evBsSync) window.evBsSync(st === 'live' && ev && ev.backsound ? ev.backsound : null, ev && ev.id, ev && ev.startAt); } catch (e) { console.log('bs', e); }
         if (!vis) closePanel(); else if ($('ev-panel')) renderPanel();
     }
     function tick() {
@@ -22609,7 +22654,7 @@
     function cineSync() {
         clearTimeout(cineTimer);
         if (!ev || !ev.active || !ev.cine || !ev.cine.on || !ev.startAt) { cineStop(); return; }
-        const left = ev.startAt - Date.now();
+        const left = ev.startAt - (window.ianNow ? window.ianNow() : Date.now());
         if (left <= 0) return;
         const key = ev.id + '|' + ev.startAt;
         if (cineDone === key) return;
@@ -22641,7 +22686,7 @@
         lbl.textContent = String(ev.title || '').toUpperCase().slice(0, 40);
         let last = -1, ended = false;
         const frame = () => {
-            const rem = startAt - Date.now();
+            const rem = startAt - (window.ianNow ? window.ianNow() : Date.now());
             if (rem <= 0 && !ended) {
                 ended = true; clearInterval(cineIv); cineIv = 0; cineDone = key;
                 cineBeep(880, 0.6, 0.25);
@@ -22667,7 +22712,7 @@
     function colors() { const b = (ev && BASE[ev.theme]) || BASE.newyear; return [ev && ev.c1 || b[0], ev && ev.c2 || b[1]]; }
 
     const ICON = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.4 5.2 5.6.7-4.1 3.9 1.1 5.6L12 15.7 7 18.4l1.1-5.6L4 8.9l5.6-.7z"/></svg>';
-    function cdShort() { const st = state(); if (st === 'pending') return ev.startAt ? fmt(ev.startAt - Date.now()) : ''; return (st === 'live' && ev.endAt) ? fmt(ev.endAt - Date.now()) : ''; }
+    function cdShort() { const st = state(); if (st === 'pending') return ev.startAt ? fmt(ev.startAt - (window.ianNow ? window.ianNow() : Date.now())) : ''; return (st === 'live' && ev.endAt) ? fmt(ev.endAt - (window.ianNow ? window.ianNow() : Date.now())) : ''; }
     function renderBanner(vis) {
         let b = $('ev-banner');
         if (!vis) { if (b) b.remove(); return; }
