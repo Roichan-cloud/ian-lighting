@@ -905,7 +905,7 @@ div.skel{display:block;}
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22c55e" stroke="none"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Badge &amp; Ban per UserId</div>
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><polygon points="9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16" fill="#22c55e"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg></span> Badge &amp; Ban per UserId</div>
         <div class="toggle-sub" style="margin-bottom:8px;">Setiap perangkat punya UserId sendiri (format U-XXXXXXXX), tampil di header chat pengguna dan bisa disalin. Pengguna mengirim UserId-nya ke admin, lalu admin memberi centang hijau/oranye di sini. Badge terikat ke UserId, jadi tetap ada walau pengguna mengganti nama. UserId juga tampil di tiap pesan pada daftar Live Chat di atas, dan di sana ada tombol cepat Hijau / Oranye / Blokir.</div>
         <label class="admin-label">UserId</label>
         <input class="admin-input" id="cu-id" maxlength="10" placeholder="U-7K3Q9XA2" autocomplete="off" autocapitalize="characters" spellcheck="false">
@@ -2043,7 +2043,7 @@ async function mbCleanup() {
 // app_config/main.chatUsers = { list: [{ id:'U-XXXXXXXX', b:'green'|'orange', note, at }] }. Ban memakai chatBlocked (id = UserId) yang sama dengan tombol Blokir.
 let _chatUsers = [];
 const CU_RE = /^U-[A-Z0-9]{8}$/;
-function cuDot(b) { return '<svg width="13" height="13" viewBox="0 0 24 24" style="vertical-align:-2px;margin-left:3px;" aria-label="' + (b === 'orange' ? 'Centang oranye' : 'Centang hijau') + '"><circle cx="12" cy="12" r="11" fill="' + (b === 'orange' ? '#f97316' : '#22c55e') + '"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+function cuDot(b) { return '<svg width="15" height="15" viewBox="0 0 24 24" style="vertical-align:-2px;margin-left:3px;" aria-label="' + (b === 'orange' ? 'Centang oranye' : 'Centang hijau') + '"><polygon points="9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16" fill="' + (b === 'orange' ? '#f97316' : '#22c55e') + '"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg>'; }
 function cuBadgeOf(id) { const u = _chatUsers.find(x => x.id === id); return u ? u.b : ''; }
 async function saveChatUsers(list) {
   const ok = await saveChatCfg({ chatUsers: { list } });
@@ -2086,7 +2086,7 @@ async function cuBan() {
 }
 let _chatBlocked = [], _chatMuted = [], _chatPin = null, _chatAdminName = 'Admin', _chatUnsub = null;
 let _chatItems = [], _chatSel = new Set(), _chatReplyTo = null;
-const CHAT_CHECK = '<svg width="13" height="13" viewBox="0 0 24 24" style="vertical-align:-2px;margin-left:3px;" aria-label="Admin terverifikasi"><circle cx="12" cy="12" r="11" fill="#1d9bf0"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CHAT_CHECK = '<svg width="15" height="15" viewBox="0 0 24 24" style="vertical-align:-2px;margin-left:3px;" aria-label="Admin terverifikasi"><polygon points="9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16" fill="#45a5f5"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg>';
 function chatTime(ts) {
   const ms = ts && ts.toMillis ? ts.toMillis() : (ts || 0);
   return ms ? new Date(ms).toLocaleString('id-ID') : '-';
