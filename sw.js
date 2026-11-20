@@ -4,7 +4,7 @@
  * - Setelah itu web bisa dibuka tanpa internet.
  * - Naikkan VERSION setiap kali kamu mengubah index.html, supaya cache lama dibuang.
  */
-const VERSION = '8.9';
+const VERSION = '9.0';
 const CACHE = 'ian-lighting-' + VERSION;
 
 // File milik web sendiri (di repo yang sama)

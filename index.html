@@ -214,6 +214,35 @@
         #net-dot.dis { color: #777; filter: none; }
         /* ── TAB CHAT (gaya WhatsApp) ── */
         #tab-chat.active { flex: 1 1 0; min-height: 320px; padding: 0 !important; }
+        #chat-wbtn { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+        #chat-wbtn button { width:30px; height:30px; min-width:0; margin:0; padding:0; border:none; border-radius:50%; background:transparent; color:#aebac1; display:none; align-items:center; justify-content:center; cursor:pointer; }
+        #chat-wbtn button:active { background:rgba(255,255,255,.12); }
+        #cw-float { display:inline-flex !important; }
+        #tab-chat.chat-float #cw-float { display:none !important; }
+        #tab-chat.chat-float #cw-min, #tab-chat.chat-float #cw-dock { display:inline-flex; }
+        #cw-min .i-res { display:none; }
+        #tab-chat.chat-min #cw-min .i-min { display:none; }
+        #tab-chat.chat-min #cw-min .i-res { display:block; }
+        #tab-chat.chat-float { position:fixed; z-index:9000; display:flex !important; flex-direction:column; flex:none; width:330px; height:460px; min-height:0 !important; margin:0; border-radius:12px; overflow:hidden; background:#0b141a !important; box-shadow:0 12px 40px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.1); }
+        #tab-chat.chat-float #chat-wrap { border-radius:12px; border:none; }
+        #tab-chat.chat-float #chat-head { cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; padding:6px 8px; }
+        #tab-chat.chat-float #chat-head:active { cursor:grabbing; }
+        #tab-chat.chat-float #chat-avatar { display:none; }
+        #tab-chat.chat-float .chat-trow { flex-direction:column; align-items:flex-start; gap:3px; }
+        #tab-chat.chat-float .chat-title { white-space:nowrap; }
+        #tab-chat.chat-float #chat-uid { max-width:100%; }
+        #tab-chat.chat-float #chat-me { max-width:84px; }
+        #tab-chat.chat-min { height:auto !important; width:auto !important; max-width:calc(100vw - 8px); }
+        #tab-chat.chat-min #chat-head { padding:4px 6px 4px 12px; gap:6px; }
+        #tab-chat.chat-min #chat-uid, #tab-chat.chat-min #chat-sub, #tab-chat.chat-min #chat-me, #tab-chat.chat-min #chat-slow { display:none !important; }
+        #tab-chat.chat-min .chat-title { font-size:13px; }
+        #tab-chat.chat-narrow #chat-me { display:none; }
+        #tab-chat.chat-tiny #chat-uid { display:none; }
+        #tab-chat.chat-min #chat-wrap { flex:none; }
+        #tab-chat.chat-min #chat-wrap > *:not(#chat-head) { display:none !important; }
+        #tab-chat.chat-min #chat-rz { display:none !important; }
+        #chat-rz { display:none; position:absolute; right:0; bottom:0; width:24px; height:24px; z-index:30; cursor:nwse-resize; touch-action:none; background:linear-gradient(135deg, transparent 52%, rgba(255,255,255,.35) 52%, rgba(255,255,255,.35) 58%, transparent 58%, transparent 68%, rgba(255,255,255,.35) 68%, rgba(255,255,255,.35) 74%, transparent 74%); border-bottom-right-radius:12px; }
+        #tab-chat.chat-float #chat-rz { display:block; }
         #chat-wrap { position:relative; display:flex; flex-direction:column; flex:1; min-height:0; background-color:#0b141a; background-image:radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px); background-size:18px 18px; border:1px solid #1f2c34; border-radius:8px; overflow:hidden; }
         #chat-head { display:flex; align-items:center; gap:10px; padding:8px 10px; background:#202c33; flex-shrink:0; z-index:3; }
         #chat-avatar { width:34px; height:34px; border-radius:50%; background:#2a3942; color:#8696a0; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -742,7 +771,7 @@
 <div id="dz-tooltip">Seret filenya ke sini</div>
 
 <div id="viewport">
-    <div id="display">IAN LIGHTING v8.9 — Inspired From IJUL</div>
+    <div id="display">IAN LIGHTING v9.0 — Inspired From IJUL</div>
     <div id="status-msg"></div>
     <div id="fps-counter" style="display:block;">FPS: --</div>
     <div id="vprec-countdown-overlay" style="display:none; position:absolute; inset:0; z-index:50; align-items:center; justify-content:center; background:rgba(0,0,0,0.35);">
@@ -778,13 +807,13 @@
             <div class="compat-arrow">→</div>
             <div class="compat-ver-badge new">
                 <div class="label">VERSI SAAT INI</div>
-                <div class="ver" id="compat-cur-ver">8.9</div>
+                <div class="ver" id="compat-cur-ver">9.0</div>
             </div>
         </div>
         <div id="compat-outdated-banner" class="compat-outdated-banner" style="display:none;">
             <b>File ini dari versi KADALUARSA.</b><br>
             Beberapa fitur baru (Rigging Bundar, Wallwasher, Parled, 3D Model) <b>tidak akan termuat</b> dan akan menggunakan nilai default.<br>
-            Disarankan untuk <b>save ulang</b> setelah dimuat agar tersimpan di format v8.9.
+            Disarankan untuk <b>save ulang</b> setelah dimuat agar tersimpan di format v9.0.
         </div>
         <div id="compat-msg" style="font-size:10px; color:#aaa; margin: 6px 0;"></div>
         <ul class="compat-list" id="compat-list"></ul>
@@ -1823,6 +1852,150 @@
                 </div>
             </div>
 
+
+            <!-- KIPAS HEXAGON -->
+            <div data-hm-panel="hexfan" class="settings-motion-row" style="border: 1px solid #ffd34d; margin-top: 8px; background: #1c1700;">
+                <div style="font-size:10px; color:#ffd34d; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>KIPAS HEXAGON</span>
+                    <span id="hxf-selection-label" style="color:#ffd34d;">ALL KIPAS HEXAGON</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+                    <button class="audio-btn" style="background:#222;border-color:#ffd34d;color:#ffd34d;" onclick="FXH.count(-1)">- KIPAS HEXAGON</button>
+                    <span id="hxf-qty-val" style="font-size:11px;font-weight:bold;color:#ffd34d;width:30px;text-align:center;">0</span>
+                    <button class="audio-btn" style="background:#222;border-color:#ffd34d;color:#ffd34d;" onclick="FXH.count(1)">+ KIPAS HEXAGON</button>
+                    <button class="audio-btn" id="hxf-toggle-vis-btn" style="background:#111;border-color:#ffd34d;color:#ffd34d;" onclick="FXH.vis()">HIDE KIPAS HEXAGON</button>
+                    <button class="audio-btn" id="hxf-toggle-strobe-btn" style="background:#ffd34d;border-color:#ffd34d;color:#000;" onclick="FXH.followToggle()">IKUT MASTER STROBE: ON</button>
+                    <button class="audio-btn" id="hxf-flash-btn" style="background:#111;border-color:#ffd34d;color:#ffd34d;" onclick="FXH.flashToggle()">IKUT FLASH MB: OFF</button>
+                </div>
+                <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;">
+                    <button id="hxf-all-btn" onclick="FXH.all()" class="audio-btn" style="background:#ffd34d;color:#000;border-color:#ffd34d;font-weight:bold;">ALL</button>
+                    <button class="audio-btn" id="hxf-odd-btn" style="background:#111;border-color:#ffd34d;color:#ffd34d;" onclick="FXH.odd()">GANJIL</button>
+                    <button class="audio-btn" id="hxf-even-btn" style="background:#111;border-color:#ffd34d;color:#ffd34d;" onclick="FXH.even()">GENAP</button>
+                    <div id="hxf-select-list" style="display:flex;gap:4px;flex-wrap:wrap;flex:1;"></div>
+                </div>
+                <div class="sliders-h-row">
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">POS X (KIRI/KANAN)</label>
+                        <input type="range" class="slider-h" id="hxf-posX" min="-150" max="150" value="0" style="accent-color:#ffd34d;" oninput="FXH.u('posX',this.value); document.getElementById('hxf-posX-disp').innerText=this.value+'';"><span id="hxf-posX-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">POS Y (ATAS/BAWAH)</label>
+                        <input type="range" class="slider-h" id="hxf-posY" min="-10" max="200" value="20" style="accent-color:#ffd34d;" oninput="FXH.u('posY',this.value); document.getElementById('hxf-posY-disp').innerText=this.value+'';"><span id="hxf-posY-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">20</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">POS Z (MAJU/MUNDUR)</label>
+                        <input type="range" class="slider-h" id="hxf-posZ" min="-150" max="150" value="-30" style="accent-color:#ffd34d;" oninput="FXH.u('posZ',this.value); document.getElementById('hxf-posZ-disp').innerText=this.value+'';"><span id="hxf-posZ-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">-30</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">ROT Y</label>
+                        <input type="range" class="slider-h" id="hxf-rotY" min="-180" max="180" value="0" style="accent-color:#ffd34d;" oninput="FXH.u('rotY',this.value); document.getElementById('hxf-rotY-disp').innerText=this.value+'';"><span id="hxf-rotY-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">ROT X</label>
+                        <input type="range" class="slider-h" id="hxf-rotX" min="-180" max="180" value="0" style="accent-color:#ffd34d;" oninput="FXH.u('rotX',this.value); document.getElementById('hxf-rotX-disp').innerText=this.value+'';"><span id="hxf-rotX-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">ROT Z</label>
+                        <input type="range" class="slider-h" id="hxf-rotZ" min="-180" max="180" value="0" style="accent-color:#ffd34d;" oninput="FXH.u('rotZ',this.value); document.getElementById('hxf-rotZ-disp').innerText=this.value+'';"><span id="hxf-rotZ-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">DIM (INTENSITAS)</label>
+                        <input type="range" class="slider-h" id="hxf-dim" min="0" max="150" value="100" style="accent-color:#ffd34d;" oninput="FXH.u('dim',this.value); document.getElementById('hxf-dim-disp').innerText=this.value+'%';"><span id="hxf-dim-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">100%</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">SCALE</label>
+                        <input type="range" class="slider-h" id="hxf-scale" min="20" max="500" value="100" style="accent-color:#ffd34d;" oninput="FXH.u('scale',this.value); document.getElementById('hxf-scale-disp').innerText=this.value+'%';"><span id="hxf-scale-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">100%</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#ffd34d;">SPEED PUTAR</label>
+                        <input type="range" class="slider-h" id="hxf-speed" min="0" max="20" step="0.5" value="2" style="accent-color:#ffd34d;" oninput="FXH.u('speed',this.value); document.getElementById('hxf-speed-disp').innerText=this.value+'';"><span id="hxf-speed-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">2</span>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:6px;min-width:0;flex-wrap:wrap;">
+                    <label style="color:#ffd34d;font-size:10px;flex-shrink:0;">COLOR</label>
+                    <div id="hxf-color-swatch" onclick="openColorWheel(this.dataset.color, v=>{this.dataset.color=v;this.style.background=v;FXH.color(v);})" data-color="#ffffff" style="width:40px;height:24px;background:#ffffff;border-radius:4px;border:1px solid #555;cursor:pointer;flex-shrink:0;"></div>
+                    <button id="hxf-rainbow-toggle" onclick="FXH.rainbowToggle()" class="audio-btn" style="background:#111;color:#ffd34d;border-color:#ffd34d;flex-shrink:0;">RAINBOW: OFF</button>
+                    <input type="range" id="hxf-rainbow" min="0" max="100" value="50" style="flex:1 1 0%;min-width:0;width:100%;accent-color:#ffd34d;" oninput="FXH.rainbowSpeed(this.value); document.getElementById('hxf-rainbow-disp').innerText=this.value+'%';"><span id="hxf-rainbow-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">50%</span>
+                </div>
+            </div>
+
+            <!-- LAMPU FLOWER -->
+            <div data-hm-panel="flower" class="settings-motion-row" style="border: 1px solid #b36bff; margin-top: 8px; background: #14081f;">
+                <div style="font-size:10px; color:#b36bff; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>LAMPU FLOWER</span>
+                    <span id="lfl-selection-label" style="color:#b36bff;">ALL FLOWER</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+                    <button class="audio-btn" style="background:#222;border-color:#b36bff;color:#b36bff;" onclick="FXL.count(-1)">- FLOWER</button>
+                    <span id="lfl-qty-val" style="font-size:11px;font-weight:bold;color:#b36bff;width:30px;text-align:center;">0</span>
+                    <button class="audio-btn" style="background:#222;border-color:#b36bff;color:#b36bff;" onclick="FXL.count(1)">+ FLOWER</button>
+                    <button class="audio-btn" id="lfl-toggle-vis-btn" style="background:#111;border-color:#b36bff;color:#b36bff;" onclick="FXL.vis()">HIDE FLOWER</button>
+                    <button class="audio-btn" id="lfl-flash-btn" style="background:#111;border-color:#b36bff;color:#b36bff;" onclick="FXL.flashToggle()">IKUT FLASH MB: OFF</button>
+                </div>
+                <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;">
+                    <button id="lfl-all-btn" onclick="FXL.all()" class="audio-btn" style="background:#b36bff;color:#000;border-color:#b36bff;font-weight:bold;">ALL</button>
+                    <button class="audio-btn" id="lfl-odd-btn" style="background:#111;border-color:#b36bff;color:#b36bff;" onclick="FXL.odd()">GANJIL</button>
+                    <button class="audio-btn" id="lfl-even-btn" style="background:#111;border-color:#b36bff;color:#b36bff;" onclick="FXL.even()">GENAP</button>
+                    <div id="lfl-select-list" style="display:flex;gap:4px;flex-wrap:wrap;flex:1;"></div>
+                </div>
+                <div class="sliders-h-row">
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">POS X (KIRI/KANAN)</label>
+                        <input type="range" class="slider-h" id="lfl-posX" min="-150" max="150" value="0" style="accent-color:#b36bff;" oninput="FXL.u('posX',this.value); document.getElementById('lfl-posX-disp').innerText=this.value+'';"><span id="lfl-posX-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">POS Y (ATAS/BAWAH)</label>
+                        <input type="range" class="slider-h" id="lfl-posY" min="-10" max="200" value="18" style="accent-color:#b36bff;" oninput="FXL.u('posY',this.value); document.getElementById('lfl-posY-disp').innerText=this.value+'';"><span id="lfl-posY-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">18</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">POS Z (MAJU/MUNDUR)</label>
+                        <input type="range" class="slider-h" id="lfl-posZ" min="-150" max="150" value="-30" style="accent-color:#b36bff;" oninput="FXL.u('posZ',this.value); document.getElementById('lfl-posZ-disp').innerText=this.value+'';"><span id="lfl-posZ-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">-30</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">ROT Y</label>
+                        <input type="range" class="slider-h" id="lfl-rotY" min="-180" max="180" value="0" style="accent-color:#b36bff;" oninput="FXL.u('rotY',this.value); document.getElementById('lfl-rotY-disp').innerText=this.value+'';"><span id="lfl-rotY-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">ROT X</label>
+                        <input type="range" class="slider-h" id="lfl-rotX" min="-180" max="180" value="0" style="accent-color:#b36bff;" oninput="FXL.u('rotX',this.value); document.getElementById('lfl-rotX-disp').innerText=this.value+'';"><span id="lfl-rotX-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">ROT Z</label>
+                        <input type="range" class="slider-h" id="lfl-rotZ" min="-180" max="180" value="0" style="accent-color:#b36bff;" oninput="FXL.u('rotZ',this.value); document.getElementById('lfl-rotZ-disp').innerText=this.value+'';"><span id="lfl-rotZ-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">0</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">DIM (INTENSITAS)</label>
+                        <input type="range" class="slider-h" id="lfl-dim" min="10" max="200" value="100" style="accent-color:#b36bff;" oninput="FXL.u('dim',this.value); document.getElementById('lfl-dim-disp').innerText=this.value+'%';"><span id="lfl-dim-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">100%</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">SCALE</label>
+                        <input type="range" class="slider-h" id="lfl-scale" min="20" max="500" value="100" style="accent-color:#b36bff;" oninput="FXL.u('scale',this.value); document.getElementById('lfl-scale-disp').innerText=this.value+'%';"><span id="lfl-scale-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">100%</span>
+                    </div>
+                    <div class="setting-col">
+                        <label style="color:#b36bff;">SPEED (PUTAR & ANIMASI)</label>
+                        <input type="range" class="slider-h" id="lfl-speed" min="0" max="5" step="0.1" value="1" style="accent-color:#b36bff;" oninput="FXL.u('speed',this.value); document.getElementById('lfl-speed-disp').innerText=this.value+'';"><span id="lfl-speed-disp" style="font-size:8px;color:#aaa;min-width:28px;text-align:right;display:inline-block;">1</span>
+                    </div>
+                </div>
+                <div style="font-size:9px;color:#b36bff;font-weight:bold;margin:8px 0 4px;letter-spacing:.5px;">GERAK PUTAR</div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    <button id="lfl-gerak-lawan" onclick="FXL.gerak('lawan')" class="audio-btn" style="background:#b36bff;color:#000;border-color:#b36bff;font-weight:bold;">BERLAWANAN</button>
+                    <button id="lfl-gerak-searah" onclick="FXL.gerak('searah')" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">SEARAH</button>
+                </div>
+                <div style="font-size:9px;color:#b36bff;font-weight:bold;margin:8px 0 4px;letter-spacing:.5px;">ANIMASI LED</div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    <button id="lfl-anim-1" onclick="FXL.anim(1)" class="audio-btn" style="background:#b36bff;color:#000;border-color:#b36bff;">CHASING</button>
+                    <button id="lfl-anim-6" onclick="FXL.anim(6)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">STROBE</button>
+                    <button id="lfl-anim-2" onclick="FXL.anim(2)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">OUTWARD</button>
+                    <button id="lfl-anim-3" onclick="FXL.anim(3)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">INWARD</button>
+                    <button id="lfl-anim-4" onclick="FXL.anim(4)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">BREATHE</button>
+                    <button id="lfl-anim-5" onclick="FXL.anim(5)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">VORTEX</button>
+                    <button id="lfl-anim-7" onclick="FXL.anim(7)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">METEOR</button>
+                    <button id="lfl-anim-8" onclick="FXL.anim(8)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">PLASMA</button>
+                    <button id="lfl-anim-9" onclick="FXL.anim(9)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">BURST</button>
+                    <button id="lfl-anim-10" onclick="FXL.anim(10)" class="audio-btn" style="background:#111;color:#b36bff;border-color:#b36bff;">WAVE</button>
+                </div>
+            </div>
+
             <!-- VIDEOTRON -->
             <div data-hm-panel="videotron" class="settings-motion-row" style="border:1px solid #88f; margin-top:8px;">
                 <div style="font-size:10px; color:#88f; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
@@ -2556,6 +2729,11 @@
                 <div id="chat-head-txt"><div class="chat-trow"><div class="chat-title" data-i18n="chat_title">Chat Umum</div><button type="button" id="chat-uid" onclick="chatCopyId()" title="Salin UserId" aria-label="Salin UserId"><span id="chat-uid-t"></span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></div><div id="chat-sub"><span id="chat-online-n">0</span> <span data-i18n="chat_online">online</span></div></div>
                 <div id="chat-slow"></div>
                 <div id="chat-me" onclick="chatChangeName()" title="Ubah nama"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span id="chat-me-name">-</span></div>
+                <div id="chat-wbtn">
+                    <button type="button" id="cw-float" onclick="chatFloat(true)" title="Jendela mengambang" aria-label="Jendela mengambang"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" ><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>
+                    <button type="button" id="cw-min" onclick="chatMinToggle()" title="Kecilkan / besarkan" aria-label="Kecilkan atau besarkan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="i-min"><line x1="5" y1="12" x2="19" y2="12"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="i-res"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
+                    <button type="button" id="cw-dock" onclick="chatFloat(false)" title="Kembali ke tab Chat" aria-label="Kembali ke tab Chat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" ><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+                </div>
             </div>
             <div id="chat-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/></svg><div style="flex:1;min-width:0;"><div class="pin-lbl"><span data-i18n="chat_pin_lbl">DISEMATKAN ADMIN</span><span id="chat-pin-check"></span></div><div class="pin-body" id="chat-pin-body"></div></div></div>
             <div id="chat-list"></div>
@@ -2586,6 +2764,7 @@
                 </div>
             </div>
         </div>
+    <div id="chat-rz" aria-label="Ubah ukuran"></div>
     </div><!-- end tab-chat -->
 
     <!-- ===== TAB SETTINGS ===== -->
@@ -2674,7 +2853,7 @@
                 <span style="font-size:9px; color:#ccc; flex:1;" data-i18n="vt_label">TULISAN VERSI DI VIEWPORT</span>
                 <button class="quality-btn active" id="btn-version-text" onclick="toggleVersionText()" style="min-width:90px;">TAMPIL</button>
             </div>
-            <div style="font-size:8px; color:#666;" data-i18n="vt_desc">Sembunyikan atau tampilkan tulisan "IAN LIGHTING v8.9" di pojok kanan atas viewport.</div>
+            <div style="font-size:8px; color:#666;" data-i18n="vt_desc">Sembunyikan atau tampilkan tulisan "IAN LIGHTING v9.0" di pojok kanan atas viewport.</div>
             <div style="border-top:1px solid #222; margin-top:10px; padding-top:10px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
                     <span style="font-size:9px; color:#ccc; flex:1;" data-i18n="s2_label">LAYAR KEDUA (MONITOR/PROYEKTOR)</span>
@@ -3371,7 +3550,7 @@
                 <span data-i18n="sec_info">INFO &amp; TENTANG</span>
             </div>
             <div style="background:#0a0a0a; border-radius:6px; padding:12px; margin-top:6px; font-size:9px; color:#888; line-height:1.8;">
-                <div style="color:#0f0; font-size:12px; font-weight:bold; margin-bottom:6px;">IAN LIGHTING v8.9</div>
+                <div style="color:#0f0; font-size:12px; font-weight:bold; margin-bottom:6px;">IAN LIGHTING v9.0</div>
                 <div>Inspired From IJUL</div>
                 <div style="margin-top:8px; color:#666;" data-i18n="app_desc">Aplikasi simulasi DMX lighting controller berbasis web. Dirancang untuk simulasi show lighting dengan kontrol beam, gobo, color chase, videotron, dan efek gerakan.</div>
                 <div style="margin-top:10px; border-top:1px solid #222; padding-top:8px;">
@@ -3618,7 +3797,7 @@
     let tapFlashTimer = null;
 
     // ── FEATURE 4: Version Compatibility
-    const CURRENT_VERSION = "8.9";
+    const CURRENT_VERSION = "9.0";
     let pendingProjectData = null;
 
     // ── NEW FEATURE: Blackout
@@ -4197,7 +4376,7 @@
         '[Tab Main] Mengontrol lampu moving head: pilih lampu (atau semua), atur warna, gobo/mode (termasuk mode prisma PRISM/FAN/DOTS/STAR/PRISM 16/PRISM 32 dan Rainbow Prism), dimmer, zoom, serta kecepatan. Ada Generator Gerakan (FX) seperti circle, mirror, dsb. dengan slider kecepatan; Chase Mover, Chase Gobo, Chase Color; Scene; Master Strobe; Flash Minibrute (FLASH MB); Freeze; Blackout; dan Master Gobo. Tombol SELECT MB memilih Minibrute untuk digerakkan lewat pan/tilt.',
         'Hotkey bawaan (keyboard): Spasi ditahan = Flash MB; F = Freeze; B = Blackout; G = ganti Master Gobo/Mode berikutnya; 1-9, 0, -, = = Chase Mover 1-12; Shift+1-9,0 = Chase Gobo 1-10; Alt+1-8 = Chase Color 1-8; Q/W/E/R/T/Y/U ditahan = Master Strobe urutan 1-7; Backspace = Balik Arah Manual (untuk gerakan circle/mirror bolak-balik bila mode MANUAL aktif). Hotkey otomatis nonaktif saat mengetik di kolom teks. Hotkey aksi dan FX bisa diganti di tab Settings.',
         '',
-        '[Tab Editor] Mengatur isi panggung: jumlah dan jarak lampu, Rigging Truss, Parled, Wallwasher, Strobe Kotak, Lampu Kipas (bisa memakai gambar PNG), Videotron (layar video; kalau tidak ada video tampil layar hitam "VT n" dan "NO SIGNAL"; ada edge RGB), Foto 2D, Banner, Model 3D (upload file OBJ/FBX; harus diupload ulang manual setelah memuat proyek), dan MINIBRUTE HARDWARE CONTROL.',
+        '[Tab Editor] Mengatur isi panggung: jumlah dan jarak lampu, Rigging Truss, Parled, Wallwasher, Strobe Kotak, Lampu Kipas (bisa memakai gambar PNG), Kipas Hexagon, Lampu Flower (10 animasi LED), Videotron (layar video; kalau tidak ada video tampil layar hitam "VT n" dan "NO SIGNAL"; ada edge RGB), Foto 2D, Banner, Model 3D (upload file OBJ/FBX; harus diupload ulang manual setelah memuat proyek), dan MINIBRUTE HARDWARE CONTROL.',
         'Minibrute: tersedia dua model, 4 MATA dan 2 MATA (tombol MODEL di panel). Bisa menambah/mengurangi unit (+ MB / - MB, maksimal 5), memilih unit MB1-MB5, dan mengatur skala, posisi X/Y/Z, serta rotasi X/Y/Z. Semua pengaturan Minibrute ikut tersimpan di Save Project.',
         'Banyak panel Editor punya tombol sembunyi/tampil dan jumlah unit; atur posisi, ukuran, dan rotasi lewat slider di panel masing-masing.',
         '',
@@ -11472,7 +11651,7 @@
         fs_label:          { id:'LAYAR PENUH (FULLSCREEN)', en:'FULLSCREEN' },
         fs_desc:           { id:'Tampilkan aplikasi memenuhi layar. Tekan lagi untuk keluar.', en:'Show the app full screen. Press again to exit.' },
         vt_label:          { id:'TULISAN VERSI DI VIEWPORT', en:'VERSION TEXT IN VIEWPORT' },
-        vt_desc:           { id:'Sembunyikan atau tampilkan tulisan "IAN LIGHTING v8.9" di pojok kanan atas viewport.', en:'Hide or show the "IAN LIGHTING v8.9" text at the top right of the viewport.' },
+        vt_desc:           { id:'Sembunyikan atau tampilkan tulisan "IAN LIGHTING v9.0" di pojok kanan atas viewport.', en:'Hide or show the "IAN LIGHTING v9.0" text at the top right of the viewport.' },
         vt_show:           { id:'TAMPIL', en:'SHOWN' },
         vt_hide:           { id:'SEMBUNYI', en:'HIDDEN' },
         dg_mouse_dbl:      { id:'• Klik dua kali di viewport = reset kamera', en:'• Double-click the viewport = reset camera' },
@@ -11864,7 +12043,7 @@
                 device: typeof _deviceInfo !== 'undefined' ? _deviceInfo.device : null,
                 browser: typeof _deviceInfo !== 'undefined' ? _deviceInfo.browser : null,
                 screen: typeof _deviceInfo !== 'undefined' ? _deviceInfo.screen : null,
-                appVersion: 'v8.9',
+                appVersion: 'v9.0',
                 status: 'baru',
                 timestamp: Date.now()
             });
@@ -13404,7 +13583,7 @@
             if (e[1]) o[e[1]] += ox; if (e[2]) o[e[2]] += oz; S.push(e);
         };
         lamps.forEach(l => { mv(l.group); const s = l.state; if (s) { if (typeof s.posZ !== 'number') s.posZ = -25; st(s, 'targetX', 'posZ'); } });
-        [parleds, wallwashers, strobes, fanLamps].forEach(arr => arr.forEach(o => { mv(o.group); st(o.state, 'posX', 'posZ'); }));
+        [parleds, wallwashers, strobes, fanLamps, (window._hxfObjs ? window._hxfObjs() : [])].forEach(arr => arr.forEach(o => { mv(o.group); st(o.state, 'posX', 'posZ'); }));
         trusses.forEach(o => mv(o.group)); photos2D.forEach(o => mv(o.group)); banners.forEach(o => mv(o.group));
         minibrutes.forEach(m => { mv(m.group); st(m, 'targetX', null); });
         (window.foggers || []).forEach(f => mv(f.group));
@@ -14523,6 +14702,10 @@
                     gm.opacity = s.curDim * blurAmt * (gi === 0 ? 0.35 : 0.18);
                 });
             });
+        }
+
+        if (typeof window._hxfFrame === 'function') {   // Kipas Hexagon + Lampu Flower
+            try { window._hxfFrame(now, { lerpMotor, lfS: _lfS, phases: { odd: sOddPh, all: sAllPh, split: sSplitPh, chase13: sChase13Step, rndSpd: sRndSpdInput } }); } catch (e) { console.error('hexfan/flower frame', e); }
         }
 
         if (remoteFans.length) {   // bilah kipas teman berputar di sisi kita (kecepatan dari teman)
@@ -17353,6 +17536,7 @@
         wallwashersData:  'Data Wallwasher',
         strobsData:       'Data Strobe Kotak',
         fanLampsData:     'Data Lampu Kipas',
+        hexFlowerData:    'Data Kipas Hexagon & Lampu Flower',
         videotronData:    'Data Videotron',
         photos2DData:     'Data 2D Photo',
         bannersData:      'Data Banner',
@@ -17462,7 +17646,7 @@
         overlay.innerHTML = `
             <div style="background:#111; border:1px solid #0f0; border-radius:10px; padding:24px 20px; width:320px; max-width:90vw; box-shadow:0 0 30px #0f04;">
                 <div style="font-size:13px; color:#0f0; font-weight:bold; letter-spacing:2px; margin-bottom:4px;">SAVE PROJECT</div>
-                <div style="font-size:9px; color:#555; margin-bottom:14px;">Ian Lighting v8.9</div>
+                <div style="font-size:9px; color:#555; margin-bottom:14px;">Ian Lighting v9.0</div>
 
                 <label style="font-size:9px; color:#aaa; display:block; margin-bottom:6px; letter-spacing:1px;">NAMA PROJECT</label>
                 <div style="display:flex; align-items:center; background:#1a1a1a; border:1px solid #0a0; border-radius:5px; overflow:hidden;">
@@ -17616,9 +17800,10 @@
             }
 
             const project = {
-                version: "8.9",
+                version: "9.0",
                 projectName: fileName,
                 pwHash: pwHash,
+                creator: _projCreator(),   // cap pembuat khusus pemilik centang hijau/oranye (diverifikasi saat project dibuka)
                 timestamp: Date.now(),
                 fixCount: fixCount,
                 globalSpacing: globalSpacing,
@@ -17674,6 +17859,7 @@
                 fanLampsVisible: areFanLampsVisible,
                 fanLampCenterGlowOn: fanLampCenterGlowOn,
                 fanLampFollowStrobe: fanLampFollowStrobe,
+                hexFlowerData: (typeof hxfSerialize === 'function') ? hxfSerialize() : null,
                 videotronData: videotrons.map(v => ({
                     posX: v.state.posX, posY: v.state.posY, posZ: v.state.posZ,
                     rotX: v.state.rotX, rotY: v.state.rotY, rotZ: v.state.rotZ || 0,
@@ -17723,7 +17909,7 @@
             dlAnchorElem.click();
             document.body.removeChild(dlAnchorElem);
             URL.revokeObjectURL(url);
-            showStatus(`Proyek "${fileName}" Berhasil Didownload (.json)!${pwHash ? ' [password aktif]' : ''}`);
+            showStatus(`Proyek "${fileName}" Berhasil Didownload (.json)!${pwHash ? ' [password aktif]' : ''}${project.creator ? ' Ditandai karya ' + project.creator.name + ' (centang ' + (project.creator.badge === 'orange' ? 'oranye' : 'hijau') + ')' : ''}`);
             if (share) _shareProjectLink(project, fileName);
         } catch (err) {
             console.error(err);
@@ -17837,6 +18023,55 @@
     }
     window.addEventListener('load', () => setTimeout(openSharedFromUrl, 600));
 
+
+    // ── Cap pembuat project untuk pemilik centang hijau/oranye ──
+    // Saat save: bila UserId perangkat ini sedang punya badge (diatur admin), project dibubuhi { uid, name, badge }.
+    // Saat load: cap hanya dianggap sah bila UserId itu SEKARANG masih punya badge di daftar admin (app_config/main.chatUsers);
+    // badge yang ditampilkan selalu diambil dari daftar admin, bukan dari isi file.
+    function _projCreator() {
+        try {
+            const uid = (typeof window.ianUserId === 'function') ? window.ianUserId() : '';
+            const b = (window.ianChatBadges || {})[uid];
+            if (!uid || (b !== 'green' && b !== 'orange')) return null;
+            const name = (localStorage.getItem('_poth_chat_name') || '').trim().slice(0, 16);
+            if (name.length < 2) return null;
+            return { uid: uid, name: name, badge: b, at: Date.now() };
+        } catch (e) { return null; }
+    }
+    function _sealSvg(color, size) {
+        const _SEAL_PTS = '9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16';
+        return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" aria-hidden="true"><polygon points="' + _SEAL_PTS + '" fill="' + color + '"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg>';
+    }
+    async function _showCreatorStamp(data) {
+        const c = data && data.creator;
+        if (!c || typeof c !== 'object') return;
+        const uid = String(c.uid || ''), nm = String(c.name || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+        if (!/^U-[A-Z0-9]{8}$/.test(uid) || nm.length < 2) return;
+        for (let i = 0; i < 12 && !window.ianChatBadges; i++) await new Promise(r => setTimeout(r, 250));   // tunggu daftar badge dari admin
+        const b = (window.ianChatBadges || {})[uid];
+        if (b !== 'green' && b !== 'orange') { showStatus('Project ini mengaku karya "' + nm + '", tetapi pembuatnya tidak terverifikasi'); return; }
+        const col = b === 'orange' ? '#f97316' : '#22c55e', lbl = b === 'orange' ? 'Centang oranye' : 'Centang hijau';
+        const old = document.getElementById('creator-stamp'); if (old) old.remove();
+        if (!document.getElementById('creator-stamp-css')) {
+            const st = document.createElement('style'); st.id = 'creator-stamp-css';
+            st.textContent = '@keyframes csIn{from{opacity:0;transform:translate(-50%,-18px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes csSheen{from{transform:translateX(-120%)}to{transform:translateX(220%)}}@keyframes csPop{0%{transform:scale(.4) rotate(-25deg)}60%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0)}}';
+            document.head.appendChild(st);
+        }
+        const el = document.createElement('div'); el.id = 'creator-stamp';
+        el.style.cssText = 'position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99990;width:min(340px,92vw);box-sizing:border-box;overflow:hidden;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(20,24,28,.96),rgba(10,12,14,.96));border:1px solid ' + col + ';box-shadow:0 0 0 1px ' + col + '33,0 10px 34px rgba(0,0,0,.6),0 0 26px ' + col + '55;color:#fff;cursor:pointer;animation:csIn .45s cubic-bezier(.2,.9,.3,1.2) both;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;';
+        el.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,' + col + '33 50%,transparent 70%);animation:csSheen 1.6s ease .35s 1 both;pointer-events:none;"></div>' +
+            '<div style="flex-shrink:0;animation:csPop .6s cubic-bezier(.3,1.4,.5,1) .15s both;filter:drop-shadow(0 0 8px ' + col + '99);">' + _sealSvg(col, 40) + '</div>' +
+            '<div style="min-width:0;flex:1;position:relative;">' +
+              '<div style="font-size:9px;letter-spacing:2px;font-weight:800;color:' + col + ';">PROJECT TERVERIFIKASI</div>' +
+              '<div style="font-size:14px;font-weight:700;margin-top:2px;line-height:1.25;word-break:break-word;">Karya <span id="cs-name"></span></div>' +
+              '<div style="font-size:10px;color:#9aa4ad;margin-top:2px;">' + lbl + ' · diverifikasi admin</div>' +
+            '</div>';
+        el.querySelector('#cs-name').textContent = nm;
+        document.body.appendChild(el);
+        const kill = () => { el.style.transition = 'opacity .3s, transform .3s'; el.style.opacity = '0'; el.style.transform = 'translate(-50%,-12px)'; setTimeout(() => el.remove(), 320); };
+        el.onclick = kill; setTimeout(() => { if (el.isConnected) kill(); }, 6500);
+    }
+
     function loadProject(input) {
         const doLoad = function(file) {
             if (!file) return;
@@ -17888,7 +18123,7 @@
                     </svg>
                     <div style="font-size:13px; color:#f90; font-weight:bold; letter-spacing:2px;">PROJECT TERKUNCI</div>
                 </div>
-                <div style="font-size:9px; color:#555; margin-bottom:10px;">Ian Lighting v8.9</div>
+                <div style="font-size:9px; color:#555; margin-bottom:10px;">Ian Lighting v9.0</div>
                 <div style="font-size:10px; color:#aaa; margin-bottom:14px; line-height:1.6;">Project <span style="color:#f90; font-weight:bold;">"${projName}"</span> mempunyai password.<br>Silahkan masukkan password untuk melanjutkan.</div>
                 <div style="display:flex; align-items:center; background:#1a0e00; border:1px solid #a50; border-radius:5px; overflow:hidden; margin-bottom:6px;">
                     <input id="load-pw-input" type="password" placeholder="Masukkan password..." maxlength="64"
@@ -17962,10 +18197,11 @@
 
         const proceed = (isOutdated) => {
             applyLoadedProject(data);
+            try { _showCreatorStamp(data); } catch (e) { console.log('creator stamp', e); }
             if (isOutdated) {
                 setTimeout(() => {
                     saveProject();
-                    showStatus('Proyek diupgrade & file baru v8.9 otomatis didownload!');
+                    showStatus('Proyek diupgrade & file baru v9.0 otomatis didownload!');
                 }, 800);
             }
         };
@@ -18194,6 +18430,9 @@
                 selectedStrobes = [-1];
                 renderStrobeSelectList(); updateStrobeFaders();
             }
+
+            // 6a2. Kipas Hexagon + Lampu Flower
+            if (data.hexFlowerData && typeof hxfRestore === 'function') hxfRestore(data.hexFlowerData);
 
             // 6b. Lampu Kipas
             if ('fanLampsData' in data) {
@@ -18588,6 +18827,7 @@
             fanLampsVisible: areFanLampsVisible,
             fanLampCenterGlowOn: fanLampCenterGlowOn,
             fanLampFollowStrobe: fanLampFollowStrobe,
+                hexFlowerData: (typeof hxfSerialize === 'function') ? hxfSerialize() : null,
             videotronData: videotrons.map(v => ({
                 posX: v.state.posX, posY: v.state.posY, posZ: v.state.posZ,
                 rotX: v.state.rotX, rotY: v.state.rotY, rotZ: v.state.rotZ || 0,
@@ -19833,6 +20073,389 @@
         handle.addEventListener('dblclick', () => setViewportHeight(32, true));
     }
 </script>
+<!-- ═══════════ KIPAS HEXAGON + LAMPU FLOWER — fixture baru (model 3D diport dari Nova: Hexagon Fan 3D & Lunar Flower 3D) ═══════════ -->
+<script>
+(function(){
+'use strict';
+var D2R = Math.PI / 180;
+function $(id){ return document.getElementById(id); }
+function sc(){ try { return (typeof scene !== 'undefined') ? scene : null; } catch (e) { return null; } }
+function tryv(fn, d){ try { var v = fn(); return v === undefined ? d : v; } catch (e) { return d; } }
+
+// ───────────────────────── Pabrik set fixture (pool, pilih unit, slider, jumlah, hide, simpan) ─────────────────────────
+function makeSet(o){
+  var S = { pool: [], sel: [-1], visible: true, flash: false };
+  var P = o.prefix, AC = o.accent;
+  function ids(){ return S.sel[0] === -1 ? S.pool.map(function(_, i){ return i; }) : S.sel.filter(function(i){ return !!S.pool[i]; }); }
+  function paint(id, on){ var b = $(id); if (!b) return; b.style.background = on ? AC : '#111'; b.style.color = on ? '#000' : AC; }
+  function same(a, b){ return a.length === b.length && a.every(function(v, i){ return v === b[i]; }); }
+  function sync(){
+    var all = S.sel[0] === -1, odd = S.pool.map(function(_, i){ return i; }).filter(function(i){ return i % 2 === 0; }), even = S.pool.map(function(_, i){ return i; }).filter(function(i){ return i % 2 === 1; });
+    paint(P + '-all-btn', all);
+    paint(P + '-odd-btn', !all && S.pool.length > 1 && same(S.sel.slice().sort(function(a, b){ return a - b; }), odd));
+    paint(P + '-even-btn', !all && S.pool.length > 1 && same(S.sel.slice().sort(function(a, b){ return a - b; }), even));
+    var l = $(P + '-selection-label'); if (l) l.innerText = all ? ('ALL ' + o.noun) : (o.noun + ': ' + S.sel.map(function(x){ return x + 1; }).join(', '));
+    renderList(); faders();
+    if (o.onSel) { var a = ids(); if (a.length) o.onSel(S.pool[a[0]].state); }
+  }
+  function renderList(){
+    var c = $(P + '-select-list'); if (!c) return; c.innerHTML = '';
+    S.pool.forEach(function(_, i){
+      var b = document.createElement('button'); b.className = 'btn-fix'; b.innerText = o.short + ' ' + (i + 1);
+      var on = S.sel[0] !== -1 && S.sel.indexOf(i) >= 0;
+      b.style.cssText = 'padding:6px 4px;font-size:8px;border:1px solid ' + AC + ';border-radius:3px;cursor:pointer;background:' + (on ? AC : '#111') + ';color:' + (on ? '#000' : AC) + ';';
+      b.onclick = function(){ S.one(i); };
+      c.appendChild(b);
+    });
+  }
+  function faders(){
+    var a = ids(); if (!a.length) return; var s = S.pool[a[0]].state;
+    [['posX', 1, ''], ['posY', 1, ''], ['posZ', 1, ''], ['rotX', 1, ''], ['rotY', 1, ''], ['rotZ', 1, ''], ['dim', 100, '%'], ['scale', 100, '%'], ['speed', 1, '']].forEach(function(f){
+      var v = (s[f[0]] !== undefined ? s[f[0]] : 0) * f[1];
+      if (f[1] !== 1) v = Math.round(v);
+      var e = $(P + '-' + f[0]); if (e) e.value = v;
+      var d = $(P + '-' + f[0] + '-disp'); if (d) d.innerText = v + f[2];
+    });
+  }
+  S.ids = ids;
+  function paintFlash(){ var b = $(P + '-flash-btn'); if (!b) return; b.innerText = 'IKUT FLASH MB: ' + (S.flash ? 'ON' : 'OFF'); b.style.background = S.flash ? AC : '#111'; b.style.color = S.flash ? '#000' : AC; }
+  S.flashToggle = function(){ S.flash = !S.flash; paintFlash(); try { showStatus(S.flash ? (o.noun + ' akan jadi putih saat Flash MB dipencet') : (o.noun + ' tidak ikut Flash MB')); } catch (e) {} };
+  // tingkat Flash MB halus 0..1 (mengikuti slider MB SMOOTH); 0 kalau tidak ikut
+  S.flashLevel = function(){ if (!S.flash) return 0; var l = tryv(function(){ return _mbFlashLevel; }, 0); return l > 0.001 ? Math.min(1, l) : 0; };
+  S.add = function(st){
+    var sce = sc(); if (!sce) return null;
+    var u = o.build(st, S.pool.length); u.state = st; u.group.visible = S.visible;
+    sce.add(u.group); S.pool.push(u); return u;
+  };
+  S.clear = function(){ var sce = sc(); S.pool.forEach(function(u){ if (sce) sce.remove(u.group); o.dispose(u); }); S.pool = []; };
+  S.refresh = function(){ var q = $(P + '-qty-val'); if (q) q.innerText = S.pool.length; sync(); paintFlash(); };
+  S.count = function(delta){
+    var next = S.pool.length + delta; if (next < 0 || next > 40) return;
+    if (delta > 0) { var last = S.pool.length ? S.pool[S.pool.length - 1].state : null; S.add(o.def(S.pool.length, last)); }
+    else { var r = S.pool.pop(); if (r) { var sce = sc(); if (sce) sce.remove(r.group); o.dispose(r); } }
+    S.sel = [-1]; S.refresh();
+  };
+  S.vis = function(){
+    S.visible = !S.visible; S.pool.forEach(function(u){ u.group.visible = S.visible; });
+    var b = $(P + '-toggle-vis-btn'); if (b) b.innerText = (S.visible ? 'HIDE ' : 'SHOW ') + o.noun;
+  };
+  S.all  = function(){ S.sel = [-1]; sync(); };
+  S.odd  = function(){ var a = S.pool.map(function(_, i){ return i; }).filter(function(i){ return i % 2 === 0; }); S.sel = a.length ? a : [-1]; sync(); };
+  S.even = function(){ var a = S.pool.map(function(_, i){ return i; }).filter(function(i){ return i % 2 === 1; }); S.sel = a.length ? a : [-1]; sync(); };
+  S.one  = function(i){
+    if (S.sel[0] === -1) S.sel = [];
+    var k = S.sel.indexOf(i); if (k >= 0) { S.sel.splice(k, 1); if (!S.sel.length) S.sel = [-1]; } else S.sel.push(i);
+    sync();
+  };
+  // param = nama state (posX, posY, posZ, rotX, rotY, rotZ, dim, scale, speed); dim & scale datang dalam persen
+  S.u = function(key, val){
+    var v = parseFloat(val); if (!isFinite(v)) return;
+    ids().forEach(function(i){
+      var u = S.pool[i], s = u.state;
+      if (key === 'dim') s.dim = v / 100;
+      else if (key === 'scale') { s.scale = v / 100; u.group.scale.setScalar(s.scale); }
+      else s[key] = v;
+    });
+  };
+  S.set = function(fn){ ids().forEach(function(i){ fn(S.pool[i].state, S.pool[i]); }); };
+  S.serialize = function(){
+    return { visible: S.visible, flash: S.flash, units: S.pool.map(function(u){
+      var s = u.state, r = { posX: s.posX, posY: s.posY, posZ: s.posZ, rotX: s.rotX, rotY: s.rotY, rotZ: s.rotZ, scale: s.scale, speed: s.speed, dim: s.dim };
+      if (o.ser) o.ser(s, r); return r;
+    }) };
+  };
+  S.restore = function(d){
+    S.clear();
+    ((d && d.units) || []).forEach(function(r, i){
+      var st = o.def(i, null);
+      ['posX', 'posY', 'posZ', 'rotX', 'rotY', 'rotZ', 'scale', 'speed', 'dim'].forEach(function(k){ if (isFinite(Number(r[k]))) st[k] = Number(r[k]); });
+      st.curDim = st.dim;
+      if (o.des) o.des(st, r);
+      S.add(st);
+    });
+    S.visible = !(d && d.visible === false); S.flash = !!(d && d.flash); paintFlash();
+    S.pool.forEach(function(u){ u.group.visible = S.visible; });
+    var b = $(P + '-toggle-vis-btn'); if (b) b.innerText = (S.visible ? 'HIDE ' : 'SHOW ') + o.noun;
+    S.sel = [-1]; S.refresh();
+  };
+  return S;
+}
+function lerpT(u, s, lm){
+  var g = u.group;
+  g.position.x += (s.posX - g.position.x) * lm; g.position.y += (s.posY - g.position.y) * lm; g.position.z += (s.posZ - g.position.z) * lm;
+  g.rotation.x += (s.rotX * D2R - g.rotation.x) * lm; g.rotation.y += (s.rotY * D2R - g.rotation.y) * lm; g.rotation.z += (s.rotZ * D2R - g.rotation.z) * lm;
+}
+function placeGroup(g, s){
+  g.position.set(s.posX, s.posY, s.posZ); g.rotation.set(s.rotX * D2R, s.rotY * D2R, s.rotZ * D2R); g.scale.setScalar(s.scale);
+}
+
+// ───────────────────────── KIPAS HEXAGON ─────────────────────────
+var HX = (function(){
+  var K = 0.55, R_OUTER_FRAME = 6.0, R_LED_OUTER = 5.8, R_LED_INNER = 4.8, R_INNER_BORDER = 4.6, R_HUB = 0.9, DEPTH_MAIN = 1.0;
+  var G = null, M = null, follow = true, tc = null;
+  function hexShape(radius){
+    var shape = new THREE.Shape(), offset = Math.PI / 6;
+    for (var i = 0; i < 6; i++) { var a = (i * Math.PI / 3) + offset, x = Math.cos(a) * radius, y = Math.sin(a) * radius; if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y); }
+    return shape;
+  }
+  function ringGeo(ro, ri){ var s = hexShape(ro); s.holes.push(hexShape(ri)); return new THREE.ExtrudeGeometry(s, { depth: DEPTH_MAIN, bevelEnabled: false }); }
+  function honeycomb(){
+    var c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
+    var ctx = c.getContext('2d'); ctx.clearRect(0, 0, 1024, 1024);
+    var r = 35, w = Math.sqrt(3) * r; ctx.lineWidth = 6; ctx.strokeStyle = '#111111';
+    var cols = Math.ceil(1024 / w) + 2, rows = Math.ceil(1024 / (1.5 * r)) + 2;
+    for (var row = -1; row <= rows; row++) for (var col = -1; col <= cols; col++) {
+      var x = col * w, y = row * 1.5 * r; if (Math.abs(row) % 2 === 1) x += w / 2;
+      ctx.beginPath();
+      for (var i = 0; i < 6; i++) { var a = (i * Math.PI / 3) + (Math.PI / 6), hx = x + r * Math.cos(a), hy = y + r * Math.sin(a); if (i === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy); }
+      ctx.closePath(); ctx.stroke();
+    }
+    var tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+  }
+  function assets(){
+    if (G) return;
+    G = {};
+    G.frame = ringGeo(R_OUTER_FRAME, R_LED_OUTER); G.led = ringGeo(R_LED_OUTER, R_LED_INNER); G.inner = ringGeo(R_LED_INNER, R_INNER_BORDER);
+    G.back = new THREE.ExtrudeGeometry(hexShape(R_OUTER_FRAME), { depth: 0.1, bevelEnabled: false });
+    G.divider = new THREE.BoxGeometry(0.08, (R_LED_OUTER - R_LED_INNER) + 0.05, 0.05);
+    G.hub = new THREE.ExtrudeGeometry(hexShape(R_HUB), { depth: 0.15, bevelEnabled: false });
+    G.bladeL = R_INNER_BORDER - R_HUB - 0.15;
+    G.blade = new THREE.PlaneGeometry(0.85, G.bladeL);
+    G.spoke = new THREE.BoxGeometry(0.04, R_INNER_BORDER - R_HUB, 0.02);
+    var grill = new THREE.ShapeGeometry(hexShape(R_INNER_BORDER)); grill.computeBoundingBox();
+    var bb = grill.boundingBox, ox = -bb.min.x, oy = -bb.min.y, rx = bb.max.x - bb.min.x, ry = bb.max.y - bb.min.y;
+    var pa = grill.attributes.position, uvs = [];
+    for (var i = 0; i < pa.count; i++) uvs.push((pa.getX(i) + ox) / rx, (pa.getY(i) + oy) / ry);
+    grill.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); G.grill = grill;
+    M = { black: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 }), solidBlack: new THREE.MeshBasicMaterial({ color: 0x050505 }),
+          grill: new THREE.MeshBasicMaterial({ map: honeycomb(), transparent: true, side: THREE.DoubleSide }) };
+  }
+  function build(st){
+    assets();
+    var g = new THREE.Group(), body = new THREE.Group(); body.scale.setScalar(K); g.add(body);
+    var ledMat = new THREE.MeshBasicMaterial({ color: 0xffffff }), bladeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    var mesh = function(geo, mat, z){ var m = new THREE.Mesh(geo, mat); m.position.z = z; body.add(m); return m; };
+    mesh(G.frame, M.black, -DEPTH_MAIN / 2); mesh(G.led, ledMat, -DEPTH_MAIN / 2); mesh(G.inner, M.black, -DEPTH_MAIN / 2); mesh(G.back, M.solidBlack, -(DEPTH_MAIN / 2) - 0.1);
+    for (var i = 0; i < 6; i++) {
+      var ang = (i * Math.PI / 3) + (Math.PI / 6), dist = (R_LED_OUTER + R_LED_INNER) / 2, d = new THREE.Mesh(G.divider, M.black);
+      d.position.set(Math.cos(ang) * dist, Math.sin(ang) * dist, (DEPTH_MAIN / 2) + 0.02); d.rotation.z = ang - Math.PI / 2; body.add(d);
+    }
+    mesh(G.hub, M.black, 0.35);
+    var fan = new THREE.Group(); fan.position.z = -0.1;
+    for (var b = 0; b < 6; b++) {
+      var a = b * Math.PI / 3, bd = R_HUB + (G.bladeL / 2) + 0.05, bl = new THREE.Mesh(G.blade, bladeMat);
+      bl.position.set(Math.cos(a) * bd, Math.sin(a) * bd, 0); bl.rotation.z = a - Math.PI / 2; fan.add(bl);
+    }
+    body.add(fan);
+    mesh(G.grill, M.grill, 0.35);
+    for (var s = 0; s < 6; s++) {
+      var sa = (s * Math.PI / 3) + (Math.PI / 6), sd = (R_INNER_BORDER + R_HUB) / 2, sp = new THREE.Mesh(G.spoke, M.black);
+      sp.position.set(Math.cos(sa) * sd, Math.sin(sa) * sd, 0.36); sp.rotation.z = sa - Math.PI / 2; body.add(sp);
+    }
+    placeGroup(g, st);
+    return { group: g, fan: fan, ledMat: ledMat, bladeMat: bladeMat, angle: st._angle || 0 };
+  }
+  function dispose(u){ try { u.ledMat.dispose(); u.bladeMat.dispose(); } catch (e) {} }
+  function def(i, last){
+    return { dim: 1, curDim: 1, posX: last ? last.posX + 14 : 0, posY: 20, posZ: -30, rotX: 0, rotY: 0, rotZ: 0, scale: 1, speed: 2,
+             color: new THREE.Color(0xffffff), rainbowOn: false, rainbow: 50, rndPhase: Math.random() * 100, rndSpeed: 0.3 + Math.random() * 0.7, _angle: i * 2.1 };
+  }
+  var set = makeSet({
+    prefix: 'hxf', accent: '#ffd34d', noun: 'KIPAS HEXAGON', short: 'KH', build: build, dispose: dispose, def: def,
+    ser: function(s, r){ r.color = '#' + s.color.getHexString(); r.rainbowOn = !!s.rainbowOn; r.rainbow = s.rainbow; },
+    des: function(s, r){ s.color = new THREE.Color(r.color || '#ffffff'); s.rainbowOn = !!r.rainbowOn; s.rainbow = isFinite(Number(r.rainbow)) ? Number(r.rainbow) : 50; },
+    onSel: function(s){
+      var sw = $('hxf-color-swatch'); if (sw) { var h = '#' + s.color.getHexString(); sw.dataset.color = h; sw.style.background = h; }
+      paintRb(s.rainbowOn);
+      var r = $('hxf-rainbow'); if (r) r.value = s.rainbow; var rd = $('hxf-rainbow-disp'); if (rd) rd.innerText = Math.round(s.rainbow) + '%';
+    }
+  });
+  function paintRb(on){ var b = $('hxf-rainbow-toggle'); if (!b) return; b.innerText = 'RAINBOW: ' + (on ? 'ON' : 'OFF'); b.style.background = on ? '#ffd34d' : '#111'; b.style.color = on ? '#000' : '#ffd34d'; }
+  function paintFollow(){ var b = $('hxf-toggle-strobe-btn'); if (!b) return; b.innerText = 'IKUT MASTER STROBE: ' + (follow ? 'ON' : 'OFF'); b.style.background = follow ? '#ffd34d' : '#111'; b.style.color = follow ? '#000' : '#ffd34d'; }
+  set.color = function(hex){ set.set(function(s){ s.color.set(hex); }); };
+  set.rainbowToggle = function(){
+    var a = set.ids(); if (!a.length) return; var on = !set.pool[a[0]].state.rainbowOn;
+    set.set(function(s){ s.rainbowOn = on; }); paintRb(on);
+  };
+  set.rainbowSpeed = function(v){ v = parseFloat(v); set.set(function(s){ s.rainbow = v; }); };
+  set.followToggle = function(){ follow = !follow; paintFollow(); };
+  var baseSer = set.serialize, baseRes = set.restore;
+  set.serialize = function(){ var d = baseSer(); d.follow = follow; return d; };
+  set.restore = function(d){ follow = !(d && d.follow === false); paintFollow(); baseRes(d); };
+  // pola Master Strobe (sama seperti fixture lain) -> nilai dimmer target unit i
+  function strobeDim(i, n, s, now, ph){
+    var d = s.dim, fx = fxState;
+    if (fx.sLR) { var k = Math.floor((now / (1000 / _cachedSpdSLR)) % (n * 2)); return (i === (k < n ? k : (n * 2 - 1) - k)) ? d : 0; }
+    if (fx.sCt) { var h = Math.ceil(n / 2), c = Math.floor((now / (1000 / _cachedSpdSCt)) % (h * 2)), st = c < h ? c : (h * 2 - 1) - c; return (i === st || (n - 1) - i === st) ? d : 0; }
+    if (fx.sOdd) return ((i % 2 === 0 && ph.odd) || (i % 2 !== 0 && !ph.odd)) ? d : 0;
+    if (fx.sAll) return ph.all ? d : 0;
+    if (fx.sRnd) { var rs = s.rndSpeed || 1, rp = s.rndPhase || (i * 7), ts = now * 0.0003 * ph.rndSpd * rs, nv = Math.sin(ts + rp) * 0.5 + Math.sin(ts * 1.7 + rp * 1.3) * 0.3 + Math.cos(ts * 0.4 - rp) * 0.2, nm = (nv + 1) / 2; return d * Math.smoothstep(nm, 0.25, 0.85); }
+    if (fx.sSplit) { var left = i < Math.ceil(n / 2); return ((left && ph.split) || (!left && !ph.split)) ? d : 0; }
+    if (fx.sChase13) return ((i % 3) === ph.chase13) ? d : 0;
+    if (fx.sLoop) return (i === (Math.floor(now / (1000 / _cachedSpdSLoop)) % Math.max(1, n))) ? d : 0;
+    return d;
+  }
+  function frame(now, dt, c){
+    var n = set.pool.length; if (!n) return;
+    if (!tc) tc = new THREE.Color();
+    var frozen = tryv(function(){ return isFrozen; }, false) === true, blk = tryv(function(){ return isBlackout; }, false) === true, md = +tryv(function(){ return masterDimLevel; }, 1);
+    var fl = set.flashLevel();
+    set.pool.forEach(function(u, i){
+      var s = u.state;
+      if (!frozen) { lerpT(u, s, c.lerpMotor); u.angle += dt * s.speed; u.fan.rotation.z = -u.angle; }
+      u.group.scale.setScalar(s.scale);
+      var d = blk ? 0 : s.dim;
+      if (!blk && follow) d = strobeDim(i, n, s, now, c.phases);
+      if (!blk) d *= md;
+      s.curDim += (d - s.curDim) * c.lfS;
+      var cd = s.curDim, lvl = cd <= 1 ? (0.133 + 0.867 * Math.max(0, cd)) : cd;
+      if (s.rainbowOn) { var sp = (s.rainbow > 0 ? s.rainbow : 50) / 10, hue = ((now * 0.0002 * sp) + i * 0.15) % 1; tc.setHSL(hue < 0 ? hue + 1 : hue, 1, 0.5); tc.multiplyScalar(lvl); }
+      else { tc.copy(s.color).multiplyScalar(lvl); }
+      if (fl > 0 && !blk) { tc.r += (1.5 - tc.r) * fl; tc.g += (1.5 - tc.g) * fl; tc.b += (1.5 - tc.b) * fl; }   // IKUT FLASH MB: putih
+      u.ledMat.color.copy(tc); u.bladeMat.color.copy(tc);
+    });
+  }
+  return { set: set, frame: frame };
+})();
+
+// ───────────────────────── LAMPU FLOWER ─────────────────────────
+var LF = (function(){
+  var BLADES = 8, SIZE = 0.3;
+  var VS = 'varying vec3 vLocalPos;\nvoid main(){ vLocalPos=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
+  var FS = [
+    'uniform float uTime; uniform int uMode; uniform vec3 uBaseColor; uniform float uIndexOffset; uniform float uDim;',
+    'varying vec3 vLocalPos;',
+    'vec3 hsl2rgb(vec3 c){ vec3 rgb=clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0);',
+    '  return c.z+c.y*(rgb-0.5)*(1.0-abs(2.0*c.z-1.0)); }',
+    'void main(){',
+    '  if(uMode==0){ gl_FragColor=vec4(uBaseColor*uDim,1.0); return; }',
+    '  float dist=length(vLocalPos.xy);',
+    '  float normDist=clamp((dist-4.8)/27.7,0.0,1.0);',
+    '  float hue=0.0; float lightness=0.55;',
+    '  if(uMode==1){ hue=fract(uTime*0.5+uIndexOffset); }',
+    '  else if(uMode==2){ hue=fract(-uTime*1.5+normDist*3.0); }',
+    '  else if(uMode==3){ hue=fract(uTime*1.5+normDist*3.0); }',
+    '  else if(uMode==4){ hue=fract(uTime*0.2); lightness=0.25+0.35*sin(uTime*4.0-normDist*4.0); }',
+    '  else if(uMode==5){ hue=fract(-uTime*1.2+normDist*2.5+uIndexOffset*2.0); }',
+    '  else if(uMode==6){ hue=fract(uTime*0.3+uIndexOffset); float st=step(0.5,fract(uTime*12.0-normDist*6.0)); lightness=st*0.6; }',
+    '  else if(uMode==7){ float tail=fract(-normDist+uTime*2.5+uIndexOffset); hue=fract(uTime*0.2+uIndexOffset*0.5); lightness=0.05+0.8*pow(tail,4.0); }',
+    '  else if(uMode==8){ float w1=sin(normDist*12.0-uTime*6.0); float w2=cos(normDist*10.0+uTime*4.0+uIndexOffset*12.0); hue=fract(uTime*0.15+(w1+w2)*0.1); lightness=0.3+0.5*abs(w1*w2); }',
+    '  else if(uMode==9){ float pulse=exp(-fract(uTime*2.0-normDist)*6.0); hue=fract(uTime*0.5+normDist*1.5); lightness=pulse; }',
+    '  else if(uMode==10){ float wv=sin(normDist*20.0-uTime*5.0)*sin(normDist*8.0+uTime*3.0); hue=fract(uIndexOffset+uTime*0.2); lightness=0.4+0.6*wv; }',
+    '  gl_FragColor=vec4(hsl2rgb(vec3(hue,1.0,lightness))*uDim,1.0);',
+    '}'
+  ].join('\n');
+  var G = null, casingMat = null, hubGeo = null, boxGeo = null;
+  function mkMat(offset){
+    return new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uMode: { value: 1 }, uBaseColor: { value: new THREE.Color(0xffffff) }, uIndexOffset: { value: offset }, uDim: { value: 1 } }, vertexShader: VS, fragmentShader: FS });
+  }
+  function bladeShape(rBase, rTip, sweep, width, tStart, tEnd, dir){
+    var p0 = new THREE.Vector2(rBase, 0), p1 = new THREE.Vector2(rBase + 8.0, 0), p2 = new THREE.Vector2(rTip, (sweep * dir) * 0.5), p3 = new THREE.Vector2(rTip, sweep * dir);
+    var curve = new THREE.CubicBezierCurve(p0, p1, p2, p3), seg = 60, pts = [], top = [], bot = [], i, t;
+    for (i = 0; i <= seg; i++) { t = tStart + (i / seg) * (tEnd - tStart); pts.push(curve.getPoint(t)); }
+    for (i = 0; i < pts.length; i++) {
+      t = tStart + (i / seg) * (tEnd - tStart);
+      var tg = curve.getTangent(t).normalize(), nx = -tg.y, ny = tg.x;
+      top.push(new THREE.Vector2(pts[i].x + nx * width, pts[i].y + ny * width)); bot.push(new THREE.Vector2(pts[i].x - nx * width, pts[i].y - ny * width));
+    }
+    var sh = new THREE.Shape(); sh.moveTo(bot[0].x, bot[0].y);
+    for (i = 1; i < bot.length; i++) sh.lineTo(bot[i].x, bot[i].y);
+    sh.lineTo(top[top.length - 1].x, top[top.length - 1].y);
+    for (i = top.length - 2; i >= 0; i--) sh.lineTo(top[i].x, top[i].y);
+    sh.lineTo(bot[0].x, bot[0].y);
+    return sh;
+  }
+  function assets(){
+    if (G) return;
+    casingMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.1, emissive: 0x0b0b0b });
+    G = {};
+    [1, -1].forEach(function(dir){
+      var bg = new THREE.ExtrudeGeometry(bladeShape(4.8, 22, 24, 0.85, 0, 1, dir), { depth: 1.2, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.05, bevelSegments: 2 });
+      var lg = new THREE.ExtrudeGeometry(bladeShape(4.8, 22, 24, 0.55, 0.05, 1.0, dir), { depth: 0.1, bevelEnabled: false });
+      bg.translate(0, 0, -0.6); lg.translate(0, 0, 0.61); G[dir] = { blade: bg, led: lg };
+    });
+    hubGeo = new THREE.CylinderGeometry(5.2, 5.2, 1.4, 16); boxGeo = new THREE.CylinderGeometry(5.0, 5.0, 3.5, 8);
+  }
+  // Lingkaran tengah polos: tidak ada logo (hanya hub hitam)
+  function layer(dir, z, mats){
+    var lg = new THREE.Group(); lg.position.z = z;
+    for (var i = 0; i < BLADES; i++) {
+      var pv = new THREE.Group(); pv.rotation.z = (i * Math.PI * 2) / BLADES;
+      pv.add(new THREE.Mesh(G[dir].blade, casingMat)); pv.add(new THREE.Mesh(G[dir].led, mats[i])); lg.add(pv);
+    }
+    var hub = new THREE.Mesh(hubGeo, casingMat); hub.rotation.x = Math.PI / 2; lg.add(hub);
+    return lg;
+  }
+  function build(st, i){
+    assets();
+    var matsF = [], matsB = [];
+    for (var k = 0; k < BLADES; k++) { matsF.push(mkMat(k / BLADES)); matsB.push(mkMat((k + BLADES / 2) / BLADES)); }
+    var g = new THREE.Group(), body = new THREE.Group(); body.scale.setScalar(SIZE); g.add(body);
+    var front = layer(1, 1.0, matsF), back = layer(-1, -1.0, matsB); body.add(front); body.add(back);
+    var box = new THREE.Mesh(boxGeo, casingMat); box.rotation.x = Math.PI / 2; box.position.z = -1.5; body.add(box);
+    placeGroup(g, st);
+    return { group: g, front: front, back: back, mats: matsF.concat(matsB), phase: i * 0.7, t: 0, aF: 0, aB: 0 };
+  }
+  function dispose(u){ try { u.mats.forEach(function(m){ m.dispose(); }); } catch (e) {} }
+  function def(i, last){
+    return { dim: 1, curDim: 1, posX: last ? last.posX + 24 : 0, posY: 18, posZ: -30, rotX: 0, rotY: 0, rotZ: 0, scale: 1, speed: 1, gerak: 'lawan', anim: 1 };
+  }
+  var set = makeSet({
+    prefix: 'lfl', accent: '#b36bff', noun: 'FLOWER', short: 'LF', build: build, dispose: dispose, def: def,
+    ser: function(s, r){ r.gerak = s.gerak; r.anim = s.anim; },
+    des: function(s, r){ s.gerak = (r.gerak === 'searah') ? 'searah' : 'lawan'; var a = Math.round(Number(r.anim)); s.anim = (a >= 1 && a <= 10) ? a : 1; },
+    onSel: function(s){ paintGerak(s.gerak); paintAnim(s.anim); }
+  });
+  function paintGerak(g){
+    [['lawan', 'lfl-gerak-lawan'], ['searah', 'lfl-gerak-searah']].forEach(function(p){ var b = $(p[1]); if (!b) return; var on = g === p[0]; b.style.background = on ? '#b36bff' : '#111'; b.style.color = on ? '#000' : '#b36bff'; });
+  }
+  function paintAnim(n){
+    for (var i = 1; i <= 10; i++) { var b = $('lfl-anim-' + i); if (!b) continue; var on = i === n; b.style.background = on ? '#b36bff' : '#111'; b.style.color = on ? '#000' : '#b36bff'; }
+  }
+  set.gerak = function(g){ set.set(function(s){ s.gerak = g; }); paintGerak(g); };
+  set.anim = function(n){ set.set(function(s){ s.anim = n; }); paintAnim(n); };
+  function frame(now, dt, c){
+    var frozen = tryv(function(){ return isFrozen; }, false) === true, blk = tryv(function(){ return isBlackout; }, false) === true, md = +tryv(function(){ return masterDimLevel; }, 1);
+    var fl = set.flashLevel();
+    set.pool.forEach(function(u){
+      var s = u.state;
+      if (!frozen) {
+        lerpT(u, s, c.lerpMotor);
+        u.t += dt * s.speed; if (u.t > 10000) u.t -= 10000;
+        var rs = 0.8 * s.speed * dt; u.aF += rs; u.aB += (s.gerak === 'searah') ? rs * 0.55 : -rs;
+      }
+      u.group.scale.setScalar(s.scale);
+      u.front.rotation.z = u.aF + u.phase; u.back.rotation.z = u.aB - u.phase;
+      var d = blk ? 0 : s.dim * md; s.curDim += (d - s.curDim) * c.lfS;
+      for (var k = 0; k < u.mats.length; k++) { var un = u.mats[k].uniforms; un.uTime.value = u.t; var dv = Math.max(0, s.curDim), wh = (fl > 0 && !blk); if (wh) dv += (Math.max(dv, 1.1) - dv) * fl; un.uMode.value = (wh && fl > 0.5) ? 0 : s.anim; un.uDim.value = dv; }
+    });
+  }
+  return { set: set, frame: frame };
+})();
+
+// ───────────────────────── API global ─────────────────────────
+var lastT = 0;
+window._hxfFrame = function(now, c){
+  var dt = lastT ? Math.min(0.1, Math.max(0, (now - lastT) / 1000)) : 0.016; lastT = now;
+  if (HX.set.pool.length) HX.frame(now, dt, c);
+  if (LF.set.pool.length) LF.frame(now, dt, c);
+};
+window._hxfObjs = function(){ return HX.set.pool.concat(LF.set.pool); };   // dipakai joystick Mabar (geser semua fixture)
+window.hxfSerialize = function(){ return { hex: HX.set.serialize(), flower: LF.set.serialize() }; };
+window.hxfRestore = function(d){
+  if (!d) return;
+  var go = function(tries){
+    if (!sc()) { if (tries > 0) setTimeout(function(){ go(tries - 1); }, 300); return; }
+    HX.set.restore(d.hex || { units: [] }); LF.set.restore(d.flower || { units: [] });
+  };
+  go(40);
+};
+window.FXH = HX.set; window.FXL = LF.set;
+function init(){ HX.set.refresh(); LF.set.refresh(); }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+
 </div><!-- end mixer -->
 <!-- ===== CROP MODAL ===== -->
 <div id="vt-crop-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.92); flex-direction:column; align-items:center; justify-content:flex-start; padding:16px 12px; box-sizing:border-box; overflow-y:auto; touch-action:none;">
@@ -20174,7 +20797,7 @@
             swReg = reg;
             return navigator.serviceWorker.ready;
         }).then(function () {
-            var flag = 'ian_offline_ready_v8.9';
+            var flag = 'ian_offline_ready_v9.0';
             try {
                 if (!localStorage.getItem(flag)) {
                     localStorage.setItem(flag, '1');
@@ -20707,7 +21330,7 @@
     }
 
     document.addEventListener('visibilitychange', () => {
-        const tab = $('tab-chat'); if (!tab || !tab.classList.contains('active')) return;
+        const tab = $('tab-chat'); if (!tab || !(floating || tab.classList.contains('active'))) return;
         if (document.hidden) { stopListeners(); } else { open(); }
     });
     window.addEventListener('pagehide', () => { if (active) presDetach(); });
@@ -20727,13 +21350,91 @@
         const btn = document.getElementById('tab-btn-chat');
         if (btn) btn.style.display = window.ianChatOff ? 'none' : '';
         const tab = $('tab-chat');
+        if (floating) { if (window.ianChatOff) { setFloat(false); stopListeners(); active = false; } else { stopListeners(); open(); } return; }
         if (tab && tab.classList.contains('active')) {
             if (window.ianChatOff && typeof switchTab === 'function') switchTab('main');
             else { stopListeners(); open(); }
         }
     };
-    window.chatOpen = function () { initGestures(); open(); };
-    window.chatClose = close;
+    // ── Jendela chat mengambang ──
+    const FK = '_poth_chat_float';
+    let floating = false, minimized = false, fHome = null, fCss = '', geo = null;
+    function loadGeo() {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        let g = null; try { g = JSON.parse(localStorage.getItem(FK) || 'null'); } catch (e) {}
+        if (!g || !isFinite(g.x) || !isFinite(g.y) || !isFinite(g.w) || !isFinite(g.h)) { const w = Math.min(330, vw - 16), h = Math.min(460, Math.round(vh * 0.62)); g = { x: vw - w - 8, y: Math.max(8, vh - h - 16), w: w, h: h }; }
+        return g;
+    }
+    function clampGeo() {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        geo.w = Math.max(Math.min(200, vw - 8), Math.min(geo.w, vw - 8));
+        geo.h = Math.max(Math.min(210, vh - 8), Math.min(geo.h, vh - 8));
+        const hh = minimized ? 44 : geo.h, ww = minimized ? ((($('tab-chat') || {}).offsetWidth) || 150) : geo.w;
+        geo.x = Math.max(0, Math.min(geo.x, vw - ww));
+        geo.y = Math.max(0, Math.min(geo.y, vh - hh));
+    }
+    function applyGeo() {
+        const t = $('tab-chat'); if (!t || !floating) return;
+        clampGeo();
+        t.style.width = minimized ? '' : geo.w + 'px'; t.style.height = minimized ? '' : geo.h + 'px';
+        t.classList.toggle('chat-narrow', !minimized && geo.w < 290); t.classList.toggle('chat-tiny', !minimized && geo.w < 235);
+        t.style.left = geo.x + 'px'; t.style.top = geo.y + 'px';
+    }
+    function saveGeo() { try { localStorage.setItem(FK, JSON.stringify(geo)); } catch (e) {} }
+    function setFloat(on) {
+        const t = $('tab-chat'); if (!t || on === floating) return;
+        if (on) {
+            if (window.ianChatOff) return;
+            if (!fHome) { fHome = document.createComment('chat-home'); t.parentNode.insertBefore(fHome, t); fCss = t.getAttribute('style') || ''; }
+            document.body.appendChild(t);
+            floating = true; minimized = false; geo = loadGeo();
+            t.classList.add('chat-float'); t.classList.remove('chat-min');
+            applyGeo();
+            if (!active) { initGestures(); open(); }
+            if (typeof switchTab === 'function') switchTab('main');
+            setTimeout(scrollBottom, 80);
+        } else {
+            floating = false; minimized = false;
+            t.classList.remove('chat-float', 'chat-min', 'chat-narrow', 'chat-tiny');
+            t.setAttribute('style', fCss);
+            if (fHome && fHome.parentNode) fHome.parentNode.insertBefore(t, fHome.nextSibling);
+        }
+    }
+    function minToggle() { if (!floating) return; minimized = !minimized; $('tab-chat').classList.toggle('chat-min', minimized); applyGeo(); if (!minimized) setTimeout(scrollBottom, 60); }
+    function initFloatDrag() {
+        const t = $('tab-chat'), head = $('chat-head'), rz = $('chat-rz'); if (!t || !head || !rz || head._fd) return; head._fd = true;
+        let d = null;
+        head.addEventListener('pointerdown', e => {
+            if (!floating || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            if (e.target.closest('button, #chat-me, #chat-uid, input, textarea')) return;
+            d = { k: 'm', x: e.clientX, y: e.clientY, gx: geo.x, gy: geo.y, pid: e.pointerId, moved: false };
+            try { head.setPointerCapture(e.pointerId); } catch (er) {}
+        });
+        rz.addEventListener('pointerdown', e => {
+            if (!floating) return;
+            d = { k: 'r', x: e.clientX, y: e.clientY, gw: geo.w, gh: geo.h, pid: e.pointerId };
+            try { rz.setPointerCapture(e.pointerId); } catch (er) {}
+            e.preventDefault();
+        });
+        const mv = e => {
+            if (!d || e.pointerId !== d.pid) return;
+            const dx = e.clientX - d.x, dy = e.clientY - d.y;
+            if (d.k === 'm') { if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true; geo.x = d.gx + dx; geo.y = d.gy + dy; }
+            else { geo.w = d.gw + dx; geo.h = d.gh + dy; }
+            applyGeo();
+        };
+        const up = e => { if (!d || e.pointerId !== d.pid) return; const was = d; d = null; saveGeo(); if (was.k === 'm' && !was.moved && minimized && e.target && e.target.closest && !e.target.closest('button')) minToggle(); };
+        [head, rz].forEach(el => { el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); });
+        window.addEventListener('resize', () => { if (floating) applyGeo(); });
+    }
+    window.chatFloat = function (on) {
+        initFloatDrag();
+        if (on) setFloat(true);
+        else { setFloat(false); if (typeof switchTab === 'function') switchTab('chat'); }
+    };
+    window.chatMinToggle = minToggle;
+    window.chatOpen = function () { if (floating) setFloat(false); initGestures(); open(); };
+    window.chatClose = function () { if (floating) return; close(); };
     window.chatSend = send; window.chatOnInput = onInput; window.chatCancelReply = cancelReply;
     window.chatCopyId = copyId; window.chatRerender = function () { try { paintMe(); if (active && $('chat-list') && lastMsgs.length) render(); } catch (e) {} }; window.chatSaveName = saveName; window.chatChangeName = changeName;
     window.chatCloseSheet = function () { if (Date.now() - sheetOpenedAt < 380) return; closeSheet(); }; window.chatScrollBottom = scrollBottom;
