@@ -905,15 +905,20 @@ div.skel{display:block;}
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22c55e" stroke="none"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Akun Centang Hijau</div>
-        <div class="toggle-sub" style="margin-bottom:8px;">Pengguna memasukkan username dan password ini lewat tombol "Terverifikasi?" di bagian pilih nama chat. Setelah masuk, namanya terkunci ke username dan tampil dengan centang hijau. Password disimpan sebagai hash, tidak bisa dilihat lagi. Membuat akun dengan username yang sudah ada = mengganti password (login lama otomatis tidak berlaku).</div>
-        <label class="admin-label">Username (3-16 karakter: huruf kecil/angka/_)</label>
-        <input class="admin-input" id="vf-user" maxlength="16" placeholder="contoh: ian_official" autocomplete="off">
-        <label class="admin-label">Password (minimal 8 karakter, makin panjang makin aman)</label>
-        <input class="admin-input" id="vf-pass" type="text" maxlength="64" placeholder="password" autocomplete="off">
-        <button class="btn-green" onclick="vfCreate()">Buat / Ganti Akun</button>
-        <div style="font-size:12px;font-weight:700;color:#444;margin:12px 0 6px;">Akun terverifikasi <span id="vf-n" class="badge-info">0</span></div>
-        <div id="vf-list" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#888;">Belum ada.</div>
+        <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22c55e" stroke="none"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Badge &amp; Ban per UserId</div>
+        <div class="toggle-sub" style="margin-bottom:8px;">Setiap perangkat punya UserId sendiri (format U-XXXXXXXX), tampil di header chat pengguna dan bisa disalin. Pengguna mengirim UserId-nya ke admin, lalu admin memberi centang hijau/oranye di sini. Badge terikat ke UserId, jadi tetap ada walau pengguna mengganti nama. UserId juga tampil di tiap pesan pada daftar Live Chat di atas, dan di sana ada tombol cepat Hijau / Oranye / Blokir.</div>
+        <label class="admin-label">UserId</label>
+        <input class="admin-input" id="cu-id" maxlength="10" placeholder="U-7K3Q9XA2" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <label class="admin-label">Catatan (opsional, hanya terlihat admin)</label>
+        <input class="admin-input" id="cu-note" maxlength="40" placeholder="contoh: Budi, teman komunitas" autocomplete="off">
+        <label class="admin-label">Badge</label>
+        <select class="admin-input" id="cu-badge"><option value="green">Centang hijau</option><option value="orange">Centang oranye</option></select>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-green" style="flex:1;" onclick="cuAdd()">Simpan Badge</button>
+          <button class="btn-red" style="flex:1;" onclick="cuBan()">Blokir UserId</button>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#444;margin:12px 0 6px;">UserId ber-badge <span id="cu-n" class="badge-info">0</span></div>
+        <div id="cu-list" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#888;">Belum ada.</div>
       </div>
 
       <div class="card">
@@ -1049,7 +1054,7 @@ function switchTab(name) {
   if(name==='settings') loadSettings();
   if(name==='feedback') loadFeedback();
   if(name!=='chat') adminChatStop();
-  if(name==='chat') { loadChatAdmin(); vfLoad(); }
+  if(name==='chat') { loadChatAdmin(); }
 }
 
 // ═══════════════════════════════════════════
@@ -2034,60 +2039,50 @@ async function mbCleanup() {
   if (ok) { toast(n + ' room dibersihkan'); mbLoad(true); }
 }
 
-// ═══ AKUN CENTANG HIJAU ═══
-// verified_users/{u}: info publik (nama, salt, chk=sha256(proof)).  verified_keys/{u}: proof rahasia (hanya admin, dipakai rules).
-// proof = PBKDF2-SHA256(password, salt, 100000). Pengguna login: hitung proof, cocokkan chk, lalu tulis verified_sessions/{uidPerangkat}.
-const VF_RE = /^[a-z0-9][a-z0-9_]{2,15}$/;
-const _hex = buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-async function vfProof(password, salt) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  return _hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: 100000 }, key, 256));
+// ═══ BADGE PER USERID ═══
+// app_config/main.chatUsers = { list: [{ id:'U-XXXXXXXX', b:'green'|'orange', note, at }] }. Ban memakai chatBlocked (id = UserId) yang sama dengan tombol Blokir.
+let _chatUsers = [];
+const CU_RE = /^U-[A-Z0-9]{8}$/;
+function cuDot(b) { return '<svg width="13" height="13" viewBox="0 0 24 24" style="vertical-align:-2px;margin-left:3px;" aria-label="' + (b === 'orange' ? 'Centang oranye' : 'Centang hijau') + '"><circle cx="12" cy="12" r="11" fill="' + (b === 'orange' ? '#f97316' : '#22c55e') + '"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+function cuBadgeOf(id) { const u = _chatUsers.find(x => x.id === id); return u ? u.b : ''; }
+async function saveChatUsers(list) {
+  const ok = await saveChatCfg({ chatUsers: { list } });
+  if (ok) _chatUsers = list;
+  return ok;
 }
-async function vfSha(t) { return _hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t))); }
-async function vfCreate() {
-  const raw = document.getElementById('vf-user').value.trim(), pw = document.getElementById('vf-pass').value;
-  const u = raw.toLowerCase();
-  if (!VF_RE.test(u)) { toast('Username 3-16 karakter: huruf kecil, angka, _ (tidak boleh diawali _)', true); return; }
-  if (pw.length < 8) { toast('Password minimal 8 karakter', true); return; }
-  const salt = _hex(crypto.getRandomValues(new Uint8Array(16)));
-  let proof, chk;
-  try { proof = await vfProof(pw, salt); chk = await vfSha(proof); } catch (e) { toast('Browser tidak mendukung enkripsi (perlu HTTPS)', true); return; }
-  const ok = await runWrite(async () => {
-    await ensureConfigDoc();
-    const b = db.batch();
-    b.set(db.collection('verified_users').doc(u), { n: u, salt, chk, ts: Date.now() });
-    b.set(db.collection('verified_keys').doc(u), { proof });
-    await b.commit();
-  }, 'Akun ' + u + ' disimpan');
-  if (ok) { document.getElementById('vf-pass').value = ''; vfLoad(); }
+function cuRender() {
+  const n = document.getElementById('cu-n'); if (!n) return;
+  n.textContent = _chatUsers.length;
+  const box = document.getElementById('cu-list');
+  box.innerHTML = !_chatUsers.length ? emptyHtml('Belum ada.') : _chatUsers.map(u => `
+    <div style="display:flex;align-items:center;gap:8px;border:1px solid #eee;border-radius:8px;padding:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;"><div style="color:#222;font-weight:600;">${escHtml(u.id)}${cuDot(u.b)}</div><div style="font-size:10px;color:#999;">${u.b === 'orange' ? 'Centang oranye' : 'Centang hijau'}${u.note ? ' &middot; ' + escHtml(u.note) : ''}</div></div>
+      <button class="btn-gray" style="width:auto;margin:0;padding:6px 10px;font-size:11px;" data-cu-sw="${escHtml(u.id)}">Jadikan ${u.b === 'orange' ? 'hijau' : 'oranye'}</button>
+      <button class="btn-red" style="width:auto;margin:0;padding:6px 10px;font-size:11px;" data-cu-rm="${escHtml(u.id)}">Cabut</button>
+    </div>`).join('');
+  box.querySelectorAll('[data-cu-sw]').forEach(b => b.onclick = () => { const u = _chatUsers.find(x => x.id === b.dataset.cuSw); if (u) cuSet(u.id, u.b === 'orange' ? 'green' : 'orange', u.note); });
+  box.querySelectorAll('[data-cu-rm]').forEach(b => b.onclick = async () => {
+    if (!await uiConfirm('Cabut badge dari ' + b.dataset.cuRm + '?')) return;
+    if (await saveChatUsers(_chatUsers.filter(x => x.id !== b.dataset.cuRm))) { toast('Badge dicabut'); cuRender(); renderChatLive(); }
+  });
 }
-async function vfLoad() {
-  const box = document.getElementById('vf-list'); if (!box) return;
-  try {
-    const snap = await db.collection('verified_users').get();
-    document.getElementById('vf-n').textContent = snap.size;
-    box.innerHTML = '';
-    if (snap.empty) { box.innerHTML = emptyHtml('Belum ada.'); return; }
-    snap.forEach(doc => {
-      const r = document.createElement('div'); r.style.cssText = 'display:flex;align-items:center;gap:8px;';
-      const t = document.createElement('span'); t.style.cssText = 'flex:1;color:#333;font-weight:600;'; t.textContent = doc.id;
-      const bt = document.createElement('button'); bt.className = 'btn-gray'; bt.style.cssText = 'width:auto;margin:0;padding:6px 10px;'; bt.textContent = 'Cabut';
-      bt.onclick = () => vfRevoke(doc.id);
-      r.append(t, bt); box.appendChild(r);
-    });
-  } catch (e) { box.textContent = 'Gagal memuat: ' + (e.message || e); }
+async function cuSet(id, b, note) {
+  id = String(id || '').trim().toUpperCase();
+  if (!CU_RE.test(id)) { toast('Format UserId harus U- diikuti 8 huruf/angka', true); return false; }
+  const list = _chatUsers.filter(x => x.id !== id).concat([{ id, b, note: String(note || '').slice(0, 40), at: Date.now() }]);
+  if (await saveChatUsers(list)) { toast('Badge ' + (b === 'orange' ? 'oranye' : 'hijau') + ' diberikan ke ' + id); cuRender(); renderChatLive(); return true; }
+  return false;
 }
-async function vfRevoke(u) {
-  if (!await uiConfirm('Cabut centang hijau akun "' + u + '"? Pengguna tidak bisa lagi memakai nama itu dengan centang.')) return;
-  const ok = await runWrite(async () => {
-    const ss = await db.collection('verified_sessions').where('u', '==', u).get();
-    const b = db.batch();
-    ss.forEach(d => b.delete(d.ref));
-    b.delete(db.collection('verified_users').doc(u)); b.delete(db.collection('verified_keys').doc(u));
-    await b.commit();
-  }, 'Akun ' + u + ' dicabut');
-  if (ok) vfLoad();
+async function cuAdd() {
+  const ok = await cuSet(document.getElementById('cu-id').value, document.getElementById('cu-badge').value, document.getElementById('cu-note').value);
+  if (ok) { document.getElementById('cu-id').value = ''; document.getElementById('cu-note').value = ''; }
+}
+async function cuBan() {
+  const id = String(document.getElementById('cu-id').value || '').trim().toUpperCase();
+  if (!CU_RE.test(id)) { toast('Format UserId harus U- diikuti 8 huruf/angka', true); return; }
+  if (_chatBlocked.some(x => x.id === id)) { toast('UserId ini sudah diblokir', true); return; }
+  if (!await uiConfirm('Blokir UserId ' + id + ' dari chat?')) return;
+  if (await saveChatBlocked(_chatBlocked.concat([{ id, name: document.getElementById('cu-note').value.trim().slice(0, 40), at: Date.now() }]))) { toast('UserId diblokir'); renderChatSide(); renderChatLive(); document.getElementById('cu-id').value = ''; }
 }
 let _chatBlocked = [], _chatMuted = [], _chatPin = null, _chatAdminName = 'Admin', _chatUnsub = null;
 let _chatItems = [], _chatSel = new Set(), _chatReplyTo = null;
@@ -2148,7 +2143,7 @@ function renderChatLive() {
     <div style="border:1px solid ${adm?(m.hl?'#e6b800':'#9cc9f0'):'#e5e5e5'};background:${adm?(m.hl?'#fff8dc':'#f0f7ff'):'#fff'};border-radius:8px;padding:8px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
         <input type="checkbox" data-sel="${m.id}" ${_chatSel.has(m.id)?'checked':''}>
-        <div style="flex:1;min-width:0;font-size:12px;font-weight:700;color:${adm?'#1d6fb8':'#333'};">${escHtml(m.name||'?')}${adm?CHAT_CHECK:''}${adm&&m.hl?' <span style="font-size:9px;color:#b38600;letter-spacing:1px;">PENGUMUMAN</span>':''}</div>
+        <div style="flex:1;min-width:0;font-size:12px;font-weight:700;color:${adm?'#1d6fb8':'#333'};">${escHtml(m.name||'?')}${adm?CHAT_CHECK:(cuBadgeOf(m.uid)?cuDot(cuBadgeOf(m.uid)):'')}${adm&&m.hl?' <span style="font-size:9px;color:#b38600;letter-spacing:1px;">PENGUMUMAN</span>':''}</div>
         <div style="font-size:10px;color:#aaa;white-space:nowrap;">${chatTime(m.ts)}</div>
       </div>
       ${reply}
@@ -2158,7 +2153,9 @@ function renderChatLive() {
         ${m.deleted ? '' : `<button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="reply" data-id="${m.id}">Balas</button>
         <button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="pin" data-id="${m.id}">Sematkan</button>`}
         <button class="btn-red" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="del" data-id="${m.id}">Hapus</button>
-        ${adm ? '' : `<button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="mute" data-id="${m.id}" ${muted?'disabled':''}>${muted?'Dimute':'Mute'}</button>
+        ${adm ? '' : `<button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="bg" data-id="${m.id}">${cuBadgeOf(m.uid)==='green'?'Cabut hijau':'Hijau'}</button>
+        <button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="bo" data-id="${m.id}">${cuBadgeOf(m.uid)==='orange'?'Cabut oranye':'Oranye'}</button>
+        <button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="mute" data-id="${m.id}" ${muted?'disabled':''}>${muted?'Dimute':'Mute'}</button>
         <button class="btn-gray" style="width:auto;margin:0;padding:5px 9px;font-size:11px;" data-act="block" data-id="${m.id}" ${blocked?'disabled':''}>${blocked?'Diblokir':'Blokir'}</button>`}
       </div>
     </div>`;
@@ -2180,6 +2177,11 @@ async function onChatListClick(e) {
     await setChatPin(m.text || '');
   } else if (act === 'del') {
     if (await runWrite(() => db.collection('chat_messages').doc(m.id).delete(), 'Pesan dihapus')) _chatSel.delete(m.id);
+  } else if (act === 'bg' || act === 'bo') {
+    const want = act === 'bg' ? 'green' : 'orange';
+    if (!CU_RE.test(m.uid || '')) { toast('Pesan ini dari versi lama (tanpa UserId), belum bisa diberi badge', true); return; }
+    if (cuBadgeOf(m.uid) === want) { if (await saveChatUsers(_chatUsers.filter(x => x.id !== m.uid))) { toast('Badge dicabut'); cuRender(); renderChatLive(); } }
+    else await cuSet(m.uid, want, m.name || '');
   } else if (act === 'mute') {
     const dur = parseInt(document.getElementById('chat-mute-dur').value, 10) || 300000;
     const list = _chatMuted.filter(x => x.id !== m.uid && x.until > Date.now()).concat([{ id: m.uid, name: m.name || '', until: Date.now() + dur }]);
@@ -2264,6 +2266,8 @@ async function loadChatAdmin() {
     const cfg = await getConfig();
     _chatBlocked = ((cfg.chatBlocked || {}).list) || [];
     _chatMuted = ((cfg.chatMuted || {}).list) || [];
+    _chatUsers = ((cfg.chatUsers || {}).list) || [];
+    cuRender();
     _chatPin = cfg.chatPin || null;
     _chatAdminName = ((cfg.chatAdmin || {}).name) || 'Admin';
     document.getElementById('chat-adm-name').value = _chatAdminName;

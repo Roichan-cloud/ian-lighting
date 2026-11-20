@@ -248,6 +248,16 @@
         .chat-msg.hl .chat-bubble { background:linear-gradient(135deg,#3a2f00,#241d00); box-shadow:0 0 0 1.5px #ffc933, 0 0 10px rgba(255,201,51,.25); }
         .chat-hl-tag { display:flex; align-items:center; font-size:10px; font-weight:700; color:#ffc933; letter-spacing:1px; margin-bottom:3px; }
         .chat-bubble.deleted { color:#8696a0; font-style:italic; display:flex; align-items:center; gap:5px; padding-right:52px; }
+        .chat-link { color:#53bdeb; text-decoration:underline; text-underline-offset:2px; cursor:pointer; word-break:break-all; -webkit-tap-highlight-color:transparent; }
+        .chat-msg.me .chat-link { color:#9be0ff; }
+        .chat-skel { display:flex; flex-direction:column; gap:10px; padding:4px 0; }
+        .chat-skel .sk-row { display:flex; }
+        .chat-skel .sk-row.r { justify-content:flex-end; }
+        .chat-skel .sk-b { border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; gap:7px; background:#202c33; max-width:78%; }
+        .chat-skel .sk-row.r .sk-b { background:#12332d; }
+        .chat-skel .sk-l { height:9px; border-radius:5px; background:linear-gradient(90deg,rgba(255,255,255,.06) 25%,rgba(255,255,255,.16) 45%,rgba(255,255,255,.06) 65%); background-size:240% 100%; animation:chatShim 1.3s linear infinite; }
+        @keyframes chatShim { 0% { background-position:120% 0; } 100% { background-position:-120% 0; } }
+        @media (prefers-reduced-motion: reduce) { .chat-skel .sk-l { animation:none; } }
         .chat-quote { display:block; border-left:4px solid var(--qc,#00a884); background:rgba(0,0,0,.22); border-radius:6px; padding:4px 8px 5px; margin-bottom:4px; cursor:pointer; overflow:hidden; }
         .chat-quote .qn { font-size:12px; font-weight:600; color:var(--qc,#00a884); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .chat-quote .qt { font-size:13px; color:#aebac1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; }
@@ -2539,7 +2549,7 @@
         <div id="chat-wrap">
             <div id="chat-head">
                 <div id="chat-avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-                <div id="chat-head-txt"><div class="chat-title" data-i18n="chat_title">Chat Umum</div><div id="chat-sub"><span id="chat-online-n">0</span> <span data-i18n="chat_online">online</span></div></div>
+                <div id="chat-head-txt"><div class="chat-title" data-i18n="chat_title">Chat Umum</div><div id="chat-sub"><span id="chat-online-n">0</span> <span data-i18n="chat_online">online</span> <span id="chat-uid" onclick="chatCopyId()" title="Salin UserId" style="cursor:pointer;margin-left:6px;opacity:.75;letter-spacing:.4px;"></span></div></div>
                 <div id="chat-slow"></div>
                 <div id="chat-me" onclick="chatChangeName()" title="Ubah nama"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span id="chat-me-name">-</span></div>
             </div>
@@ -2551,13 +2561,7 @@
                 <div style="font-size:12px;color:#8696a0;margin-top:4px;" data-i18n="chat_setup_desc">Nama ini tampil di chat. 2-16 karakter, bisa diubah kapan saja.</div>
                 <input id="chat-name-input" type="text" maxlength="16" autocomplete="off" onkeydown="if(event.key==='Enter')chatSaveName()">
                 <button onclick="chatSaveName()" data-i18n="chat_setup_btn">MULAI CHAT</button>
-                <button type="button" id="chat-vf-open" onclick="chatVfToggle()" style="background:transparent;color:#22c55e;border:1px solid #1f6f3d;margin-top:8px;padding:6px;font-size:11px;">Terverifikasi?</button>
-                <div id="chat-vf-box" style="display:none;margin-top:6px;">
-                    <input id="chat-vf-user" type="text" maxlength="16" placeholder="Username" autocomplete="off" autocapitalize="none" spellcheck="false" style="margin:6px 0;">
-                    <input id="chat-vf-pass" type="password" maxlength="64" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter')chatVfLogin()" style="margin:6px 0;">
-                    <div id="chat-vf-msg" style="font-size:11px;color:#f87171;min-height:14px;margin-bottom:6px;"></div>
-                    <button type="button" onclick="chatVfLogin()" style="background:#22c55e;">MASUK TERVERIFIKASI</button>
-                </div>
+                <div id="chat-uid-setup" onclick="chatCopyId()" title="Salin UserId" style="margin-top:12px;font-size:11px;color:#8696a0;cursor:pointer;text-align:center;"></div>
             </div>
             <button id="chat-down" onclick="chatScrollBottom()" aria-label="Ke pesan terbaru"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
             <div id="chat-typing"></div>
@@ -19073,6 +19077,11 @@
                     if (typeof chatRefreshUi === 'function') chatRefreshUi();
                 }
                 if(first || changed('chatFilter')) { try { if (window.ianFilter) window.ianFilter.build(cfg.chatFilter || {}); } catch(e) { console.log('chatFilter', e); } }
+                if(first || changed('chatUsers')) {
+                    const bm = {}; (((cfg.chatUsers || {}).list) || []).forEach(x => { if (x && x.id && (x.b === 'green' || x.b === 'orange')) bm[x.id] = x.b; });
+                    window.ianChatBadges = bm;
+                    if (typeof chatRerender === 'function') chatRerender();
+                }
                 if(first || changed('chatBlocked')) {
                     window.ianChatBlocked = ((cfg.chatBlocked || {}).list || []).map(x => x && x.id).filter(Boolean);
                     if (typeof chatOnAdminChange === 'function') chatOnAdminChange();
@@ -20265,14 +20274,8 @@
         online:   { id:'online', en:'online' },
         fast:     { id:'Terlalu cepat, tunggu sebentar.', en:'Too fast, wait a moment.' },
         fail:     { id:'Pesan gagal terkirim.', en:'Message failed to send.' },
-        vfBadForm: { id:'Isi username dan password.', en:'Enter username and password.' },
-        vfNone:   { id:'Akun tidak ditemukan.', en:'Account not found.' },
-        vfWrong:  { id:'Password salah.', en:'Wrong password.' },
-        vfFail:   { id:'Gagal masuk. Periksa koneksi lalu coba lagi.', en:'Login failed. Check your connection and try again.' },
-        vfNoCrypto: { id:'Browser ini tidak mendukung verifikasi (butuh HTTPS).', en:'This browser does not support verification (HTTPS required).' },
-        vfOk:     { id:'Terverifikasi! Nama terkunci ke akunmu.', en:'Verified! Your name is locked to your account.' },
-        vfReserved: { id:'Nama ini milik akun terverifikasi. Pakai tombol Terverifikasi? untuk masuk.', en:'This name belongs to a verified account. Use Verified? to log in.' },
-        vfRevoked: { id:'Verifikasi akunmu tidak berlaku lagi. Pilih nama lain.', en:'Your verification is no longer valid. Pick another name.' },
+        uidCopied: { id:'UserId disalin', en:'UserId copied' },
+        uidLbl:   { id:'UserId kamu: ', en:'Your UserId: ' },
         nameBad:  { id:'Nama harus 2-16 karakter.', en:'Name must be 2-16 characters.' },
         err:      { id:'Chat tidak bisa dimuat. Periksa koneksi.', en:'Chat could not load. Check your connection.' },
         muted:    { id:'Kamu dibungkam admin sampai ', en:'You are muted by the admin until ' },
@@ -20290,27 +20293,45 @@
         reply: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
         ban:   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>',
         vcheck: '<svg width="13" height="13" viewBox="0 0 24 24" aria-label="Terverifikasi" role="img"><circle cx="12" cy="12" r="11" fill="#22c55e"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        ocheck: '<svg width="13" height="13" viewBox="0 0 24 24" aria-label="Centang oranye" role="img"><circle cx="12" cy="12" r="11" fill="#f97316"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         check: '<svg width="14" height="14" viewBox="0 0 24 24" aria-label="Admin terverifikasi"><circle cx="12" cy="12" r="11" fill="#1d9bf0"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     };
 
     let unsubMsg = null, unsubPres = null, hbTimer = null, tickTimer = null, active = false;
     window.ianChatIsActive = () => active;   // dipakai pengecekan pengguna dari admin
-    let sheetOpenedAt = 0, myName = '', replyTo = null, lastSend = 0, lastTypingWrite = 0, lastMsgs = [], presence = [], cleaned = false, loadedOnce = false, sheetMsg = null;
+    let sheetOpenedAt = 0, myName = '', replyTo = null, lastSend = 0, lastTypingWrite = 0, lastMsgs = [], presence = [], cleaned = false, loadedOnce = false, sheetMsg = null, gotSnap = false;
 
     function db() { return (typeof _db !== 'undefined') ? _db : null; }
-    function me() { return typeof _deviceId !== 'undefined' ? _deviceId : 'anon'; }
+    function devId() { return typeof _deviceId !== 'undefined' ? _deviceId : 'anon'; }
+    const UK = '_poth_userid', UA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    function genUid() { let r = ''; try { const a = new Uint8Array(8); crypto.getRandomValues(a); for (let i = 0; i < 8; i++) r += UA[a[i] % 32]; } catch (e) { for (let i = 0; i < 8; i++) r += UA[Math.floor(Math.random() * 32)]; } return 'U-' + r; }
+    function me() { try { let v = localStorage.getItem(UK); if (v && /^U-[A-Z0-9]{8}$/.test(v)) return v; v = genUid(); localStorage.setItem(UK, v); return v; } catch (e) { return me._m || (me._m = genUid()); } }
+    window.ianUserId = me;
     function isOffline() { return document.body.classList.contains('is-offline') || navigator.onLine === false; }
-    function isBlocked() { return Array.isArray(window.ianChatBlocked) && window.ianChatBlocked.indexOf(me()) !== -1; }
-    const VS = '_poth_chat_v';
-    function getV() { try { const o = JSON.parse(localStorage.getItem(VS) || 'null'); return (o && o.u && o.n && o.n === getName()) ? o : null; } catch (e) { return null; } }
-    function clearV() { try { localStorage.removeItem(VS); } catch (e) {} }
+    function isBlocked() { const l = window.ianChatBlocked; return Array.isArray(l) && (l.indexOf(me()) !== -1 || l.indexOf(devId()) !== -1); }
+    function myBadge() { const b = window.ianChatBadges || {}; return b[me()] || ''; }
+    function paintMe() {
+        const n = $('chat-me-name'); if (!n) return;
+        n.textContent = myName || '-';
+        const o = n.parentNode && n.parentNode.querySelector('.chat-me-bd'); if (o) o.remove();
+        const b = myBadge();
+        if (b && n.parentNode) { const c = document.createElement('span'); c.className = 'chat-check chat-me-bd'; c.innerHTML = b === 'orange' ? SVG.ocheck : SVG.vcheck; n.parentNode.insertBefore(c, n.nextSibling); }
+        const u = $('chat-uid'); if (u) u.textContent = me();
+        const us = $('chat-uid-setup'); if (us) us.textContent = T('uidLbl') + me();
+    }
+    function copyId() {
+        const v = me(), done = () => toast(T('uidCopied'));
+        try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(v).then(done, () => { fbCopy(v); done(); }); return; } } catch (e) {}
+        fbCopy(v); done();
+    }
+    function fbCopy(v) { try { const t = document.createElement('textarea'); t.value = v; t.style.cssText = 'position:fixed;opacity:0;'; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); } catch (e) {} }
     function getName() { try { return (localStorage.getItem(NS) || '').trim(); } catch (e) { return ''; } }
     function colorFor(s) { let h = 0; s = s || ''; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return 'hsl(' + h + ',62%,62%)'; }
     function two(n) { return n < 10 ? '0' + n : '' + n; }
     function cooldownMs() { const sl = parseInt(window.ianChatSlow, 10) || 0; return Math.max(COOLDOWN, sl * 1000); }
     function myMute() {
         const l = Array.isArray(window.ianChatMuted) ? window.ianChatMuted : [];
-        return l.find(e => e && e.id === me() && e.until > Date.now()) || null;
+        return l.find(e => e && (e.id === me() || e.id === devId()) && e.until > Date.now()) || null;
     }
     function toast(m, err) { if (typeof showStatus === 'function') showStatus(m, !!err); }
     function dayLabel(ts) {
@@ -20374,11 +20395,41 @@
         presMap = {}; presence = [];
     }
 
+    // ── Skeleton loading ──
+    function skeleton(list) {
+        const w = document.createElement('div'); w.className = 'chat-skel'; w.setAttribute('aria-busy', 'true');
+        [[70, 90, 45, 0], [55, 80, 0, 1], [85, 60, 75, 0], [40, 0, 0, 1], [75, 88, 0, 0], [60, 50, 0, 1]].forEach(r => {
+            const row = document.createElement('div'); row.className = 'sk-row' + (r[3] ? ' r' : '');
+            const b = document.createElement('div'); b.className = 'sk-b'; b.style.width = r[0] + '%';
+            [r[1], r[2]].forEach(x => { if (x) { const l = document.createElement('div'); l.className = 'sk-l'; l.style.width = x + '%'; b.appendChild(l); } });
+            if (!b.children.length) { const l = document.createElement('div'); l.className = 'sk-l'; l.style.width = '100%'; b.appendChild(l); }
+            row.appendChild(b); w.appendChild(row);
+        });
+        list.appendChild(w);
+    }
+    // ── Deteksi link ──
+    const LINK_RE = /(?:https?:\/\/|www\.)[^\s<>"]+/gi;
+    function appendLinked(parent, text) {
+        let last = 0, m; LINK_RE.lastIndex = 0;
+        while ((m = LINK_RE.exec(text))) {
+            let u = m[0], tail = '';
+            const t = u.match(/[.,;:!?'")\]]+$/); if (t) { tail = t[0]; u = u.slice(0, -tail.length); }
+            if (u.length < 5 || /^(?:https?:\/\/|www\.)$/i.test(u)) continue;
+            if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+            const href = /^https?:\/\//i.test(u) ? u : 'https://' + u;
+            const a = document.createElement('a'); a.className = 'chat-link'; a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow'; a.textContent = u;
+            parent.appendChild(a);
+            last = m.index + u.length; LINK_RE.lastIndex = last;
+        }
+        if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+
     // ── Tampilan pesan ──
     function render() {
         const list = $('chat-list'); if (!list) return;
         const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 90;
         list.textContent = '';
+        if (!lastMsgs.length && !gotSnap) { skeleton(list); return; }
         if (!lastMsgs.length) { const e = document.createElement('div'); e.className = 'chat-empty'; e.textContent = T('empty'); list.appendChild(e); return; }
         let prev = null;
         lastMsgs.forEach(m => {
@@ -20401,7 +20452,7 @@
                     if (!adm) n.style.color = colorFor(m.uid || m.name);
                     const nt = document.createElement('span'); nt.textContent = m.name || '?'; n.appendChild(nt);
                     if (adm) { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = SVG.check; n.appendChild(c); }
-                    else if (m.v === true) { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = SVG.vcheck; n.appendChild(c); }
+                    else { const bk = (window.ianChatBadges || {})[m.uid]; if (bk === 'green' || bk === 'orange') { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = bk === 'orange' ? SVG.ocheck : SVG.vcheck; n.appendChild(c); } }
                     b.appendChild(n);
                 }
                 if (adm && m.hl) { const tg = document.createElement('div'); tg.className = 'chat-hl-tag'; tg.textContent = T('hl'); b.appendChild(tg); }
@@ -20413,7 +20464,7 @@
                     q.appendChild(qn); q.appendChild(qt); b.appendChild(q);
                 }
                 const _flt = !adm && window.ianFilter && window.ianFilter.active();   // sensor di sisi penerima, pesan yang lolos dari filter pengirim tetap tersensor
-                b.appendChild(document.createTextNode(_flt ? window.ianFilter.clean(m.text || '') : (m.text || '')));
+                appendLinked(b, _flt ? window.ianFilter.clean(m.text || '') : (m.text || ''));
                 const sp = document.createElement('span'); sp.className = 'chat-spacer'; b.appendChild(sp);
                 const t = new Date(m.ts); const tt = document.createElement('span'); tt.className = 'chat-time'; tt.textContent = two(t.getHours()) + ':' + two(t.getMinutes()); b.appendChild(tt);
             }
@@ -20449,8 +20500,8 @@
         unsubMsg = d.collection('chat_messages').orderBy('ts', 'desc').limit(LIMIT).onSnapshot(snap => {
             const arr = [];
             snap.forEach(doc => { const x = doc.data({ serverTimestamps: 'estimate' }); x.id = doc.id; x.ts = x.ts && x.ts.toMillis ? x.ts.toMillis() : (x.ts || Date.now()); arr.push(x); });
-            arr.reverse(); lastMsgs = arr; render();
-        }, err => { console.log('chat msg err', err); const l = $('chat-list'); if (l && !lastMsgs.length) { l.textContent = ''; const e = document.createElement('div'); e.className = 'chat-empty'; e.textContent = T('err'); l.appendChild(e); } });
+            arr.reverse(); lastMsgs = arr; gotSnap = true; render();
+        }, err => { console.log('chat msg err', err); gotSnap = true; const l = $('chat-list'); if (l && !lastMsgs.length) { l.textContent = ''; const e = document.createElement('div'); e.className = 'chat-empty'; e.textContent = T('err'); l.appendChild(e); } });
         presAttach();
         tickTimer = setInterval(renderPresence, 2000);
         if (!cleaned) { cleaned = true; cleanup(); }
@@ -20475,9 +20526,9 @@
         if (isBlocked()) return show('notice', T('blocked'));
         if (isOffline()) return show('notice', T('offline'));
         myName = getName();
-        $('chat-me-name').textContent = myName || '-';
+        paintMe();
         if (!myName) { show('setup'); const i = $('chat-name-input'); if (i) setTimeout(() => i.focus(), 50); return; }
-        show('list'); loadedOnce = false; render(); renderPresence(); refreshAdminUi();
+        show('list'); loadedOnce = false; gotSnap = lastMsgs.length > 0; render(); renderPresence(); refreshAdminUi();
         if (!db()) { show('notice', T('err')); return; }
         attach();
     }
@@ -20588,6 +20639,7 @@
                 return;
             }
             if (cancelled || cur.cancel) return;
+            if (e.target && e.target.closest && e.target.closest('a.chat-link')) return;
             const dist = Math.hypot(e.clientX - cur.x, e.clientY - cur.y);
             if (dist > 8 || Date.now() - cur.t > 600) return;
             if (window.getSelection && String(window.getSelection()).length) return;
@@ -20630,49 +20682,21 @@
         lastSend = now;
         const payload = { uid: me(), name: myName, text: outText, ts: firebase.firestore.FieldValue.serverTimestamp(), replyTo: replyTo ? { id: replyTo.id, name: replyTo.name, text: replyTo.text } : null };
         i.value = ''; i.style.height = 'auto'; $('chat-count-n').textContent = '0'; $('chat-count').style.display = 'none'; cancelReply(); lastTypingWrite = 0; writePresence(false);
-        if (getV()) payload.v = true;
         try { await d.collection('chat_messages').add(payload); setTimeout(scrollBottom, 60); }
         catch (e) {
             console.log('chat send err', e); i.value = text;
-            if (payload.v && e && e.code === 'permission-denied') { clearV(); toast(T('vfRevoked'), true); changeName(); }   // akun dicabut / password diganti
-            else toast(T('fail'), true);
+            toast(T('fail'), true);
         }
     }
 
     function saveName() {
         const v = ($('chat-name-input').value || '').replace(/\s+/g, ' ').trim();
         if (v.length < 2 || v.length > 16) { toast(T('nameBad'), true); return; }
-        const d = db(), key = v.toLowerCase();
-        const fin = () => { clearV(); try { localStorage.setItem(NS, v); } catch (e) {} stopListeners(); open(); };
-        if (d && /^[a-z0-9][a-z0-9_]{2,15}$/.test(key)) {   // nama milik akun terverifikasi dicadangkan
-            d.collection('verified_users').doc(key).get().then(s => { if (s.exists) toast(T('vfReserved'), true); else fin(); }).catch(fin);
-        } else fin();
-    }
-    function vfToggle() { const b = $('chat-vf-box'); b.style.display = b.style.display === 'none' ? 'block' : 'none'; $('chat-vf-msg').textContent = ''; if (b.style.display === 'block') setTimeout(() => { const u = $('chat-vf-user'); u.focus(); try { u.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }, 50); }
-    async function vfLogin() {
-        const msg = $('chat-vf-msg'), u = ($('chat-vf-user').value || '').trim().toLowerCase(), pw = $('chat-vf-pass').value || '';
-        msg.style.color = '#f87171'; msg.textContent = '';
-        if (!u || !pw) { msg.textContent = T('vfBadForm'); return; }
-        if (!window.crypto || !crypto.subtle) { msg.textContent = T('vfNoCrypto'); return; }
-        if (!/^[a-z0-9][a-z0-9_]{2,15}$/.test(u)) { msg.textContent = T('vfNone'); return; }
-        const d = db(); if (!d || isOffline()) { msg.textContent = T('offline'); return; }
-        msg.style.color = '#8696a0'; msg.textContent = '...';
-        try {
-            const snap = await d.collection('verified_users').doc(u).get();
-            if (!snap.exists) { msg.style.color = '#f87171'; msg.textContent = T('vfNone'); return; }
-            const acc = snap.data(), enc = new TextEncoder(), hex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
-            const k = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
-            const proof = hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(String(acc.salt)), iterations: 100000 }, k, 256));
-            const chk = hex(await crypto.subtle.digest('SHA-256', enc.encode(proof)));
-            if (chk !== acc.chk) { msg.style.color = '#f87171'; msg.textContent = T('vfWrong'); return; }
-            await d.collection('verified_sessions').doc(me()).set({ u: u, proof: proof, ts: firebase.firestore.FieldValue.serverTimestamp() });
-            try { localStorage.setItem(NS, acc.n); localStorage.setItem(VS, JSON.stringify({ u: u, n: acc.n })); } catch (e) {}
-            $('chat-vf-pass').value = ''; toast(T('vfOk'));
-            stopListeners(); open();
-        } catch (e) { console.log('vf login', e); msg.style.color = '#f87171'; msg.textContent = T('vfFail'); }
+        try { localStorage.setItem(NS, v); } catch (e) {}
+        stopListeners(); open();
     }
     function changeName() {
-        stopListeners(); myName = ''; clearV();   // ganti nama = centang hilang, harus login lagi
+        stopListeners(); myName = '';   // badge terikat ke UserId, jadi tetap ada setelah ganti nama
         presDetach();
         $('chat-name-input').value = getName(); show('setup');
         setTimeout(() => $('chat-name-input').focus(), 50);
@@ -20707,7 +20731,7 @@
     window.chatOpen = function () { initGestures(); open(); };
     window.chatClose = close;
     window.chatSend = send; window.chatOnInput = onInput; window.chatCancelReply = cancelReply;
-    window.chatVfToggle = vfToggle; window.chatVfLogin = vfLogin; window.chatSaveName = saveName; window.chatChangeName = changeName;
+    window.chatCopyId = copyId; window.chatRerender = function () { try { paintMe(); if (active && $('chat-list') && lastMsgs.length) render(); } catch (e) {} }; window.chatSaveName = saveName; window.chatChangeName = changeName;
     window.chatCloseSheet = function () { if (Date.now() - sheetOpenedAt < 380) return; closeSheet(); }; window.chatScrollBottom = scrollBottom;
 })();
 </script>
@@ -23125,7 +23149,7 @@
     // ── chat event ──
     function bodyChat(b) {
         const name = (ls(NAME_KEY) || '').trim();
-        const blocked = (window.ianChatBlocked || []).indexOf(typeof _deviceId !== 'undefined' ? _deviceId : '') >= 0;
+        const blocked = (window.ianChatBlocked || []).some(x => x === (window.ianUserId ? window.ianUserId() : '') || x === (typeof _deviceId !== 'undefined' ? _deviceId : ''));
         const list = el('div', { id: 'ev-chatlist', style: 'height:min(42vh,300px);overflow:auto;background:#101010;border:1px solid #222;border-radius:8px;padding:6px;margin-bottom:8px;' });
         b.appendChild(list); renderChat(list, true);
         if (window.ianChatOff) { b.appendChild(el('div', { textContent: 'Chat dimatikan admin.', style: 'color:#f88;' })); }
@@ -23139,7 +23163,7 @@
                 const t = inp.value.trim(); if (!t || !_db) return;
                 if (Date.now() - lastSend < 2500) { if (typeof showStatus === 'function') showStatus('Terlalu cepat, tunggu sebentar', true); return; }
                 lastSend = Date.now(); inp.value = '';
-                try { await sub('chat').add({ uid: _deviceId, name, text: t.slice(0, 200), ts: firebase.firestore.FieldValue.serverTimestamp() }); }
+                try { await sub('chat').add({ uid: (window.ianUserId ? window.ianUserId() : _deviceId), name, text: t.slice(0, 200), ts: firebase.firestore.FieldValue.serverTimestamp() }); }
                 catch (e) { inp.value = t; console.log('ev chat', e); if (typeof showStatus === 'function') showStatus('Gagal mengirim pesan', true); }
             };
             inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') send(); });
@@ -23161,6 +23185,7 @@
             const t = m.ts && m.ts.toDate ? m.ts.toDate() : null, hh = t ? String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') : '';
             list.appendChild(el('div', { style: 'padding:3px 4px;word-break:break-word;' }, [
                 el('span', { textContent: (m.admin ? '[ADMIN] ' : '') + str(m.name, 24) + ' ', style: 'font-weight:bold;color:' + (m.admin ? '#ff0' : 'var(--tp)') + ';' }),
+                (!m.admin && (window.ianChatBadges || {})[m.uid]) ? el('span', { style: 'display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:' + ((window.ianChatBadges[m.uid] === 'orange') ? '#f97316' : '#22c55e') + ';' }) : null,
                 el('span', { textContent: str(m.text, 300) }),
                 hh ? el('span', { textContent: '  ' + hh, style: 'font-size:9px;color:#666;' }) : null
             ]));
