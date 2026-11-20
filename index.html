@@ -17892,7 +17892,7 @@
                 lampsData: lamps.map(l => ({
                     dim: l.state.dim, pan: l.state.pan, tilt: l.state.tilt, zoom: l.state.zoom,
                     mode: l.state.mode, rainbow: l.state.rainbow, sunburst: l.state.sunburst,
-                    posX: l.state.posX, posY: l.state.posY, rot: l.state.rot, rotZ: l.state.rotZ || 0,
+                    posX: (l.state.targetX !== undefined ? l.state.targetX : l.state.posX), posY: (l.state.targetY !== undefined ? l.state.targetY : l.state.posY), posZ: (l.state.posZ !== undefined ? l.state.posZ : l.group.position.z), rainbowPrism: !!l.state.rainbowPrism, rot: l.state.rot, rotZ: l.state.rotZ || 0,
                     colorSteps: l.state.colorSteps,
                     curRotPrism: l.state.curRotPrism || 0, curRotFan: l.state.curRotFan || 0,
                     curRotDots: l.state.curRotDots || 0, curRotMatrix: l.state.curRotMatrix || 0,
@@ -18289,7 +18289,7 @@
                 data.lampsData.forEach((ld, i) => {
                     const s = {
                         dim: ld.dim, pan: ld.pan, tilt: ld.tilt, zoom: ld.zoom, mode: ld.mode,
-                        rainbow: ld.rainbow, sunburst: ld.sunburst, posX: ld.posX, posY: ld.posY,
+                        rainbow: ld.rainbow, sunburst: ld.sunburst, posX: ld.posX, posY: ld.posY, posZ: (ld.posZ !== undefined ? ld.posZ : -25), rainbowPrism: !!ld.rainbowPrism,
                         rot: ld.rot, curPan: ld.pan, curTilt: ld.tilt, curDim: ld.dim, curRot: 0,
                         curRotPrism: ld.curRotPrism || 0, curRotFan: ld.curRotFan || 0, curRotDots: ld.curRotDots || 0,
                         curRotMatrix: ld.curRotMatrix || 0, curRotStar: ld.curRotStar || 0, curZoom: ld.zoom,
@@ -18303,6 +18303,7 @@
                     };
                     createLamp(s, i);
                     lamps[i].state = s;
+                    lamps[i].group.position.z = s.posZ;   // posisi depan/belakang ikut tersimpan
                 });
             } else {
                 // Format lama: spawn ulang dari fixCount, apply lampColorSteps jika ada
@@ -18791,7 +18792,7 @@
             lampsData: lamps.map(l => ({
                 dim: l.state.dim, pan: l.state.pan, tilt: l.state.tilt, zoom: l.state.zoom,
                 mode: l.state.mode, rainbow: l.state.rainbow, sunburst: l.state.sunburst,
-                posX: l.state.posX, posY: l.state.posY, rot: l.state.rot, rotZ: l.state.rotZ || 0,
+                posX: (l.state.targetX !== undefined ? l.state.targetX : l.state.posX), posY: (l.state.targetY !== undefined ? l.state.targetY : l.state.posY), posZ: (l.state.posZ !== undefined ? l.state.posZ : l.group.position.z), rainbowPrism: !!l.state.rainbowPrism, rot: l.state.rot, rotZ: l.state.rotZ || 0,
                 colorSteps: l.state.colorSteps,
                 curRotPrism: l.state.curRotPrism || 0, curRotFan: l.state.curRotFan || 0,
                 curRotDots: l.state.curRotDots || 0, curRotMatrix: l.state.curRotMatrix || 0,
