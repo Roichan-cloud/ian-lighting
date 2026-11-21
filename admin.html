@@ -906,9 +906,9 @@ div.skel{display:block;}
 
       <div class="card">
         <div class="card-title"><span class="icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><polygon points="9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16" fill="#22c55e"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg></span> Badge &amp; Ban per UserId</div>
-        <div class="toggle-sub" style="margin-bottom:8px;">Setiap perangkat punya UserId sendiri (format U-XXXXXXXX), tampil di header chat pengguna dan bisa disalin. Pengguna mengirim UserId-nya ke admin, lalu admin memberi centang hijau/oranye di sini. Badge terikat ke UserId, jadi tetap ada walau pengguna mengganti nama. UserId juga tampil di tiap pesan pada daftar Live Chat di atas, dan di sana ada tombol cepat Hijau / Oranye / Blokir.</div>
+        <div class="toggle-sub" style="margin-bottom:8px;">Setiap perangkat punya UserId sendiri (format U- diikuti 16 huruf/angka), tampil di header chat pengguna dan bisa disalin. Pengguna mengirim UserId-nya ke admin, lalu admin memberi centang hijau/oranye di sini. Badge terikat ke UserId, jadi tetap ada walau pengguna mengganti nama. UserId juga tampil di tiap pesan pada daftar Live Chat di atas, dan di sana ada tombol cepat Hijau / Oranye / Blokir.</div>
         <label class="admin-label">UserId</label>
-        <input class="admin-input" id="cu-id" maxlength="10" placeholder="U-7K3Q9XA2" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <input class="admin-input" id="cu-id" maxlength="18" placeholder="U-7K3Q9XA2BN4RM6TE" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <label class="admin-label">Catatan (opsional, hanya terlihat admin)</label>
         <input class="admin-input" id="cu-note" maxlength="40" placeholder="contoh: Budi, teman komunitas" autocomplete="off">
         <label class="admin-label">Badge</label>
@@ -2042,7 +2042,7 @@ async function mbCleanup() {
 // ═══ BADGE PER USERID ═══
 // app_config/main.chatUsers = { list: [{ id:'U-XXXXXXXX', b:'green'|'orange', note, at }] }. Ban memakai chatBlocked (id = UserId) yang sama dengan tombol Blokir.
 let _chatUsers = [];
-const CU_RE = /^U-[A-Z0-9]{8}$/;
+const CU_RE = /^U-(?:[A-Z0-9]{16}|[A-Z0-9]{8})$/;   // 16 karakter = UserId baru (bisa ber-cap bertanda tangan); 8 karakter = UserId lama
 function cuDot(b) { return '<svg width="15" height="15" viewBox="0 0 24 24" style="vertical-align:-2px;margin-left:3px;" aria-label="' + (b === 'orange' ? 'Centang oranye' : 'Centang hijau') + '"><polygon points="9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16" fill="' + (b === 'orange' ? '#f97316' : '#22c55e') + '"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg>'; }
 function cuBadgeOf(id) { const u = _chatUsers.find(x => x.id === id); return u ? u.b : ''; }
 async function saveChatUsers(list) {
@@ -2068,7 +2068,7 @@ function cuRender() {
 }
 async function cuSet(id, b, note) {
   id = String(id || '').trim().toUpperCase();
-  if (!CU_RE.test(id)) { toast('Format UserId harus U- diikuti 8 huruf/angka', true); return false; }
+  if (!CU_RE.test(id)) { toast('Format UserId tidak valid (U- diikuti 16 huruf/angka)', true); return false; }
   const list = _chatUsers.filter(x => x.id !== id).concat([{ id, b, note: String(note || '').slice(0, 40), at: Date.now() }]);
   if (await saveChatUsers(list)) { toast('Badge ' + (b === 'orange' ? 'oranye' : 'hijau') + ' diberikan ke ' + id); cuRender(); renderChatLive(); return true; }
   return false;
@@ -2079,7 +2079,7 @@ async function cuAdd() {
 }
 async function cuBan() {
   const id = String(document.getElementById('cu-id').value || '').trim().toUpperCase();
-  if (!CU_RE.test(id)) { toast('Format UserId harus U- diikuti 8 huruf/angka', true); return; }
+  if (!CU_RE.test(id)) { toast('Format UserId tidak valid (U- diikuti 16 huruf/angka)', true); return; }
   if (_chatBlocked.some(x => x.id === id)) { toast('UserId ini sudah diblokir', true); return; }
   if (!await uiConfirm('Blokir UserId ' + id + ' dari chat?')) return;
   if (await saveChatBlocked(_chatBlocked.concat([{ id, name: document.getElementById('cu-note').value.trim().slice(0, 40), at: Date.now() }]))) { toast('UserId diblokir'); renderChatSide(); renderChatLive(); document.getElementById('cu-id').value = ''; }
