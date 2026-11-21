@@ -281,6 +281,23 @@
         .chat-msg.hl .chat-bubble { background:linear-gradient(135deg,#3a2f00,#241d00); box-shadow:0 0 0 1.5px #ffc933, 0 0 10px rgba(255,201,51,.25); }
         .chat-hl-tag { display:flex; align-items:center; font-size:10px; font-weight:700; color:#ffc933; letter-spacing:1px; margin-bottom:3px; }
         .chat-bubble.deleted { color:#8696a0; font-style:italic; display:flex; align-items:center; gap:5px; padding-right:52px; }
+        .chat-msg.vg .chat-bubble { box-shadow:inset 2px 0 0 #22c55e, 0 0 0 1px rgba(34,197,94,.28), 0 0 12px rgba(34,197,94,.16); }
+        .chat-msg.vo .chat-bubble { box-shadow:inset 2px 0 0 #f97316, 0 0 0 1px rgba(249,115,22,.30), 0 0 12px rgba(249,115,22,.16); }
+        .chat-msg.vg:not(.me) .chat-bubble { background:linear-gradient(135deg,#202c33 60%,#1d3a2f); }
+        .chat-msg.vo:not(.me) .chat-bubble { background:linear-gradient(135deg,#202c33 60%,#3a2c1d); }
+        .chat-msg.vg.first:not(.me) .chat-bubble::before, .chat-msg.vo.first:not(.me) .chat-bubble::before { background:#202c33; }
+        .chat-name .chat-nt, .chat-name .chat-check { cursor:pointer; }
+        #chat-prof { position:fixed; inset:0; z-index:100001; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.55); animation:cpFade .2s ease both; padding:16px; box-sizing:border-box; }
+        #chat-prof.out { animation:cpFadeOut .18s ease forwards; }
+        #chat-prof .cp-card { width:min(300px,100%); box-sizing:border-box; background:#111b21; color:#e9edef; border-radius:14px; padding:18px 16px 14px; text-align:center; border:1px solid var(--cp,#2a3942); box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 24px var(--cpg,transparent); animation:cpPop .26s cubic-bezier(.2,.9,.3,1.2) both; font-family:-apple-system,"Segoe UI",Roboto,sans-serif; }
+        #chat-prof .cp-nm { font-size:16px; font-weight:700; margin-top:8px; word-break:break-word; }
+        #chat-prof .cp-ty { font-size:11px; font-weight:700; letter-spacing:1px; margin-top:3px; }
+        #chat-prof .cp-rw { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; padding:8px 0; border-top:1px solid #1f2c34; text-align:left; }
+        #chat-prof .cp-rw span:first-child { color:#8696a0; flex:none; }
+        #chat-prof .cp-rw span:last-child { font-family:ui-monospace,Menlo,monospace; word-break:break-all; text-align:right; }
+        #chat-prof button { margin-top:10px; width:100%; border:1px solid #2a3942; background:#202c33; color:#e9edef; border-radius:8px; padding:8px; font-size:12px; cursor:pointer; }
+        @keyframes cpFade{from{opacity:0}to{opacity:1}} @keyframes cpFadeOut{to{opacity:0}} @keyframes cpPop{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}
+        @media (prefers-reduced-motion:reduce){#chat-prof,#chat-prof *{animation:none!important}}
         .chat-link { color:#53bdeb; text-decoration:underline; text-underline-offset:2px; cursor:pointer; word-break:break-all; -webkit-tap-highlight-color:transparent; }
         .chat-msg.me .chat-link { color:#9be0ff; }
         .chat-skel { display:flex; flex-direction:column; gap:10px; padding:4px 0; }
@@ -1856,7 +1873,7 @@
             <!-- KIPAS HEXAGON -->
             <div data-hm-panel="hexfan" class="settings-motion-row" style="border: 1px solid #ffd34d; margin-top: 8px; background: #1c1700;">
                 <div style="font-size:10px; color:#ffd34d; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>KIPAS HEXAGON BY NOVA</span>
+                    <span>KIPAS HEXAGON <span style="font-size:8px; letter-spacing:1.5px; font-weight:600; opacity:.75; margin-left:6px;">BY NOVA LIGHTING</span></span>
                     <span id="hxf-selection-label" style="color:#ffd34d;">ALL KIPAS HEXAGON</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
@@ -1922,7 +1939,7 @@
             <!-- LAMPU FLOWER -->
             <div data-hm-panel="flower" class="settings-motion-row" style="border: 1px solid #b36bff; margin-top: 8px; background: #14081f;">
                 <div style="font-size:10px; color:#b36bff; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>LAMPU FLOWER BY NOVA</span>
+                    <span>LAMPU FLOWER <span style="font-size:8px; letter-spacing:1.5px; font-weight:600; opacity:.75; margin-left:6px;">BY NOVA LIGHTING</span></span>
                     <span id="lfl-selection-label" style="color:#b36bff;">ALL FLOWER</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
@@ -2785,6 +2802,15 @@
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div id="mabar-joy-pad" style="position:relative; width:110px; height:110px; border-radius:50%; background:#1a1a1a; border:1px solid #0a0; touch-action:none; flex:none; cursor:pointer;"><div id="mabar-joy-knob" style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:#0f0; opacity:.8; pointer-events:none;"></div></div>
                     <div style="font-size:9px; color:#aaa; line-height:1.7; flex:1;">Atas / bawah: maju / mundur<br>Kiri / kanan: geser ke samping<br><span id="mabar-joy-val" style="color:#0f0; font-family:monospace; white-space:pre;">X 0   Z 0</span><br><button class="quality-btn" id="mabar-joy-reset" type="button" style="margin-top:4px;">RESET POSISI</button></div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                    <span style="font-size:9px; color:#aaa; flex:none;">KECEPATAN</span>
+                    <input type="range" id="mabar-joy-spd" min="5" max="150" step="5" value="30" style="flex:1; min-width:0;">
+                    <span id="mabar-joy-spd-v" style="font-size:9px; color:#0f0; font-family:monospace; width:34px; text-align:right;">30</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                    <button class="quality-btn" id="mabar-joy-cam" type="button" style="min-width:120px;">IKUT KAMERA: AKTIF</button>
+                    <span style="font-size:8px; color:#777; line-height:1.4; flex:1;">Kamera ikut bergeser saat project digerakkan.</span>
                 </div>
             </div>
             <div id="mabar-diag" style="display:none; margin:8px 0 6px; padding:8px; border:1px solid #333; border-radius:6px;">
@@ -13303,7 +13329,7 @@
             let C = null, prevH = 0, me_ = null;
             list.forEach(e => {
                 const c = (e.sp.min + e.sp.max) / 2, hh = (e.sp.max - e.sp.min) / 2;
-                C = C === null ? c : C + prevH + hh + 30; prevH = hh;
+                C = C === null ? c : C + prevH + hh + 10; prevH = hh;   // jarak kosong antar-project (dulu 30)
                 e.bx = C - c; e.sx = e.bx + (e.o[0] || 0); e.sz = e.o[1] || 0; if (e.self) me_ = e;
             });
             // project kita sendiri digeser langsung (lihat animate), jadi pemain lain hanya dikurangi posisi dasar kita, bukan geseran kita
@@ -13585,6 +13611,7 @@
         lamps.forEach(l => { mv(l.group); const s = l.state; if (s) { if (typeof s.posZ !== 'number') s.posZ = -25; st(s, 'targetX', 'posZ'); } });
         [parleds, wallwashers, strobes, fanLamps, (window._hxfObjs ? window._hxfObjs() : [])].forEach(arr => arr.forEach(o => { mv(o.group); st(o.state, 'posX', 'posZ'); }));
         trusses.forEach(o => mv(o.group)); photos2D.forEach(o => mv(o.group)); banners.forEach(o => mv(o.group));
+        videotrons.forEach(o => mv(o.group));   // Videotron ikut bergeser (hanya di layarmu, tidak dikirim ke pemain lain)
         minibrutes.forEach(m => { mv(m.group); st(m, 'targetX', null); });
         (window.foggers || []).forEach(f => mv(f.group));
     }
@@ -18109,9 +18136,11 @@
         } catch (e) { console.log('creator gate', e); }
         return true;
     }
-    function _sealSvg(color, size) {
+    function _sealSvg(color, size, anim) {
         const _SEAL_PTS = '9.2,1.5 12,2.94 14.8,1.5 16.52,4.16 19.68,4.3 19.84,7.46 22.5,9.2 21.04,12 22.5,14.8 19.84,16.52 19.68,19.7 16.52,19.84 14.8,22.5 12,21.04 9.2,22.5 7.46,19.84 4.3,19.7 4.16,16.52 1.5,14.8 2.94,12 1.5,9.2 4.16,7.46 4.3,4.3 7.46,4.16';
-        return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" aria-hidden="true"><polygon points="' + _SEAL_PTS + '" fill="' + color + '"/><polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/></svg>';
+        return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" aria-hidden="true"><polygon points="' + _SEAL_PTS + '" fill="' + color + '"/>' + (anim
+            ? '<polyline class="cs-chk" points="8.1,12.2 10.8,14.9 15.9,9.4" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>'
+            : '<polygon points="7.46,12.36 8.52,11.32 10.7,13.52 15.5,8.88 16.54,9.94 10.7,15.6" fill="#fff"/>') + '</svg>';
     }
     // Nama terbaru pembuat: perangkat sendiri -> nama chat sekarang; orang lain -> nama di pesan chat terbarunya
     // (pesan chat hanya disimpan 3 hari); kalau tidak ada, pakai nama yang tertulis di file project.
@@ -18144,21 +18173,22 @@
         const old = document.getElementById('creator-stamp'); if (old) old.remove();
         if (!document.getElementById('creator-stamp-css')) {
             const st = document.createElement('style'); st.id = 'creator-stamp-css';
-            st.textContent = '@keyframes csIn{from{opacity:0;transform:translate(-50%,-18px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes csSheen{from{transform:translateX(-120%)}to{transform:translateX(220%)}}@keyframes csPop{0%{transform:scale(.4) rotate(-25deg)}60%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0)}}';
+            st.textContent = '@keyframes csIn{from{opacity:0;transform:translate(-50%,-18px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes csSheen{from{transform:translateX(-120%)}to{transform:translateX(220%)}}@keyframes csPop{0%{transform:scale(.4) rotate(-25deg)}60%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0)}}'+'@keyframes csOut{from{opacity:1;transform:translate(-50%,0) scale(1)}to{opacity:0;transform:translate(-50%,-14px) scale(.95)}}'+'@keyframes csDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}'+'@keyframes csTxt{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}'+'#creator-stamp .cs-chk{stroke-dasharray:1;stroke-dashoffset:1;animation:csDraw .35s ease .5s forwards}'+'#creator-stamp .cs-t{animation:csTxt .4s ease both}'+'@media (prefers-reduced-motion:reduce){#creator-stamp,#creator-stamp *{animation:none!important;transition:none!important}#creator-stamp .cs-chk{stroke-dashoffset:0}}';
             document.head.appendChild(st);
         }
         const el = document.createElement('div'); el.id = 'creator-stamp';
         el.style.cssText = 'position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99990;width:min(340px,92vw);box-sizing:border-box;overflow:hidden;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(20,24,28,.96),rgba(10,12,14,.96));border:1px solid ' + col + ';box-shadow:0 0 0 1px ' + col + '33,0 10px 34px rgba(0,0,0,.6),0 0 26px ' + col + '55;color:#fff;cursor:pointer;animation:csIn .45s cubic-bezier(.2,.9,.3,1.2) both;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;';
         el.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,' + col + '33 50%,transparent 70%);animation:csSheen 1.6s ease .35s 1 both;pointer-events:none;"></div>' +
-            '<div style="flex-shrink:0;animation:csPop .6s cubic-bezier(.3,1.4,.5,1) .15s both;filter:drop-shadow(0 0 8px ' + col + '99);">' + _sealSvg(col, 40) + '</div>' +
+            '<div style="flex-shrink:0;animation:csPop .6s cubic-bezier(.3,1.4,.5,1) .15s both;filter:drop-shadow(0 0 8px ' + col + '99);">' + _sealSvg(col, 40, true) + '</div>' +
             '<div style="min-width:0;flex:1;position:relative;">' +
-              '<div style="font-size:9px;letter-spacing:2px;font-weight:800;color:' + col + ';">PROJECT TERVERIFIKASI</div>' +
-              '<div style="font-size:14px;font-weight:700;margin-top:2px;line-height:1.25;word-break:break-word;">Karya <span id="cs-name"></span></div>' +
-              '<div style="font-size:10px;color:#9aa4ad;margin-top:2px;">' + lbl + ' · diverifikasi admin</div>' +
+              '<div class="cs-t" style="animation-delay:.3s;font-size:9px;letter-spacing:2px;font-weight:800;color:' + col + ';">PROJECT TERVERIFIKASI</div>' +
+              '<div class="cs-t" style="animation-delay:.42s;font-size:14px;font-weight:700;margin-top:2px;line-height:1.25;word-break:break-word;">Karya <span id="cs-name"></span></div>' +
+              '<div class="cs-t" style="animation-delay:.54s;font-size:10px;color:#9aa4ad;margin-top:2px;">' + lbl + ' · diverifikasi admin</div>' +
             '</div>';
         el.querySelector('#cs-name').textContent = shown;
         document.body.appendChild(el);
-        const kill = () => { el.style.transition = 'opacity .3s, transform .3s'; el.style.opacity = '0'; el.style.transform = 'translate(-50%,-12px)'; setTimeout(() => el.remove(), 320); };
+        let dying = false;
+        const kill = () => { if (dying) return; dying = true; el.style.pointerEvents = 'none'; el.style.animation = 'csOut .35s ease forwards'; setTimeout(() => el.remove(), 380); };
         el.onclick = kill; setTimeout(() => { if (el.isConnected) kill(); }, 6500);
     }
 
@@ -19416,8 +19446,8 @@
                 }
                 if(first || changed('chatFilter')) { try { if (window.ianFilter) window.ianFilter.build(cfg.chatFilter || {}); } catch(e) { console.log('chatFilter', e); } }
                 if(first || changed('chatUsers')) {
-                    const bm = {}; (((cfg.chatUsers || {}).list) || []).forEach(x => { if (x && x.id && (x.b === 'green' || x.b === 'orange')) bm[x.id] = x.b; });
-                    window.ianChatBadges = bm;
+                    const bm = {}, bi = {}; (((cfg.chatUsers || {}).list) || []).forEach(x => { if (x && x.id && (x.b === 'green' || x.b === 'orange')) { bm[x.id] = x.b; bi[x.id] = { at: +x.at || 0 }; } });
+                    window.ianChatBadges = bm; window.ianChatBadgeInfo = bi;
                     if (typeof chatRerender === 'function') chatRerender();
                 }
                 if(first || changed('chatBlocked')) {
@@ -21080,6 +21110,34 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
         try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(v).then(done, () => { fbCopy(v); done(); }); return; } } catch (e) {}
         fbCopy(v); done();
     }
+    function openProfile(m) {
+        const old = document.getElementById('chat-prof'); if (old) old.remove();
+        const adm = m.admin === true, uid = adm ? '' : String(m.uid || '');
+        const bk = adm ? 'admin' : ((window.ianChatBadges || {})[uid] || '');
+        const col = bk === 'orange' ? '#f97316' : bk === 'green' ? '#22c55e' : bk === 'admin' ? '#45a5f5' : '#8696a0';
+        const lbl = bk === 'orange' ? 'CENTANG ORANYE' : bk === 'green' ? 'CENTANG HIJAU' : bk === 'admin' ? 'ADMIN' : 'PENGGUNA';
+        const icon = bk === 'orange' ? SVG.ocheck : bk === 'green' ? SVG.vcheck : bk === 'admin' ? SVG.check : '';
+        const info = (window.ianChatBadgeInfo || {})[uid], at = info && info.at ? new Date(info.at) : null;
+        const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const el = document.createElement('div'); el.id = 'chat-prof';
+        const card = document.createElement('div'); card.className = 'cp-card'; card.style.setProperty('--cp', col + '88'); card.style.setProperty('--cpg', col + '33');
+        const ic = document.createElement('div'); ic.style.cssText = 'display:flex;justify-content:center;'; ic.innerHTML = icon.replace(/width="15" height="15"/, 'width="44" height="44"');
+        const nm = document.createElement('div'); nm.className = 'cp-nm'; nm.textContent = m.name || '?';
+        const ty = document.createElement('div'); ty.className = 'cp-ty'; ty.style.color = col; ty.textContent = lbl;
+        card.append(ic, nm, ty);
+        const row = (k, v) => { const r = document.createElement('div'); r.className = 'cp-rw'; const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; r.append(a, b); card.appendChild(r); };
+        if (!adm) row('UserId', uid || '-');
+        if (bk === 'green' || bk === 'orange') row('Dapat centang', at ? at.getDate() + ' ' + MON[at.getMonth()] + ' ' + at.getFullYear() : '-');
+        else if (bk === 'admin') row('Peran', 'Admin resmi');
+        else row('Centang', 'Belum ada');
+        if (!adm && uid) { const cb = document.createElement('button'); cb.type = 'button'; cb.textContent = 'Salin UserId'; cb.onclick = () => { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(uid).catch(() => fbCopy(uid)); else fbCopy(uid); } catch (e) { fbCopy(uid); } cb.textContent = 'Tersalin'; }; card.appendChild(cb); }
+        const xb = document.createElement('button'); xb.type = 'button'; xb.textContent = 'Tutup'; card.appendChild(xb);
+        el.appendChild(card); document.body.appendChild(el);
+        const close = () => { if (el.classList.contains('out')) return; el.classList.add('out'); document.removeEventListener('keydown', onKey, true); setTimeout(() => el.remove(), 200); };
+        const onKey = ev => { if (ev.key === 'Escape') close(); };
+        document.addEventListener('keydown', onKey, true);
+        xb.onclick = close; el.addEventListener('click', ev => { if (ev.target === el) close(); });
+    }
     function fbCopy(v) { try { const t = document.createElement('textarea'); t.value = v; t.style.cssText = 'position:fixed;opacity:0;'; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); } catch (e) {} }
     function getName() { try { return (localStorage.getItem(NS) || '').trim(); } catch (e) { return ''; } }
     function colorFor(s) { let h = 0; s = s || ''; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return 'hsl(' + h + ',62%,62%)'; }
@@ -21143,7 +21201,10 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
         list.on('child_added', upd, e => console.log('presence err', e)); list.on('child_changed', upd); list.on('child_removed', del);
         const onConn = s => { if (s.val() === true && presRef && myName && !isBlocked()) { presRef.onDisconnect().remove(); presRef.set({ n: myName, t: 0 }).catch(() => {}); } };
         conn.on('value', onConn);
-        presOff = [() => { list.off('child_added', upd); list.off('child_changed', upd); list.off('child_removed', del); conn.off('value', onConn); }];
+        const atRef = r.ref('chat_admin_typing');   // admin sedang mengetik (ditulis dari panel admin)
+        const atCb = s => { const v = s.val(); adminTyping = v && typeof v.n === 'string' ? { n: v.n, t: +v.t || 0 } : null; renderPresence(); };
+        atRef.on('value', atCb, e => console.log('admin typing err', e));
+        presOff = [() => { list.off('child_added', upd); list.off('child_changed', upd); list.off('child_removed', del); conn.off('value', onConn); atRef.off('value', atCb); adminTyping = null; }];
     }
     function presDetach() {
         presOff.forEach(f => { try { f(); } catch (e) {} }); presOff = [];
@@ -21197,6 +21258,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
             const first = newDay || !prev || prev.uid !== m.uid || (prev.admin === true) !== adm;
             const row = document.createElement('div');
             row.className = 'chat-msg' + (mine ? ' me' : '') + (adm ? ' adm' : '') + (adm && m.hl ? ' hl' : '') + (first ? ' first' : '');
+            if (!adm && !m.deleted) { const _vb = (window.ianChatBadges || {})[m.uid]; if (_vb === 'green') row.className += ' vg'; else if (_vb === 'orange') row.className += ' vo'; }
             row.dataset.id = m.id;
             const ic = document.createElement('div'); ic.className = 'chat-swipe-ic'; ic.innerHTML = SVG.reply; row.appendChild(ic);
             const b = document.createElement('div'); b.className = 'chat-bubble' + (m.deleted ? ' deleted' : '');
@@ -21206,7 +21268,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
                 if (!mine && first) {
                     const n = document.createElement('div'); n.className = 'chat-name';
                     if (!adm) n.style.color = colorFor(m.uid || m.name);
-                    const nt = document.createElement('span'); nt.textContent = m.name || '?'; n.appendChild(nt);
+                    const nt = document.createElement('span'); nt.className = 'chat-nt'; nt.textContent = m.name || '?'; n.appendChild(nt);
                     if (adm) { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = SVG.check; n.appendChild(c); }
                     else { const bk = (window.ianChatBadges || {})[m.uid]; if (bk === 'green' || bk === 'orange') { const c = document.createElement('span'); c.className = 'chat-check'; c.innerHTML = bk === 'orange' ? SVG.ocheck : SVG.vcheck; n.appendChild(c); } }
                     b.appendChild(n);
@@ -21237,12 +21299,20 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     }
     function scrollBottom() { const l = $('chat-list'); if (l) l.scrollTo({ top: l.scrollHeight, behavior: 'smooth' }); }
 
+    let adminTyping = null;
     function renderPresence() {
         const now = Date.now();
         const on = presence;
         const typers = on.filter(p => p.uid !== me() && p.typingUntil && p.typingUntil > now);
         const sub = $('chat-sub'); if (!sub) return;
-        if (typers.length) {
+        if (adminTyping && adminTyping.t > now) {
+            sub.className = 'typing';
+            sub.textContent = '';
+            const nm = document.createElement('span'); nm.textContent = String(adminTyping.n || 'Admin').slice(0, 24); nm.style.fontWeight = '700';
+            const ic = document.createElement('span'); ic.innerHTML = SVG.check; ic.style.cssText = 'display:inline-flex;vertical-align:middle;margin:0 3px;';
+            const tx = document.createElement('span'); tx.textContent = T('typing1').replace(/^\s+/, '');
+            sub.append(nm, ic, tx);
+        } else if (typers.length) {
             sub.className = 'typing';
             sub.textContent = typers.length === 1 ? (typers[0].name || '?') + T('typing1') : T('typingN');
         } else {
@@ -21399,6 +21469,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
             const dist = Math.hypot(e.clientX - cur.x, e.clientY - cur.y);
             if (dist > 8 || Date.now() - cur.t > 600) return;
             if (window.getSelection && String(window.getSelection()).length) return;
+            { const nm = e.target.closest ? e.target.closest('.chat-name') : null; const pm = nm ? msgById(cur.id) : null; if (pm && !pm.deleted) { openProfile(pm); return; } }
             if (cur.quote) { const q = e.target.closest ? e.target.closest('.chat-quote') : null; if (q && q.dataset.qid) { jumpTo(q.dataset.qid); return; } }
             openSheet(msgById(cur.id));
         }
@@ -23141,8 +23212,15 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     }
 
     // ── joystick: menggeser project kita sendiri (terlihat semua pemain) ──
-    const JOY_MAX = 300, JOY_SPEED = 30;   // batas geser (satuan scene) dan kecepatan penuh (satuan/detik)
+    const JOY_MAX = 300;   // batas geser (satuan scene)
+    let JOY_SPEED = 30, joyCam = true;   // kecepatan penuh (satuan/detik) dan mode Ikut Kamera (bawaan aktif); disimpan di perangkat
+    try { const sv = +localStorage.getItem('_poth_mabar_joyspd'); if (sv >= 5 && sv <= 150) JOY_SPEED = sv; if (localStorage.getItem('_poth_mabar_joycam') === '0') joyCam = false; } catch (e) {}
     let joyV = [0, 0], joyInit = false;
+    function joyCamFollow(dx, dz) {   // geser titik pandang kamera sebesar geseran project, jadi tampilan relatif tidak berubah
+        if (!joyCam || (!dx && !dz)) return;
+        try { if (typeof camTarget !== 'undefined' && typeof updateCameraFromSpherical === 'function') { camTarget.x += dx; camTarget.z += dz; updateCameraFromSpherical(); } } catch (e) {}
+    }
+    function joyCamLabel() { const b = $('mabar-joy-cam'); if (b) { b.textContent = 'IKUT KAMERA: ' + (joyCam ? 'AKTIF' : 'MATI'); b.classList.toggle('active', joyCam); } }
     function joyShow() { const v = $('mabar-joy-val'); if (v && R) v.textContent = 'X ' + Math.round(R.ox) + '   Z ' + Math.round(R.oz); }
     function joyApply() { try { window.mabarRemote.setMyOffset(R.ox, R.oz); } catch (e) {} joyShow(); }
     function initJoy() {
@@ -23158,12 +23236,18 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
         pad.addEventListener('pointerdown', e => { try { pad.setPointerCapture(e.pointerId); } catch (x) {} set(e.clientX, e.clientY); e.preventDefault(); });
         pad.addEventListener('pointermove', e => { if (e.buttons || e.pressure > 0) set(e.clientX, e.clientY); });
         ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => pad.addEventListener(t, end));
-        $('mabar-joy-reset').onclick = () => { if (!R) return; R.ox = R.oz = 0; joyApply(); };
+        $('mabar-joy-reset').onclick = () => { if (!R) return; const dx = -R.ox, dz = -R.oz; R.ox = R.oz = 0; joyCamFollow(dx, dz); joyApply(); };
+        const sp = $('mabar-joy-spd'), spv = $('mabar-joy-spd-v');
+        if (sp) { sp.value = JOY_SPEED; if (spv) spv.textContent = JOY_SPEED; sp.oninput = () => { JOY_SPEED = +sp.value || 30; if (spv) spv.textContent = JOY_SPEED; try { localStorage.setItem('_poth_mabar_joyspd', String(JOY_SPEED)); } catch (e) {} }; }
+        const cb = $('mabar-joy-cam');
+        if (cb) { joyCamLabel(); cb.onclick = () => { joyCam = !joyCam; joyCamLabel(); try { localStorage.setItem('_poth_mabar_joycam', joyCam ? '1' : '0'); } catch (e) {} }; }
         setInterval(() => {
             if (!R || (!joyV[0] && !joyV[1])) return;
             const k = JOY_SPEED * 0.05, cl = v => Math.max(-JOY_MAX, Math.min(JOY_MAX, v));
+            const ox0 = R.ox, oz0 = R.oz;
             if (Math.abs(joyV[0]) > 0.08) R.ox = cl(R.ox + joyV[0] * k);
             if (Math.abs(joyV[1]) > 0.08) R.oz = cl(R.oz + joyV[1] * k);   // atas = maju (menjauh dari kamera), bawah = mundur
+            joyCamFollow(R.ox - ox0, R.oz - oz0);
             joyApply();
         }, 50);
     }

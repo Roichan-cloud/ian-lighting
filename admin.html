@@ -843,7 +843,7 @@ div.skel{display:block;}
           <button class="btn-gray" style="width:auto;flex:1;min-width:130px;margin:0;padding:8px;font-size:11px;" onclick="clearChatSelection()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>Batal Pilih</button>
         </div>
         <div id="chat-adm-reply" style="display:none;align-items:center;gap:6px;background:#eef6ff;border-left:3px solid #1d9bf0;border-radius:4px;padding:6px 8px;font-size:11px;color:#456;margin-bottom:6px;"><span id="chat-adm-reply-txt" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><button onclick="cancelAdminReply()" style="background:none;border:none;cursor:pointer;color:#888;" aria-label="Batal balas"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-        <textarea id="chat-adm-input" rows="2" maxlength="500" placeholder="Tulis pesan sebagai admin..." style="width:100%;border:1px solid #ccc;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
+        <textarea id="chat-adm-input" oninput="admTypingInput()" onblur="admTypingWrite(false)" rows="2" maxlength="500" placeholder="Tulis pesan sebagai admin..." style="width:100%;border:1px solid #ccc;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
         <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#555;margin-bottom:8px;">
           <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" id="chat-adm-hl"> Sorot sebagai pengumuman</label>
           <label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" id="chat-adm-pin"> Sematkan juga</label>
@@ -2069,7 +2069,8 @@ function cuRender() {
 async function cuSet(id, b, note) {
   id = String(id || '').trim().toUpperCase();
   if (!CU_RE.test(id)) { toast('Format UserId tidak valid (U- diikuti 16 huruf/angka)', true); return false; }
-  const list = _chatUsers.filter(x => x.id !== id).concat([{ id, b, note: String(note || '').slice(0, 40), at: Date.now() }]);
+  const _prev = _chatUsers.find(x => x.id === id);   // tanggal mendapat centang dipertahankan kalau jenis centangnya sama
+  const list = _chatUsers.filter(x => x.id !== id).concat([{ id, b, note: String(note || '').slice(0, 40), at: (_prev && _prev.b === b && _prev.at) ? _prev.at : Date.now() }]);
   if (await saveChatUsers(list)) { toast('Badge ' + (b === 'orange' ? 'oranye' : 'hijau') + ' diberikan ke ' + id); cuRender(); renderChatLive(); return true; }
   return false;
 }
@@ -2218,6 +2219,19 @@ async function saveChatSlow() {
   const v = parseInt(document.getElementById('chat-slow-sel').value, 10) || 0;
   if (await saveChatCfg({ chatCtl: { slow: v } })) toast(v ? 'Mode lambat ' + v + ' detik aktif' : 'Mode lambat dimatikan');
 }
+let _admTypLast = 0;
+function admTypingWrite(on) {
+  try {
+    const r = admRtdb().ref('chat_admin_typing');
+    if (on) r.set({ n: String(_chatAdminName || 'Admin').slice(0, 24), t: Date.now() + 4000 }).catch(function () {});
+    else r.remove().catch(function () {});
+  } catch (e) {}
+}
+function admTypingInput() {
+  const v = document.getElementById('chat-adm-input').value;
+  if (!v.trim()) { _admTypLast = 0; admTypingWrite(false); return; }
+  const n = Date.now(); if (n - _admTypLast > 3000) { _admTypLast = n; admTypingWrite(true); }
+}
 async function sendAdminChat() {
   const inp = document.getElementById('chat-adm-input');
   const text = inp.value.trim().slice(0, 500);
@@ -2226,6 +2240,7 @@ async function sendAdminChat() {
   const payload = { uid: 'ADMIN', name: _chatAdminName, text, ts: firebase.firestore.FieldValue.serverTimestamp(), replyTo: _chatReplyTo ? { id: _chatReplyTo.id, name: _chatReplyTo.name, text: _chatReplyTo.text } : null, admin: true, hl };
   const ok = await runWrite(() => db.collection('chat_messages').add(payload));
   if (!ok) return;
+  _admTypLast = 0; admTypingWrite(false);
   inp.value = ''; document.getElementById('chat-adm-hl').checked = false; document.getElementById('chat-adm-pin').checked = false; cancelAdminReply();
   if (pin) await setChatPin(text);
 }
